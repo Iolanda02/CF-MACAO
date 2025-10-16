@@ -1,0 +1,47 @@
+@base=http://localhost:4000/api/v1/users
+@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJiNTI3Mjk4YjIyOGE4MzcyMWQ1MiIsImlhdCI6MTc2MDI3NzkyOCwiZXhwIjoxNzYyODY5OTI4fQ.6hXU8D7u8MTvQWsmvaR1OhbwRGrcYlWtiVgwtbKsolU
+@tokenAdmin=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJjNTZhMTkzM2FjZTY5NzQyZmY4NyIsImlhdCI6MTc2MDI4NDU1OCwiZXhwIjoxNzYyODc2NTU4fQ.ZU_7se0QUDofkwMCMMh2LA5d0xfEvcmpIB7zV2ahh18
+
+
+GET {{base}}/
+
+###
+GET {{base}}?page=1&perPage=2
+
+###
+GET {{base}}?search=gi&searchField=lastName
+
+###
+GET {{base}}/68ebb527298b228a83721d52
+Authorization: Bearer {{tokenUser}}
+
+
+###
+POST {{base}}/
+Content-Type: application/json
+
+{
+    "email": "giuseppe.verdi@mail.com",
+    "password": "12ab34cd",
+    "firstName": "Giuseppe",
+    "lastName": "Verdi",
+    "phone": "3457896445",
+    "birthDate": "01/06/1987"
+}
+
+###
+PUT {{base}}/68eae9ff7ee30910bc49d460
+Content-Type: application/json
+Authorization: Bearer {{tokenUser}}
+
+{
+    "email": "nicoletta.verdi@mail.com",
+    "firstName": "Nicoletta",
+    "lastName": "Verdi",
+    "phone": "3457896445",
+    "birthDate": "01/06/1988"
+}
+
+###
+DELETE {{base}}/68ebcb7cb1f44204ad7dff57
+Authorization: Bearer {{tokenUser}}

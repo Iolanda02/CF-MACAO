@@ -1,0 +1,14 @@
+@base=http://localhost:4000/api/v1/coffee-capsules
+@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJiNTI3Mjk4YjIyOGE4MzcyMWQ1MiIsImlhdCI6MTc2MDI3NzkyOCwiZXhwIjoxNzYyODY5OTI4fQ.6hXU8D7u8MTvQWsmvaR1OhbwRGrcYlWtiVgwtbKsolU
+@tokenAdmin=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJjNTZhMTkzM2FjZTY5NzQyZmY4NyIsImlhdCI6MTc2MDI4NDU1OCwiZXhwIjoxNzYyODc2NTU4fQ.ZU_7se0QUDofkwMCMMh2LA5d0xfEvcmpIB7zV2ahh18
+
+GET {{base}}/
+
+###
+GET {{base}}?page=1&perPage=2
+
+###
+GET {{base}}?search=gi
+
+###
+GET {{base}}/68ebb527298b228a83721d52

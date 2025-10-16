@@ -1,0 +1,371 @@
+import mongoose from "mongoose";
+import Order from "../models/Order.js";
+import ItemVariant from "../models/ItemVariant.js";
+
+/**
+ * @desc Recupera tutti gli ordini nel sistema per un utente admin oppure un elenco di tutti gli ordini effettuati dall'utente autenticato, con opzioni di filtro e paginazione
+ * @route GET /api/v1/orders
+ * @access Privato (utente autenticato)
+ */
+export const getAllOrders = async (req, res, next) => {
+    const { user } = req.user;
+    if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+
+    try {
+        const { status, page = 1, limit = 10, ...otherQueryParams } = req.query;
+        const baseQuery = buildOrderQuery(user.role, user._id, { status, ...otherQueryParams });
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const orders = await Order.find(baseQuery)
+                                  .populate('user', 'firstName lastName email')
+                                  .populate('items.item', 'name description')
+                                  .populate('items.variant', 'sku attributes')
+                                  .sort({ createdAt: -1 }) // dal più recente al meno recente
+                                  .skip(skip)
+                                  .limit(parseInt(limit));
+
+        const totalOrders = await Order.countDocuments(baseQuery);
+        const totalPages = Math.ceil(totalOrders / parseInt(limit));
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                orders,
+                totalOrders,
+                currentPage: parseInt(page),
+                totalPages,
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+/**
+ * @desc Converte il carrello dell'utente (orderStatus: "Pending") in un ordine effettivo
+ * @route POST /api/v1/orders
+ * @access Privato (utente autenticato)
+ */
+export const createOrder = async (req, res, next) => {
+    const { userId } = req.user.id;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+
+    const { paymentDetails, paymentMethod, shippingAddress } = req.body; //DA verificare
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const cart = await Order.findOne({ 
+            user: userId, 
+            orderStatus: "Pending" 
+        }).session(session);
+        
+        if(!cart) {
+            return next(new AppError("Nessun carrello trovato per l'utente", 404));
+        }
+        
+        if (cart.items.length === 0) {
+            return next(new AppError("Il carrello è vuoto: impossibile creare un ordine.", 400));
+        }
+
+        for (const cartItem of cart.items) {
+            const variant = await ItemVariant.findById(cartItem.variant).session(session);
+            if (!variant) {
+                return next(new AppError(`Variante di prodotto non trovata per ID: ${cartItem.variant}`, 404));
+            }
+            
+            // Verifica disponibilità in magazzino
+            if (variant.stock?.quantity < cartItem.quantity) {
+                return next(new AppError(`Scorte insufficiente per il prodotto ${cartItem.productName} (${variant.sku}). Disponibilità: ${variant.stockQuantity}, Richiesta: ${cartItem.quantity}`, 400));
+            }
+            
+            variant.stock?.quantity -= cartItem.quantity;
+            await variant.save({ session });
+            
+            
+            cart.orderStatus = "Processing";
+            cart.paymentStatus = "Pending";
+            cart.paymentMethod = paymentMethod || cart.paymentMethod;
+            
+            
+            if (shippingAddress) {
+                cart.shippingAddress = shippingAddress;
+            } else if (!cart.shippingAddress || Object.keys(cart.shippingAddress).length === 0) {
+                return next(new AppError("L\'indirizzo di spedizione è obbligatorio per finalizzare l'ordine", 400));
+            }
+            
+            // Possibile logica per elaborare il pagamento
+            // const paymentResult = await processPaymentWithStripe(paymentDetails, cart.totalAmount, cart.currency);
+            // if (paymentResult.success) {
+            //     cart.paymentStatus = "Paid";
+            // } else {
+            //     cart.paymentStatus = "Failed";
+            //     cart.orderStatus = "Cancelled";
+            //     return next(new AppError("Pagamento fallito. Riprova più tardi.", 400));
+            // }
+
+            await cart.save({ session });
+
+            await session.commitTransaction();
+            session.endSession();
+            
+            res.status(201).json({
+                status: 'success',
+                data: cart
+            });
+        }
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        next(error);
+    }
+}
+
+
+/**
+ * @desc Recupera i dettagli di un ordine specifico. Se l'utente autenticato è user l'odine deve appartenere a lui. Se l'utente è admin non ci sono restrizioni.
+ * @route GET /api/v1/orders/:orderId
+ * @access Privato (utente autenticato)
+ */
+export const getOrder = async (req, res, next) => {
+    const { user } = req.user;  
+    const { orderId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return next(new AppError("ID ordine non valido", 400));
+    }
+    
+    let query = { _id: orderId };
+    
+    if (user.role !== 'admin') {
+        query.user = user._id;
+        query.orderStatus = { $ne: 'Pending' };
+    }
+    
+    try {
+        const order = await Order.findOne(query)
+        .populate('user', 'firstName lastName email')
+        .populate('items.item', 'name description')
+        .populate('items.variant', 'sku attributes');
+        
+        if (!order) {
+            // È importante non specificare "non trovato" vs "non autorizzato" per sicurezza.
+            // Entrambi risultano in un 404 per evitare di rivelare l'esistenza di ordini altrui.
+            return next(new AppError("Ordine non trovato o non autorizzato", 404));
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: order
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+/**
+ * @desc Permette all'utente Admin di aggiornare i campi di un ordine, come lo stato di spedizione di un ordine.
+ * @route PATCH /api/v1/orders/:orderId
+ * @access Privato (utente autenticato)
+ */
+export const updateOrder = async (req, res, next) => {
+    const { user } = req;
+    const { orderId } = req.params;
+    const updates = req.body;
+    
+    if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return next(new AppError("ID ordine non valido", 400));
+    }
+    
+    if (user.role !== 'admin') {
+        return next(new AppError("Non autorizzato ad aggiornare gli ordini", 403));
+    }
+    
+    try {
+        const order = await Order.findById(orderId);
+        
+        if(!order) {
+            return next(new AppError("Ordine non trovato", 404));
+        }
+        
+        const allowedUpdates = [
+            'orderStatus',
+            'paymentStatus',
+            'shippingAddress', 
+            'paymentMethod',
+            'shippingCost',
+            'discountCode',
+            'discountAmount',
+            'notes'
+        ];
+        
+        for (const key in updates) {
+            if (allowedUpdates.includes(key)) {
+                if (key === 'shippingAddress' || key === 'shippingCost') {
+                    order[key] = { ...order[key], ...updates[key] };
+                } else {
+                    order[key] = updates[key];
+                }
+            } else {
+                return next(new AppError(`Tentativo di aggiornare il campo non consentito: ${key}`, 400));
+            }
+        }
+
+        await order.save();
+
+        const updatedOrder = await Order.findById(orderId)
+                                        .populate('user', 'firstName lastName email')
+                                        .populate('items.item', 'name description')
+                                        .populate('items.variant', 'sku attributes');
+
+        res.status(200).json({
+            status: 'success',
+            data: updatedOrder
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+/**
+ * @desc Aggiorna lo stato di pagamento dell'ordine dopo una transazione
+ * @route POST /api/v1/orders/:orderId/payment-status
+ * @access Privato
+ */
+export const updatePaymentStatus = async (req, res, next) => {
+    const { user } = req;
+    const { orderId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return next(new AppError("ID ordine non valido", 400));
+    }
+
+    try {
+        const order = await Order.findById(orderId);
+        
+        if(!order) {
+            return next(new AppError("Ordine non trovato", 404));
+        }
+
+        // DA COMPLETARE
+
+        res.status(200).json({
+            status: 'success'
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+    
+
+
+// Cancellare un Ordine
+// Endpoint: POST /api/orders/:orderId/cancel
+// Descrizione: Consente all'utente di richiedere la cancellazione di un ordine, se l'ordine non è ancora stato spedito. Potrebbe richiedere l'approvazione manuale o processare un rimborso. In questo caso, le scorte dovrebbero essere ripristinate.
+// Accesso: Utente autenticato.
+/**
+ * @desc Consente all'utente di richiedere la cancellazione di un ordine, se l'ordine non è ancora stato spedito. Le scorte vengono ripristinate.
+ * @route POST /api/v1/orders/:orderId/cancel
+ * @access Privato (utente autenticato)
+ */
+export const cancelOrder = async (req, res, next) => {
+    const { user } = req;
+    const { orderId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400));
+    }
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return next(new AppError("ID ordine non valido", 400));
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const order = await Order.findOne({ _id: orderId, user: userId }).session(session);
+
+        if(!order) {
+            return next(new AppError("Ordine non trovato o non autorizzato alla cancellazione", 404));
+        }
+        
+        const cancellableStatuses = ["Pending", "Processing"];
+        if (!cancellableStatuses.includes(order.orderStatus)) {
+            return next(new AppError("L\'ordine non è più cancellabile", 400));
+        }
+
+        for (const orderItem of order.items) {
+            const variant = await ItemVariant.findById(orderItem.variant).session(session);
+
+            if (!variant) {
+                return next(new AppError("Variante prodotto non trovata per il ripristino scorte", 404));
+            } else {
+                variant.stock.quantity += orderItem.quantity;
+                await variant.save({ session });
+            }
+        }
+
+        order.orderStatus = "Cancelled";
+        order.paymentStatus = "Refunded"; //Da verificare
+        order.cancellationReason = req.body.reason || "Cancellato dall'utente";
+
+        await order.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+        
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        next(error);
+    }
+}
+
+
+// Funzione helper per costruire i filtri basati sui query params
+const buildOrderQuery = (userRole, userId, queryParams) => {
+    let query = {};
+
+    // Se non è un admin, l'utente può vedere solo i propri ordini (esclusi i carrelli 'Pending')
+    if (userRole !== 'admin') {
+        query.user = userId;
+        query.orderStatus = { $ne: 'Pending' };
+    }
+
+    // Filtro per stato dell'ordine
+    if (queryParams.status) {
+        const statuses = queryParams.status.split(',').map(s => s.trim());
+        query.orderStatus = { $in: statuses };
+    }
+
+    if (queryParams.paymentStatus) {
+        query.paymentStatus = queryParams.paymentStatus;
+    }
+    if (queryParams.orderNumber) {
+        query.orderNumber = { $regex: queryParams.orderNumber, $options: 'i' };
+    }
+
+    return query;
+}
