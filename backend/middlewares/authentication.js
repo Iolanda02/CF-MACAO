@@ -103,7 +103,7 @@ export const authorizeOwnerOrAdmin = (model, idParamName = 'id', ownerField = 'u
         }
 
         if (req.user.role === 'admin') {
-        return next();
+            return next();
         }
 
         const resourceId = req.params[idParamName];
@@ -134,7 +134,7 @@ export const authorizeOwnerOrAdmin = (model, idParamName = 'id', ownerField = 'u
 const getOwnerIdFromField = (resource, ownerField) => {
     const owner = resource[ownerField];
     // Nessun proprietario definito
-    if (!owner) return null; 
+    if (!owner) return null;
 
     // Se è un ObjectId (non popolato)
     if (owner._id === undefined && owner.toString) {

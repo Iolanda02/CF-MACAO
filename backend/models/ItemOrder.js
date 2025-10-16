@@ -16,6 +16,14 @@ const itemOrderSchema = new Schema({
         required: true,
         trim: true
     },
+    variantName: {
+        type: String,
+        trim: true
+    },
+    sku: {
+        type: String,
+        trim: true,
+    },
     variantImageUrl: {
         url: {
             type: String,

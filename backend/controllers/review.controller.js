@@ -2,18 +2,23 @@ import mongoose from 'mongoose';
 import Review from '../models/Review.js';
 import AppError from '../utils/appError.js';
 import * as factory from './factory.controller.js';
+import Item from '../models/Item.js';
 
 
 export const getAllReviews = factory.getAll(Review);
 
 export const getReview = factory.getOne(Review, { path: 'item user' });
 
-export const createReview = async (req, resizeBy, next) => {
+export const createReview = async (req, res, next) => {
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
+    }
+
     const { item, rating, comment } = req.body;
-    if (!mongoose.Types.ObjectId.isValid(item)) {
+    if (!item || !mongoose.Types.ObjectId.isValid(item)) {
         return next(new AppError('ID prodotto non valido', 400));
     }
-    const user = req.user._id;
     
     if (!item || !rating) {
         return next(new AppError('Item e rating sono campi obbligatori', 400));
@@ -22,6 +27,9 @@ export const createReview = async (req, resizeBy, next) => {
     if (rating && (rating < 1 || rating > 5)) {
         return next(new AppError('Il rating deve essere compreso tra 1 e 5', 400));
     }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
     
     try {
         // Controlla se t'utente ha già recensito questo articolo
@@ -32,30 +40,50 @@ export const createReview = async (req, resizeBy, next) => {
 
         const newReview = new Review({
             item,
-            user,
+            user: userId,
             rating,
             comment
         });
 
-        const savedReview = await newReview.save();
+        const savedReview = await newReview.save({ session });
+
+        const existingItem = await Item.findById(item).populate('reviews').session(session);
+        
+        if (!existingItem) {
+            await session.abortTransaction();
+            session.endSession();
+            return next(new AppError("Prodotto non trovato", 404));
+        }
+
+        existingItem.reviews.push(savedReview._id);
+        await existingItem.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
         
         res.status(201).json({
             status: 'success',
             data: savedReview
         });
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         next(error);
     }
 }
 
 export const updateReview = async (req, res, next) => {
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
+    }
+
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("ID recensione non valido", 400))
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError('ID commento non valido', 400));
     }
 
     const { rating, comment } = req.body;
-    const user = req.user._id;
     
     if (rating && (rating < 1 || rating > 5)) {
         return next(new AppError('Il rating deve essere compreso tra 1 e 5', 400));
@@ -70,7 +98,7 @@ export const updateReview = async (req, res, next) => {
     }
     
     try {
-        const existingReview = await Review.findOne({ _id: id, user: user });
+        const existingReview = await Review.findOne({ _id: id, user: userId });
         
         if (!existingReview) {
             return next(new AppError('Recensione non trovata o non autorizzato ad aggiornarla', 404));
@@ -97,14 +125,18 @@ export const updateReview = async (req, res, next) => {
 }
 
 export const deleteReview = async(req, res, next) => {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return next(new AppError("ID recensione non valido", 400))
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
-    const user = req.user._id;
+    
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError('ID commento non valido', 400));
+    }
 
     try {
-        const reviewToDelete = await Review.findOneAndDelete({ _id: id, user: user });
+        const reviewToDelete = await Review.findOneAndDelete({ _id: id });
 
         if (!reviewToDelete) {
             return next(new AppError('Recensione non trovata o non autorizzato ad eliminarla', 404));

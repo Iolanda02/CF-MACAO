@@ -1,5 +1,5 @@
 @base=http://localhost:4000/api/v1/items
-@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJiNTI3Mjk4YjIyOGE4MzcyMWQ1MiIsImlhdCI6MTc2MDI3NzkyOCwiZXhwIjoxNzYyODY5OTI4fQ.6hXU8D7u8MTvQWsmvaR1OhbwRGrcYlWtiVgwtbKsolU
+@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZjEyYmU4YTliZDhmNjJmNGRmNTJhZiIsImlhdCI6MTc2MDYzNTk5NSwiZXhwIjoxNzYzMjI3OTk1fQ.1oA0ZSKJwpCdKQn3_AyI88ExX6CZ1VZ7ZnqGfvyRtHU
 @tokenAdmin=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJjNTZhMTkzM2FjZTY5NzQyZmY4NyIsImlhdCI6MTc2MDI4NDU1OCwiZXhwIjoxNzYyODc2NTU4fQ.ZU_7se0QUDofkwMCMMh2LA5d0xfEvcmpIB7zV2ahh18
 
 GET {{base}}/
@@ -11,13 +11,13 @@ GET {{base}}?page=1&perPage=2
 GET {{base}}?search=gi
 
 ###
-GET {{base}}/68eed07cc53f616efd230364
+GET {{base}}/68f12f84384abe1691e7dc12
 
 ###
-GET {{base}}/68eed07cc53f616efd230364/variants
+GET {{base}}/68f12f84384abe1691e7dc12/variants
 
 ###
-GET {{base}}/68eed07cc53f616efd230364/reviews
+GET {{base}}/68f12f84384abe1691e7dc12/reviews
 
 ###
 POST {{base}}/
@@ -46,7 +46,7 @@ Content-Type: application/json
 }
 
 ###
-PUT {{base}}/68eed07cc53f616efd230364
+PUT {{base}}/68f12f84384abe1691e7dc12
 Content-Type: application/json
 
 {
@@ -55,8 +55,8 @@ Content-Type: application/json
     "itemType": "coffee_capsule",
     "variants": [
         {
-            "_id": "68eed085c53f616efd230366",
-            "item": "68eed07cc53f616efd230364",
+            "_id": "68f13049384abe1691e7dc2f",
+            "item": "68f12f84384abe1691e7dc12",
             "itemType": "coffee_capsule",
             "name": "Confezione da 50 capsule",
             "sku": "CD-P-C50-0001",
@@ -73,12 +73,14 @@ Content-Type: application/json
             }
         },
         {
-            "item": null,
+            "_id": "68f13049384abe1691e7dc30",
+            "item": "68f12f84384abe1691e7dc12",
             "itemType": "coffee_capsule",
             "name": "Confezione da 100 capsule",
             "sku": "CD-P-C100-0002",
             "price": {
-                "amount": "21.90"
+                "amount": "21.90",
+                "currency": "EUR"
             },
             "stock": {
                 "quantity": 30

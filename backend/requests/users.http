@@ -21,12 +21,12 @@ POST {{base}}/
 Content-Type: application/json
 
 {
-    "email": "giuseppe.verdi@mail.com",
-    "password": "12ab34cd",
-    "firstName": "Giuseppe",
-    "lastName": "Verdi",
-    "phone": "3457896445",
-    "birthDate": "01/06/1987"
+    "email": "sara.lentini@mail.com",
+    "password": "s.lentini.pass",
+    "firstName": "Sara",
+    "lastName": "Lentini",
+    "phone": "3338989550",
+    "birthDate": "15/05/1990"
 }
 
 ###

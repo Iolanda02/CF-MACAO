@@ -1,14 +1,54 @@
 @base=http://localhost:4000/api/v1/orders
-@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJiNTI3Mjk4YjIyOGE4MzcyMWQ1MiIsImlhdCI6MTc2MDI3NzkyOCwiZXhwIjoxNzYyODY5OTI4fQ.6hXU8D7u8MTvQWsmvaR1OhbwRGrcYlWtiVgwtbKsolU
+@tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZjEyYmU4YTliZDhmNjJmNGRmNTJhZiIsImlhdCI6MTc2MDYzNTk5NSwiZXhwIjoxNzYzMjI3OTk1fQ.1oA0ZSKJwpCdKQn3_AyI88ExX6CZ1VZ7ZnqGfvyRtHU
 @tokenAdmin=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJjNTZhMTkzM2FjZTY5NzQyZmY4NyIsImlhdCI6MTc2MDI4NDU1OCwiZXhwIjoxNzYyODc2NTU4fQ.ZU_7se0QUDofkwMCMMh2LA5d0xfEvcmpIB7zV2ahh18
 
 GET {{base}}/
+Authorization: Bearer {{tokenUser}}
 
 ###
-GET {{base}}?page=1&perPage=2
+GET {{base}}/admin
+Authorization: Bearer {{tokenAdmin}}
 
 ###
-GET {{base}}?search=gi
+POST {{base}}/
+Content-Type: application/json
+Authorization: Bearer {{tokenUser}}
+
+{
+    "paymentMethod": "PayPal",
+    "shippingAddress": 
+    {
+        "address": "Via Roma 10",
+        "city": "Milano",
+        "state": "Milano",
+        "postalCode": "10020",
+        "country": "Italia"
+    }
+}
 
 ###
-GET {{base}}/68ebb527298b228a83721d52
+GET {{base}}/68f142702f0e790883024440
+Authorization: Bearer {{tokenUser}}
+
+###
+PATCH {{base}}/68f142702f0e790883024440
+Content-Type: application/json
+Authorization: Bearer {{tokenAdmin}}
+
+{
+    "orderStatus": "Shipped"
+}
+
+###
+PATCH {{base}}/68f142702f0e790883024440/payment-status
+Content-Type: application/json
+Authorization: Bearer {{tokenAdmin}}
+
+{
+    "paymentStatus": "Paid"
+}
+
+###
+POST {{base}}/68f1648131c579daeb98cf2e/cancel
+Content-Type: application/json
+Authorization: Bearer {{tokenUser}}

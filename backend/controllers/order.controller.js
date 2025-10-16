@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import ItemVariant from "../models/ItemVariant.js";
+import AppError from "../utils/appError.js";
 
 /**
  * @desc Recupera tutti gli ordini nel sistema per un utente admin oppure un elenco di tutti gli ordini effettuati dall'utente autenticato, con opzioni di filtro e paginazione
@@ -8,14 +9,14 @@ import ItemVariant from "../models/ItemVariant.js";
  * @access Privato (utente autenticato)
  */
 export const getAllOrders = async (req, res, next) => {
-    const { user } = req.user;
-    if (!mongoose.Types.ObjectId.isValid(user.id)) {
-        return next(new AppError("ID utente non valido", 400));
+    const user = req.user;
+    if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400))
     }
 
     try {
         const { status, page = 1, limit = 10, ...otherQueryParams } = req.query;
-        const baseQuery = buildOrderQuery(user.role, user._id, { status, ...otherQueryParams });
+        const baseQuery = buildOrderQuery(user.role, user.id, { status, ...otherQueryParams });
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -51,12 +52,14 @@ export const getAllOrders = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const createOrder = async (req, res, next) => {
-    const { userId } = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return next(new AppError("ID utente non valido", 400));
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
 
-    const { paymentDetails, paymentMethod, shippingAddress } = req.body; //DA verificare
+    // const { paymentDetails, paymentMethod, shippingAddress } = req.body; //DA verificare
+    const paymentMethod = req.body?.paymentMethod;
+    const shippingAddress = req.body?.shippingAddress;
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -82,11 +85,11 @@ export const createOrder = async (req, res, next) => {
             }
             
             // Verifica disponibilità in magazzino
-            if (variant.stock?.quantity < cartItem.quantity) {
-                return next(new AppError(`Scorte insufficiente per il prodotto ${cartItem.productName} (${variant.sku}). Disponibilità: ${variant.stockQuantity}, Richiesta: ${cartItem.quantity}`, 400));
+            if (variant.stock.quantity < cartItem.quantity) {
+                return next(new AppError(`Scorte insufficiente per il prodotto ${cartItem.productName} (${variant.sku}). Disponibilità: ${variant.stock.quantity}, Richiesta: ${cartItem.quantity}`, 400));
             }
             
-            variant.stock?.quantity -= cartItem.quantity;
+            variant.stock.quantity -= cartItem.quantity;
             await variant.save({ session });
             
             
@@ -135,13 +138,13 @@ export const createOrder = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const getOrder = async (req, res, next) => {
-    const { user } = req.user;  
-    const { orderId } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(user.id)) {
-        return next(new AppError("ID utente non valido", 400));
+    const user = req.user;
+    if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400))
     }
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+
+    const { orderId } = req.params;
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
         return next(new AppError("ID ordine non valido", 400));
     }
     
@@ -159,8 +162,6 @@ export const getOrder = async (req, res, next) => {
         .populate('items.variant', 'sku attributes');
         
         if (!order) {
-            // È importante non specificare "non trovato" vs "non autorizzato" per sicurezza.
-            // Entrambi risultano in un 404 per evitare di rivelare l'esistenza di ordini altrui.
             return next(new AppError("Ordine non trovato o non autorizzato", 404));
         }
 
@@ -180,20 +181,21 @@ export const getOrder = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const updateOrder = async (req, res, next) => {
-    const { user } = req;
-    const { orderId } = req.params;
-    const updates = req.body;
-    
-    if (!mongoose.Types.ObjectId.isValid(user.id)) {
-        return next(new AppError("ID utente non valido", 400));
+    const user = req.user;
+    if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400))
     }
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+
+    const { orderId } = req.params;
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
         return next(new AppError("ID ordine non valido", 400));
     }
     
     if (user.role !== 'admin') {
         return next(new AppError("Non autorizzato ad aggiornare gli ordini", 403));
     }
+
+    const updates = req.body;
     
     try {
         const order = await Order.findById(orderId);
@@ -248,15 +250,17 @@ export const updateOrder = async (req, res, next) => {
  * @access Privato
  */
 export const updatePaymentStatus = async (req, res, next) => {
-    const { user } = req;
-    const { orderId } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(user.id)) {
-        return next(new AppError("ID utente non valido", 400));
+    const user = req.user;
+    if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400))
     }
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+
+    const { orderId } = req.params;
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
         return next(new AppError("ID ordine non valido", 400));
     }
+
+    const paymentStatus = req.body?.paymentStatus;
 
     try {
         const order = await Order.findById(orderId);
@@ -266,9 +270,18 @@ export const updatePaymentStatus = async (req, res, next) => {
         }
 
         // DA COMPLETARE
+        order.paymentStatus = paymentStatus;
+        
+        await order.save();
+
+        const updatedOrder = await Order.findById(orderId)
+                                        .populate('user', 'firstName lastName email')
+                                        .populate('items.item', 'name description')
+                                        .populate('items.variant', 'sku attributes');
 
         res.status(200).json({
-            status: 'success'
+            status: 'success',
+            data: updatedOrder
         });
     } catch (error) {
         next(error);
@@ -276,24 +289,19 @@ export const updatePaymentStatus = async (req, res, next) => {
 }
     
 
-
-// Cancellare un Ordine
-// Endpoint: POST /api/orders/:orderId/cancel
-// Descrizione: Consente all'utente di richiedere la cancellazione di un ordine, se l'ordine non è ancora stato spedito. Potrebbe richiedere l'approvazione manuale o processare un rimborso. In questo caso, le scorte dovrebbero essere ripristinate.
-// Accesso: Utente autenticato.
 /**
  * @desc Consente all'utente di richiedere la cancellazione di un ordine, se l'ordine non è ancora stato spedito. Le scorte vengono ripristinate.
  * @route POST /api/v1/orders/:orderId/cancel
  * @access Privato (utente autenticato)
  */
 export const cancelOrder = async (req, res, next) => {
-    const { user } = req;
-    const { orderId } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(user.id)) {
-        return next(new AppError("ID utente non valido", 400));
+    const user = req.user;
+    if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+        return next(new AppError("ID utente non valido", 400))
     }
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+
+    const { orderId } = req.params;
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
         return next(new AppError("ID ordine non valido", 400));
     }
 
@@ -301,7 +309,7 @@ export const cancelOrder = async (req, res, next) => {
     session.startTransaction();
 
     try {
-        const order = await Order.findOne({ _id: orderId, user: userId }).session(session);
+        const order = await Order.findOne({ _id: orderId, user: user.id }).session(session);
 
         if(!order) {
             return next(new AppError("Ordine non trovato o non autorizzato alla cancellazione", 404));
@@ -324,7 +332,7 @@ export const cancelOrder = async (req, res, next) => {
         }
 
         order.orderStatus = "Cancelled";
-        order.paymentStatus = "Refunded"; //Da verificare
+        order.paymentStatus = "Refunded";
         order.cancellationReason = req.body.reason || "Cancellato dall'utente";
 
         await order.save({ session });

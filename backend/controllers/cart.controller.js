@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Item from "../models/Item.js";
 import ItemVariant from "../models/ItemVariant.js";
+import AppError from "../utils/appError.js";
 
 /**
  * @desc Recupera l'ordine attualmente in stato "Pending" per l'utente autenticato. Se non esiste, ne crea uno vuoto.
@@ -9,8 +10,8 @@ import ItemVariant from "../models/ItemVariant.js";
  * @access Privato (Utente autenticato)
  */
 export const getCart = async (req, res, next) => {
-    const { userId } = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
         return next(new AppError("ID utente non valido", 400))
     }
 
@@ -20,6 +21,7 @@ export const getCart = async (req, res, next) => {
             orderStatus: "Pending",
             paymentStatus: "Pending"
         })
+        // .populate('user')
         .populate({
             path: 'items.item',
             select: 'name description imageUrls slug'
@@ -32,7 +34,7 @@ export const getCart = async (req, res, next) => {
         if(!cart) {
             cart = await Order.create({
                 user: userId,
-                orderNumber: await generateUniqueOrderNumber(),
+                orderNumber: 'ORD-' + Date.now(),
                 items: [],
                 shippingCost: { amount: 0, currency: "EUR" },
                 subtotal: 0,
@@ -43,6 +45,7 @@ export const getCart = async (req, res, next) => {
             });
             
             cart = await Order.findById(cart._id)
+                // .populate('user')
                 .populate({
                     path: 'items.item',
                     select: 'name description imageUrls slug'
@@ -68,9 +71,9 @@ export const getCart = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const addItemToChart = async (req, res, next) => {
-    const { userId } = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return next(new AppError("ID utente non valido", 400));
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
     
     const { itemId, variantId, quantity } = req.body;
@@ -113,8 +116,8 @@ export const addItemToChart = async (req, res, next) => {
         }
         
         // Verifica disponibilità in magazzino
-        if (variant.stock < quantity) {
-            return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Disponibili: ${variant.stock}`, 400));
+        if (variant.stock && variant.stock.quantity < quantity) {
+            return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Disponibili: ${variant.stock.quantity}`, 400));
         }
         
         // Controlla se l'elemento è già nel carrello
@@ -130,8 +133,8 @@ export const addItemToChart = async (req, res, next) => {
             const newQuantity = currentQuantity + quantity;
             
             // Verifica disponibilità in magazzino
-            if (variant.stock < newQuantity) {
-                return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Disponibili: ${variant.stock}`, 400));
+            if (variant.stock && variant.stock.quantity < newQuantity) {
+                return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Disponibili: ${variant.stock.quantity}`, 400));
             }
 
             cart.items[existingItemIndex].quantity = newQuantity;
@@ -141,11 +144,13 @@ export const addItemToChart = async (req, res, next) => {
                 item: itemId,
                 variant: variantId,
                 productName: item.name,
-                variantImageUrl: {
-                    url: variant.imageUrls[0]?.url || item.imageUrls[0]?.url || "",
-                    public_id: variant.imageUrls[0]?.public_id || item.imageUrls[0]?.public_id || "",
-                    altText: `${item.name} ${variant.sku}`
-                },
+                variantName: variant.name,
+                sku: variant.sku,
+                // variantImageUrl: {
+                //     url: variant.imageUrls[0]?.url || item.imageUrls[0]?.url || "",
+                //     public_id: variant.imageUrls[0]?.public_id || item.imageUrls[0]?.public_id || "",
+                //     altText: `${item.name} ${variant.sku}`
+                // },
                 price: {
                     amount: variant.price.amount,
                     currency: variant.price.currency || "EUR"
@@ -182,9 +187,9 @@ export const addItemToChart = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const updateCartItemQuantity = async (req, res, next) => {
-    const userId = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return next(new AppError("ID utente non valido", 400));
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
 
     const { itemId, variantId } = req.params;
@@ -197,8 +202,8 @@ export const updateCartItemQuantity = async (req, res, next) => {
         return next(new AppError("ID variante prodotto non valido", 400));
     }
     
-    if (!quantity || typeof quantity !== 'number' || quantity < 1 || !Number.isInteger(quantity)) {
-        return next(new AppError("La quantità deve essere un numero intero positivo", 400));
+    if (typeof quantity !== 'number' || quantity < 0 || !Number.isInteger(quantity)) {
+        return next(new AppError("La quantità non può essere negativa", 400));
     }
 
     try {
@@ -237,7 +242,7 @@ export const updateCartItemQuantity = async (req, res, next) => {
                     select: 'sku weight stock price' 
                 });
 
-            res.status(200).json({
+            return res.status(200).json({
                 status: 'success',
                 data: updatedCart
             });
@@ -249,13 +254,13 @@ export const updateCartItemQuantity = async (req, res, next) => {
         }
 
         // Verifica disponibilità in magazzino
-        if (variant.stock < quantity) {
+        if (variant.stock && variant.stock.quantity < quantity) {
             const item = await Item.findById(itemId);
             if (!item) {
                 return next(new AppError("Prodotto non trovato per il controllo magazzino", 404));
             }
 
-            return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Richiesti: ${quantity}, Disponibili: ${variant.stock}`, 400));
+            return next(new AppError(`Scorte insufficienti per ${item.name} - ${variant.sku}. Richiesti: ${quantity}, Disponibili: ${variant.stock.quantity}`, 400));
         }
 
         // Aggiorna la quantità
@@ -290,9 +295,9 @@ export const updateCartItemQuantity = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const removeCartItem = async (req, res, next) => {
-    const { userId } = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return next(new AppError("ID utente non valido", 400));
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
     
     const { itemId, variantId } = req.params;

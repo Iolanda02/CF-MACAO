@@ -1,17 +1,18 @@
 import express from "express";
 import { cancelOrder, createOrder, getAllOrders, getOrder, updateOrder, updatePaymentStatus } from "../controllers/order.controller.js";
+import { protect, restrictTo } from "../middlewares/authentication.js";
 
 const orderRouter = express.Router();
+orderRouter.use(protect);
 
-// Ottiene tutti gli ordini per utente admin o quelli dell'utente autenticato per utente user
+// Ottiene tutti gli ordini dell'utente autenticato
 orderRouter.get("/", getAllOrders);
+
+// Ottiene tutti gli ordini del negozio
+orderRouter.get("/admin", restrictTo('admin'), getAllOrders);
 
 
 // Finalizza il carrello e crea un ordine
-// JSON
-// {
-//     "paymentDetails": { /* Dettagli per il pagamento */ }
-// }
 orderRouter.post("/", createOrder);
 
 
@@ -20,11 +21,12 @@ orderRouter.get("/:orderId", getOrder);
 
 
 // Permette all'utente admin di aggiornare alcuni campi di un Ordine
-orderRouter.patch("/:orderId", updateOrder);
+orderRouter.patch("/:orderId", restrictTo('admin'), updateOrder);
 
 
 // Aggiorna lo stato di pagamento di un ordine
-orderRouter.post("/:orderId/payment-status", updatePaymentStatus);
+// orderRouter.post("/:orderId/payment-status", updatePaymentStatus);
+orderRouter.patch("/:orderId/payment-status", restrictTo('admin'), updatePaymentStatus);
 
 
 // Cancella un ordine

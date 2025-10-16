@@ -102,7 +102,7 @@ const itemVariantSchema = new Schema({
 }, 
 { 
     timestamps: true,
-    discriminatorKey: 'item.itemType' 
+    discriminatorKey: 'itemType' 
 });
 
 

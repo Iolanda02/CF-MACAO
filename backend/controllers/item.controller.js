@@ -141,7 +141,6 @@ export const updateItem = async (req, res, next) => {
             status: 'success',
             data: finalUpdatedItem
         });
-
     } catch (error) {
         await session.abortTransaction();
         session.endSession();

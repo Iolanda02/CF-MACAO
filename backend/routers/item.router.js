@@ -1,7 +1,5 @@
 import express from "express";
-import { createItem, deleteItem, getAllItems, getItem, updateItem } from "../controllers/item.controller.js";
-import { getReviewsByItemId } from "../controllers/review.controller.js";
-import { getItemVariantsByItemId } from "../controllers/itemVariant.controller.js";
+import { createItem, deleteItem, getAllItems, getItem, getItemVariantsByItemId, getReviewsByItemId, updateItem } from "../controllers/item.controller.js";
 
 const itemRouter = express.Router();
 
@@ -15,8 +13,8 @@ itemRouter.put("/:id", updateItem);
 
 itemRouter.delete("/:id", deleteItem);
 
-itemRouter.route('/:itemId/variants').get(getItemVariantsByItemId);
+itemRouter.get('/:itemId/variants', getItemVariantsByItemId);
 
-itemRouter.route('/:itemId/reviews').get(getReviewsByItemId);
+itemRouter.get('/:itemId/reviews', getReviewsByItemId);
 
 export default itemRouter;

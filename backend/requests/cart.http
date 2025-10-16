@@ -1,38 +1,33 @@
-@base=http://localhost:4000/api/v1/reviews
+@base=http://localhost:4000/api/v1/cart
 @tokenUser=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZjEyYmU4YTliZDhmNjJmNGRmNTJhZiIsImlhdCI6MTc2MDYzNTk5NSwiZXhwIjoxNzYzMjI3OTk1fQ.1oA0ZSKJwpCdKQn3_AyI88ExX6CZ1VZ7ZnqGfvyRtHU
 @tokenAdmin=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZWJjNTZhMTkzM2FjZTY5NzQyZmY4NyIsImlhdCI6MTc2MDI4NDU1OCwiZXhwIjoxNzYyODc2NTU4fQ.ZU_7se0QUDofkwMCMMh2LA5d0xfEvcmpIB7zV2ahh18
 
 GET {{base}}/
+Authorization: Bearer {{tokenUser}}
 
 ###
-GET {{base}}?page=1&perPage=2
-
-###
-GET {{base}}?search=gi
-
-###
-GET {{base}}/68f16cc496a0a5bb77d7e446
-
-###
-POST {{base}}/
+POST {{base}}/items
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 {
-    "item": "68f12f84384abe1691e7dc12",
-    "rating": 5,
-    "comment": "Il migliore sul mercatoooooo!"
+    "itemId": "68f12f84384abe1691e7dc12",
+    "variantId": "68f13049384abe1691e7dc30",
+    "quantity": 2
 }
 
+
 ###
-PUT {{base}}/68f17166d0cafe833eaffed6
+PUT {{base}}/items/68f12f84384abe1691e7dc12/68f13049384abe1691e7dc30
 Content-Type: application/json
 Authorization: Bearer {{tokenUser}}
 
 {
-    "comment": "Finalmente un buon caffè!"
+    "quantity": 5
 }
 
+
 ###
-DELETE {{base}}/68f170a8d0cafe833eaffecf
-Authorization: Bearer {{tokenAdmin}}
+DELETE {{base}}/items/68f12f84384abe1691e7dc12/68f13049384abe1691e7dc30
+Content-Type: application/json
+Authorization: Bearer {{tokenUser}}

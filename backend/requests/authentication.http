@@ -4,12 +4,11 @@ POST {{base}}/register
 Content-Type: application/json
 
 {
-    "email": "mario.rossi@mail.com",
-    "password": "m.rossi.pass",
-    "firstName": "Mario",
-    "lastName": "Rossi",
-    "phone": "3356768990",
-    "birthDate": "06/03/1985"
+    "email": "sara.lentini@mail.com",
+    "password": "s.lentini.pass",
+    "firstName": "Sara",
+    "lastName": "Lentini",
+    "phone": "3338989550"
 }
 
 ###
@@ -17,6 +16,6 @@ POST {{base}}/login
 Content-Type: application/json
 
 {
-    "email": "iolanda.anile@gmail.com",
-    "password": "passwordSicura12345"
+    "email": "sara.lentini@mail.com",
+    "password": "s.lentini.pass"
 }
