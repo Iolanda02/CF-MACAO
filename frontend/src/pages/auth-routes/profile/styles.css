@@ -1,0 +1,20 @@
+.user-profile-root {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.user-details-cover {
+  width:180px;
+  height: 180px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.user-details-title {
+  margin-top: 50px;
+  margin-bottom: 50px;
+  font-weight: bold;
+}
