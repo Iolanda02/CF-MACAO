@@ -1,0 +1,128 @@
+.cart-page {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.cart-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.cart-summary {
+    font-size: 1rem;
+    color: #666;
+}
+
+.cart-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.cart-item-img {
+    width: 100%;
+    height: auto;
+    object-fit: contain; 
+    background-color: #fff;
+    border-radius: 6px;
+}
+
+.item-brand {
+    font-size: 0.85rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.item-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.item-format {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 0.5rem;
+}
+
+.item-remove-btn {
+    font-size: 0.9rem;
+    color: #dc3545;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+.item-remove-btn:hover {
+    color: #c82333;
+}
+
+.item-quantity-display {
+    min-width: 30px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.item-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.item-price-per-unit {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.order-summary {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.summary-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.promo-toggle-btn {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.checkout-btn {
+    background-color: #000;
+    border-color: #000;
+    font-weight: bold;
+}
+.checkout-btn:hover {
+    background-color: #333;
+    border-color: #333;
+}
+
+.bi-dash-circle-fill, .bi-plus-circle-fill {
+    color: #007bff;
+}
+.bi-dash-circle-fill:hover, .bi-plus-circle-fill:hover {
+    color: #0056b3;
+}
+
+.bi-info-circle-fill {
+    font-size: 0.9em;
+    vertical-align: middle;
+}
+
+.input-group > .form-control, .input-group > .btn {
+    border-color: #ced4da;
+}
+.input-group > .form-control:focus {
+    box-shadow: none;
+    border-color: #80bdff;
+}

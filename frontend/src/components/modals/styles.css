@@ -1,0 +1,147 @@
+.checkout-options-modal-wrapper .modal-content {
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.checkout-options-modal-wrapper .modal-header {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.checkout-options-modal-wrapper .modal-header .btn-close {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+}
+
+.checkout-options-modal-wrapper .modal-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.section-subtitle {
+    font-size: 1.15rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.modal-subtitle {
+    font-size: 1rem;
+    color: #666;
+}
+
+.social-login-buttons .social-button {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: bold;
+    color: #333;
+    transition: all 0.2s ease-in-out;
+}
+
+.social-login-buttons .social-button:hover {
+    background-color: #f0f0f0;
+    border-color: #999;
+}
+
+.social-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    margin-right: 10px;
+}
+
+.separator {
+    color: #999;
+}
+
+.separator hr {
+    border-top: 1px solid #eee;
+}
+
+.form-control-custom {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px 15px;
+    height: auto;
+}
+
+.form-control-custom::placeholder {
+    color: #999;
+}
+
+.form-control-custom:focus {
+    border-color: #333;
+    box-shadow: none;
+}
+
+.password-toggle-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    background-color: transparent;
+    color: #666;
+}
+
+.password-toggle-button:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.forgot-password-link {
+    font-size: 0.9rem;
+    color: #007bff;
+    text-decoration: none;
+    padding: 0;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.proceed-guest-button {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+    padding: 12px 0;
+    font-weight: bold;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.proceed-guest-button:hover {
+    background-color: #333;
+    border-color: #333;
+}
+
+
+.login-button {
+    background-color: #6c757d; 
+    border-color: #6c757d;
+    padding: 12px 0;
+    font-weight: bold;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.login-button:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+.register-link {
+    color: #000;
+    text-decoration: none;
+    padding: 0;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+.checkout-options-modal-wrapper .border-top {
+    border-color: #eee !important; 
+}

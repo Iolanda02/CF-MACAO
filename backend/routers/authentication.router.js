@@ -1,6 +1,7 @@
 import express from "express";
 import { login, register } from "../controllers/authentication.controller.js";
 import passport from "passport";
+import { protect } from "../middlewares/authentication.js";
 
 const authenticationRouter = express.Router();
 
@@ -28,6 +29,10 @@ authenticationRouter.get('/callback-google',
 
 authenticationRouter.get('/login-failure', (req, res) => {
     res.redirect(process.env.FRONTEND_HOST + process.env.OAUTH_PATH_FRONTEND + '?error=login_failed');
+});
+
+authenticationRouter.get('/profile', protect, (request, response, next) => {
+    response.send(request.user);
 });
 
 export default authenticationRouter;
