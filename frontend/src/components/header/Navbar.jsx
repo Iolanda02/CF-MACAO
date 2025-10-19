@@ -8,7 +8,7 @@ import logo from "../../assets/logo.png";
 import "./styles.css";
 
 
-function Header() {
+function Navbar() {
     const { isAuthenticated, authUser, logout } = useAuth();
 
     return (
@@ -60,4 +60,4 @@ function Header() {
     );
 }
 
-export default Header;
+export default Navbar;
