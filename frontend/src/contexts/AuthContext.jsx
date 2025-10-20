@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { profile, loginApi, registerApi } from '../api/authentication';
+import { loginApi, profile } from '../api/authentication';
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(localStorage.getItem('token'));
@@ -8,18 +8,7 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
-    // Effetto per gestire l'inizializzazione del token e caricare il profilo
-    useEffect(() => {
-        if (token) {
-            loadUserProfile(token);
-        } else {
-            setAuthUser(null);
-            setIsLoading(false);
-        }
-    }, [token, loadUserProfile]);
-
-
+    
     // Funzione per caricare il profilo utente in base al token
     const loadUserProfile = useCallback(async (authToken) => {
         if (!authToken) {
@@ -42,6 +31,16 @@ export function AuthProvider({ children }) {
             setIsLoading(false);
         }
     }, []);
+
+    // Effetto per gestire l'inizializzazione del token e caricare il profilo
+    useEffect(() => {
+        if (token) {
+            loadUserProfile(token);
+        } else {
+            setAuthUser(null);
+            setIsLoading(false);
+        }
+    }, [token, loadUserProfile]);
 
 
     // Funzione di Login

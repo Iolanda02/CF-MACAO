@@ -48,11 +48,11 @@ export const getCart = async (req, res, next) => {
                 // .populate('user')
                 .populate({
                     path: 'items.item',
-                    select: 'name description imageUrls slug'
+                    select: 'name brand description slug'
                 })
                 .populate({
                     path: 'items.variant',
-                    select: 'sku weight stock price'
+                    select: 'name sku weight stock price images'
                 });
         }
 
@@ -162,13 +162,14 @@ export const addItemToChart = async (req, res, next) => {
         await cart.save();
 
         const updatedCart = await Order.findById(cart._id)
+            // .populate('user')
             .populate({
                 path: 'items.item',
-                select: 'name description imageUrls slug'
+                select: 'name brand description slug'
             })
             .populate({
                 path: 'items.variant',
-                select: 'sku weight stock price'
+                select: 'name sku weight stock price images'
             });
         
         res.status(200).json({
@@ -269,13 +270,14 @@ export const updateCartItemQuantity = async (req, res, next) => {
         await cart.save();
         
         const updatedCart = await Order.findById(cart._id)
-            .populate({ 
-                path: 'items.item', 
-                select: 'name description imageUrls slug' 
+            // .populate('user')
+            .populate({
+                path: 'items.item',
+                select: 'name brand description slug'
             })
-            .populate({ 
-                path: 'items.variant', 
-                select: 'sku weight stock price' 
+            .populate({
+                path: 'items.variant',
+                select: 'name sku weight stock price images'
             });
 
         res.status(200).json({
@@ -339,13 +341,14 @@ export const removeCartItem = async (req, res, next) => {
         await cart.save();
 
         const updatedCart = await Order.findById(cart._id)
-            .populate({ 
-                path: 'items.item', 
-                select: 'name description imageUrls slug' 
+            // .populate('user')
+            .populate({
+                path: 'items.item',
+                select: 'name brand description slug'
             })
-            .populate({ 
-                path: 'items.variant', 
-                select: 'sku weight stock price' 
+            .populate({
+                path: 'items.variant',
+                select: 'name sku weight stock price images'
             });
 
         res.status(200).json({

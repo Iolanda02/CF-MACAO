@@ -1,10 +1,10 @@
-import { Route, Routes } from "react-router";
+import { Outlet, Route, Routes } from "react-router";
 import { Container } from "react-bootstrap";
 
 import { useAuth } from "./contexts/AuthContext";
 import AdminRoutes from "./pages/admin-routes/AdminRoutes";
 import ProtectedRoutes from "./pages/auth-routes/ProtectedRoutes";
-import Navbar from "./components/header/Navbar";
+import PublicNavbar from "./components/header/PublicNavbar";
 import Footer from "./components/footer/Footer";
 import AdminNavbar from "./components/header/AdminNavbar";
 import HomePage from "./pages/public-routes/home/HomePage";
@@ -26,6 +26,7 @@ import AdminUsersListPage from "./pages/admin-routes/admin-users/AdminUsersListP
 import AdminUsersFormPage from "./pages/admin-routes/admin-users/AdminUsersFormPage";
 import AdminUsersViewPage from "./pages/admin-routes/admin-users/AdminUsersViewPage";
 import NotFoundPage from "./pages/public-routes/not-found/NotFoundPage";
+import { CartProvider } from "./contexts/CartContext";
 
 function App() {
 
@@ -36,21 +37,23 @@ function App() {
 
   return (
     <>
+      <CartProvider>
       <Routes>
-        {/* Rotte pubbliche */}
-        <Route path="/" element={<MainLayout />} />
-        <Route index element={<HomePage />} />
-        <Route path="product/:id" element={<ProductDetailsPage />} />
-        <Route path="cart" element={<CartPage />} />
-        <Route path="checkout" element={<CheckoutPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+          {/* Rotte pubbliche */}
+          <Route path="/" element={<MainLayout />}> 
+            <Route index element={<HomePage />} />
+            <Route path="product/:id" element={<ProductDetailsPage />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="login" element={<LoginPage />} />
+            <Route path="register" element={<RegisterPage />} />
+          </Route>
 
-        {/* Rotte protette */}
-        <Route element={<ProtectedRoutes />}>
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="orders" element={<OrdersPage />} />
-        </Route>
+          {/* Rotte protette */}
+          <Route element={<ProtectedRoutes />}>
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="orders" element={<OrdersPage />} />
+          </Route>
 
         {/* Rotte Admin */}
         <Route path="/admin" element={<AdminRoutes />}>
@@ -72,13 +75,14 @@ function App() {
         {/* Rotta 404 - Pagina non trovata */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </CartProvider>
     </>
   )
 }
 
 const MainLayout = () => (
   <div>
-    <Navbar />
+    <PublicNavbar />
     <Container className='min-height-main-content'>
       <main>
         <Outlet />

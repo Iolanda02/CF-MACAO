@@ -6,9 +6,84 @@ import * as factory from './factory.controller.js';
 import Review from '../models/Review.js';
 
 
-export const getAllItems = factory.getAll(Item);
+// export const getAllItems = factory.getAll(Item);
+export const getAllItems = async(req, res, next) => {
+    const searchTerm = req.query.search;
+    const searchField = req.query.searchField || 'name';
+    
+    const allowedSearchFields = ['name', 'description'];
+    if (searchField && !allowedSearchFields.includes(searchField)) {
+        return next(
+            new AppError(
+                `Campo di ricerca non valido. Campi permessi: ${allowedSearchFields.join(', ')}`, 
+                400
+            )
+        );
+    }
 
-export const getItem = factory.getOne(Item, { path: 'variants reviews' });
+    let queryObj = {};
+
+    if (searchTerm) {
+        queryObj[searchField] = new RegExp(searchTerm, "i");
+    }
+
+    let page = parseInt(req.query.page) || 1;
+    if (page < 1) page = 1;
+
+    let perPage = parseInt(req.query.perPage) || 6;
+    if (perPage < 1 || perPage > 25) perPage = 6;
+
+    try {
+        const totalCount = await Item.countDocuments(queryObj);
+        const totalPages = Math.ceil(totalCount / perPage);
+
+        const users = await Item.find(queryObj)
+            .sort({ firstName: 1, lastName: 1 })
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .populate('variants');
+
+        res.status(200).send({
+            page,
+            perPage,
+            totalPages,
+            totalCount,
+            data: users
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// export const getItem = factory.getOne(Item, [{ path: 'variants reviews' }, { path : 'reviews.user'}]);
+export const getItem = async (req, res, next) => {
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError("ID prodotto non valido", 400));
+    }
+    
+    try {
+        const item = await Item.findById(id)
+        .populate('variants')
+        .populate({
+            path: 'reviews', 
+            populate: {
+                path: "user"
+            }
+        })
+        
+        if (!item) {
+            return next(new AppError("Prodotto non trovato", 404));
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: item
+        });
+    } catch (error) {
+        next(error);
+    }
+}
 
 export const createItem = async (req, res, next) => {
     const session = await mongoose.startSession();

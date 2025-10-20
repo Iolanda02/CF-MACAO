@@ -8,7 +8,7 @@ import logo from "../../assets/logo.png";
 import "./styles.css";
 
 
-function Navbar() {
+function PublicNavbar() {
     const { isAuthenticated, authUser, logout } = useAuth();
 
     return (
@@ -44,7 +44,7 @@ function Navbar() {
                                     </div>
                             ) : (
                                 <div className='d-flex justify-content-end w-100'>
-                                    <Nav.Link as={NavLink} to="/register">
+                                    <Nav.Link as={NavLink} to="/">
                                         Register
                                     </Nav.Link>
                                     <Nav.Link as={NavLink} to="/login">
@@ -60,4 +60,4 @@ function Navbar() {
     );
 }
 
-export default Navbar;
+export default PublicNavbar;

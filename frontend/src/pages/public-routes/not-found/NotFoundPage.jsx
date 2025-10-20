@@ -1,8 +1,9 @@
 
-import notFoundImage from '';
 import { Link } from "react-router";
 
 function NotFoundPage() {
+    const notFoundImage = '';
+
     return (
         <div className="not-found-page-root d-flex align-items-center justify-content-center min-vh-100 py-5">
             <Container className="text-center">

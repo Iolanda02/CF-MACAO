@@ -1,50 +1,62 @@
-import { useState } from "react";
-import { Button, InputGroup } from "react-bootstrap";
-import { Form } from "react-router";
+import { useEffect, useState } from "react";
+import { Button, Card, Form, InputGroup } from "react-bootstrap";
+import { Link } from "react-router";
 import "./styles.css";
+import { CartPlusFill, Dash, Plus } from "react-bootstrap-icons";
+import { useCart } from "../../contexts/CartContext";
 
-
-export const useCart = () => {
-    const addToCart = (product, quantity, format) => {
-        console.log(`Aggiunto ${quantity} di ${product.name} (${format} capsule) al carrello.`);
-        // Logica per aggiungere al carrello globale
-    };
-    return { addToCart };
-};
 
 function ProductCard({ product }) {
-    const { addToCart } = useCart();
+    const { addItemToCart, isLoading, error } = useCart();
     const [quantity, setQuantity] = useState(1);
-    const [selectedFormat, setSelectedFormat] = useState(product.formats[0].quantity);
+    const [selectedVariant, setSelectedVariant] = useState(product.variants[0]?.name || '');
+    const [currentPrice, setCurrentPrice] = useState(product.variants[0]?.price?.amount || 0);
 
     useEffect(() => {
-        setQuantity(1);
-        setSelectedFormat(product.formats[0].quantity);
-    }, [product.id, product.formats]);
+        // Reset di quantità e variante quando cambia il prodotto
+        if (product && product.variants && product.variants.length > 0) {
+            setQuantity(1);
+            setSelectedVariant(product.variants[0].name);
+            setCurrentPrice(product.variants[0].price.amount);
+        }
+    }, [product._id, product.variants]);
 
+    useEffect(() => {
+        // Trova il prezzo del pacco selezionato quando cambia la variante
+        const variant = product.variants.find(v => v.name === selectedVariant);
+        setCurrentPrice(variant?.price?.amount || 0);
+    }, [selectedVariant, product.variants])
+    
     const handleQuantityChange = (delta) => {
         setQuantity(prev => Math.max(1, prev + delta));
     };
-
-    const handleAddToCart = () => {
-        addToCart(product, quantity, selectedFormat);
-        // Feedback visivo (es. toast) da aggiungere
+    
+    const handleAddToCart = async () => {
+        try {
+            // Qui devi passare l'ID del prodotto, la quantità e l'ID della variante selezionata
+            const selectedVariantObj = product.variants.find(v => v.name === selectedVariant);
+            if (!selectedVariantObj) {
+                console.error("Variante selezionata non trovata.");
+                return;
+            }
+            await addItemToCart(product._id, quantity, selectedVariantObj._id);
+            // Feedback visivo (es. toast) qui
+        } catch (error) {
+            console.error("Errore nell'aggiunta al carrello:", error);
+        }
     };
-
-    // Trova il prezzo del pacco selezionato
-    const currentPrice = product.formats.find(f => f.quantity === selectedFormat)?.pricePerPack || product.price;
-
+    
     return (
         <Card className="h-100 shadow-sm">
             <Card.Img variant="top" src={product.image?.path} alt={product.name} style={{ height: '200px', objectFit: 'cover' }} />
             <Card.Body className="d-flex flex-column">
                 <Card.Title className="mb-2">
-                    <Link to={`/product/${product.id}`} className="text-decoration-none text-dark">
+                    <Link to={`/product/${product._id}`} className="text-decoration-none text-dark">
                         {product.name}
                     </Link>
                 </Card.Title>
                 <Card.Text className="text-muted flex-grow-1">
-                    {product.description.length > 100 ?
+                    {product.description?.length > 100 ?
                         `${product.description.substring(0, 100)}...` :
                         product.description}
                 </Card.Text>
@@ -55,19 +67,19 @@ function ProductCard({ product }) {
                     <Form.Select
                         size="sm"
                         className="mt-1"
-                        value={selectedFormat}
-                        onChange={(e) => setSelectedFormat(parseInt(e.target.value))}
+                        value={selectedVariant}
+                        onChange={(e) => setSelectedVariant(e.target.value)}
                     >
-                        {product.formats.map(format => (
-                            <option key={format.quantity} value={format.quantity}>
-                                {format.quantity} capsule (€{format.pricePerPack.toFixed(2)})
+                        {product.variants?.map(variant => (
+                            <option key={variant._id} value={variant.name}>
+                                {variant.name}
                             </option>
                         ))}
                     </Form.Select>
                 </div>
 
                 <h5 className="text-end mb-3">
-                    €{currentPrice.toFixed(2)}
+                    €{currentPrice?.toFixed(2)}
                 </h5>
 
                 {/* Controlli quantità e pulsante aggiungi al carrello */}
@@ -99,6 +111,7 @@ function ProductCard({ product }) {
                         variant="primary"
                         onClick={handleAddToCart}
                         className="ms-2"
+                        disabled={isLoading}
                     >
                         <CartPlusFill className="me-1" /> Aggiungi
                     </Button>

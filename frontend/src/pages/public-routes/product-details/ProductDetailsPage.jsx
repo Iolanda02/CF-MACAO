@@ -1,20 +1,39 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useCart } from "../../../components/product-card/ProductCard";
-import { Container, Image } from "react-bootstrap";
+import { Alert, Button, Col, Container, Form, Image, InputGroup, Row, Spinner } from "react-bootstrap";
 import ProductReviewsArea from "../../../components/product-reviews-area/ProductReviewArea";
+import { getProduct } from "../../../api/product";
+import { CartPlusFill, Dash, Plus, StarFill } from "react-bootstrap-icons";
+import { useCart } from "../../../contexts/CartContext";
 
 function ProductDetailsPage() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
-    const [selectedFormat, setSelectedFormat] = useState(null);
+    const [selectedVariant, setSelectedVariant] = useState(null);
     const params = useParams();
-    const { authUser } = useAuth(); 
+    const { authUser } = useAuth();
     const { addToCart } = useCart(); 
     const navigate = useNavigate();
+    
+    const getProductDetails = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const result = await getProduct(id);
+            setProduct(result.data);
+            setSelectedVariant(result.data.variants[0].name);
+            setQuantity(1);
+        } catch(error) {
+            console.error(error);
+            setError("Errore durante il caricamento del prodotto.")
+            // navigate('/404', { replace: true });
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const productId = params.id;
 
@@ -24,54 +43,52 @@ function ProductDetailsPage() {
         }
     }, [productId, getProductDetails]);
 
-        
-    const getProductDetails = useCallback(async (id) => {
-        try {
-            setLoading(true);
-            setError(false);
-            const result = await fetchProductDetails(id);
-            setProduct(result);
-            setSelectedFormat(result.formats[0].quantity);
-            setQuantity(1);
-        } catch(error) {
-            setError(true);
-            console.error(error);
-            // navigate('/404', { replace: true });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     const handleQuantityChange = (delta) => {
         setQuantity(prev => Math.max(1, prev + delta));
     };
 
     const handleFormatChange = (formatQuantity) => {
-        setSelectedFormat(parseInt(formatQuantity));
+        setSelectedVariant(parseInt(formatQuantity));
     };
 
     const handleAddToCart = () => {
-        if (product && quantity > 0 && selectedFormat) {
-            addToCart(product, quantity, selectedFormat);
+        if (product && quantity > 0 && selectedVariant) {
+            addToCart(product, quantity, selectedVariant);
         }
     };
 
-    const currentPrice = product?.formats.find(f => f.quantity === selectedFormat)?.pricePerPack || product?.price;
+    const currentPrice = product?.variants.find(f => f.name === selectedVariant)?.price?.amount || product?.price;
 
     // Per i prodotti correlati
-    const relatedProducts = productsData //--- recuperare i dati
-        .filter(p => p.id !== product?.id)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3);
+    // const relatedProducts = productsData //--- recuperare i dati
+    //     .filter(p => p._id !== product?._id)
+    //     .sort(() => 0.5 - Math.random())
+    //     .slice(0, 3);
 
-    if (error) {
-        return <Container className="my-5"><Alert variant="danger" className="text-center">Errore durante il caricamento del prodotto. Potrebbe non esistere.</Alert></Container>;
-    }
+        
     if (loading) {
-        return <Container className="my-5"><h2 className="text-center text-primary">Caricamento prodotto...</h2></Container>;
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento prodotto...</span>
+                </Spinner>
+                <p>Caricamento prodotto...</p>
+            </Container>
+        );
     }
+    
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+            </Container>
+        );
+    }
+    
     if (!product) {
-        return <Container className="my-5"><Alert variant="info" className="text-center">Prodotto non disponibile.</Alert></Container>;
+        return <Container className="my-5">
+            <Alert variant="info" className="text-center">Prodotto non disponibile.</Alert>
+        </Container>;
     }
 
     return (
@@ -104,13 +121,13 @@ function ProductDetailsPage() {
                     <Form.Group className="mb-3">
                         <Form.Label>Seleziona Formato:</Form.Label>
                         <Form.Select
-                            value={selectedFormat || ''}
+                            value={selectedVariant || ''}
                             onChange={(e) => handleFormatChange(e.target.value)}
                             className="w-auto"
                         >
-                            {product.formats.map(format => (
-                                <option key={format.quantity} value={format.quantity}>
-                                    {format.quantity} capsule (€{format.pricePerPack.toFixed(2)})
+                            {product.variants.map(variant => (
+                                <option key={variant._id} value={variant.name}>
+                                    {variant.name}
                                 </option>
                             ))}
                         </Form.Select>
@@ -135,22 +152,24 @@ function ProductDetailsPage() {
             </Row>
 
             {/* Descrizione estesa */}
-            <Row className="mb-5">
-                <Col>
-                    <h3 className="mb-3">Dettagli del Prodotto</h3>
-                    <p>{product.description}</p>
-                </Col>
-            </Row>
+            {product.description && 
+                <Row className="mb-5">
+                    <Col>
+                        <h3 className="mb-3">Dettagli del Prodotto</h3>
+                        <p>{product.description}</p>
+                    </Col>
+                </Row>
+            }
 
             {/* Sezione Recensioni */}
             <Row className="mb-5">
                 <Col>
-                    <ProductReviewsArea productId={product.id} />
+                    <ProductReviewsArea productId={product.id} productReviews={product.reviews || []} />
                 </Col>
             </Row>
 
             {/* Prodotti Correlati */}
-            <Row className="mb-5">
+            {/* <Row className="mb-5">
                 <Col>
                     <h3 className="mb-4">Potrebbe interessarti anche...</h3>
                     <Row xs={1} md={2} lg={3} className="g-4">
@@ -171,7 +190,7 @@ function ProductDetailsPage() {
                         ))}
                     </Row>
                 </Col>
-            </Row>
+            </Row> */}
         </Container>
     )
 }

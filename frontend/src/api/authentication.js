@@ -16,7 +16,7 @@ export async function registerApi(body) {
     }
 }
 
-export async function loginAPi(body) {
+export async function loginApi(body) {
     try {
         const response = await publicApi.post('/auth/login', body);
         // console.log("(API) - login: ", response)

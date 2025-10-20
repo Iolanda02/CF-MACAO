@@ -1,28 +1,34 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { ListGroup } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, ListGroup, Row } from "react-bootstrap";
+import { PencilFill, StarFill, TrashFill } from "react-bootstrap-icons";
+import { Link } from "react-router";
 
-function ProductReviewsArea({ productId }) {
+function ProductReviewsArea({ productId, productReviews }) {
     const { authUser, isAuthenticated } = useAuth();
-    const [reviews, setReviews] = useState([]);
+    const [reviews, setReviews] = useState(productReviews);
     const [newReviewText, setNewReviewText] = useState("");
     const [newReviewRating, setNewReviewRating] = useState(0);
     const [editingReviewId, setEditingReviewId] = useState(null);
     const [editingReviewText, setEditingReviewText] = useState("");
     const [editingReviewRating, setEditingReviewRating] = useState(0);
 
-    useEffect(() => {
-        fetchReviews();
-    }, [fetchReviews]);
+    // const fetchReviews = useCallback(async () => {
+    //     try {
+    //         const fetchedReviews = await getReviewsByProductId(productId);
+    //         setReviews(fetchedReviews);
+    //     } catch (error) {
+    //         console.error("Error fetching reviews:", error);
+    //     }
+    // }, [productId]);
 
-    const fetchReviews = useCallback(async () => {
-        try {
-            const fetchedReviews = await getReviewsByProductId(productId);
-            setReviews(fetchedReviews);
-        } catch (error) {
-            console.error("Error fetching reviews:", error);
-        }
-    }, [productId]);
+    // useEffect(() => {
+    //     fetchReviews();
+    // }, [fetchReviews]);
+    
+    useEffect(() => {
+        setReviews(productReviews);
+    }, [reviews]);
 
     const handlePostReview = async () => {
         if (!newReviewText.trim() || newReviewRating === 0) {
@@ -129,12 +135,12 @@ function ProductReviewsArea({ productId }) {
                             <ListGroup.Item key={review._id} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                     <div>
-                                        <strong>{review.author.nome} {review.author.cognome}</strong>
+                                        <strong>{review.user?.firstName || ''} {review.user?.lastName || ''}</strong>
                                         <span className="text-muted ms-2">{new Date(review.createdAt).toLocaleDateString()}</span>
                                     </div>
                                     <div className="d-flex align-items-center">
                                         {renderStars(review.rating)}
-                                        {isAuthenticated && authUser?._id === review.author._id && (
+                                        {isAuthenticated && authUser?._id === review.user._id && (
                                             <>
                                                 {editingReviewId === review._id ? (
                                                      <Button variant="outline-success" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
