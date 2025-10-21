@@ -1,5 +1,8 @@
-import { Button, Card } from "react-bootstrap";
-import { Form, useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
+import { Link, useNavigate, useParams } from "react-router";
+import { getOrderById, updateOrder } from "../../../api/order";
+import { ArrowLeft, Save } from "react-bootstrap-icons";
 
 function AdminOrdersFormPage() {
     const { id } = useParams();
@@ -24,11 +27,11 @@ function AdminOrdersFormPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`/api/admin/orders/${id}`);
+            const response =  await getOrderById(id);
             setOrder(response.data);
         } catch (err) {
-            setError("Errore nel caricamento dei dettagli dell'ordine per la modifica.");
             console.error("Errore fetch dettagli ordine:", err);
+            setError("Non è stato possibile recuperare i dati dell'ordine. Riprova più tardi.");
         } finally {
             setLoading(false);
         }
@@ -36,7 +39,7 @@ function AdminOrdersFormPage() {
     
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Gestione campi annidati come shippingAddress.street
+        // Gestione campi annidati come shippingAddress.address
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setOrder(prevOrder => ({
@@ -74,24 +77,52 @@ function AdminOrdersFormPage() {
         setSubmitting(true);
         setError(null);
         try {
-            await axios.put(`/api/admin/orders/${id}`, order);
+            const dataToSend = {
+                orderStatus: order.orderStatus,
+                paymentStatus: order.paymentStatus,
+                paymentMethod: order.paymentMethod,
+                notes: order.notes,
+                discountAmount: order.discountAmount,
+                discountCode: order.discountCode,
+                shippingCost: (
+                    order.shippingCost.amount || order.shippingCost.currency) ? order.shippingCost : undefined,
+                shippingAddress: (
+                    order.user?.shippingAddress?.address || order.user?.shippingAddress?.city || order.user?.shippingAddress?.postalCode || order.user?.shippingAddress?.country) ? order.user?.shippingAddress : undefined
+            }
+
+            await updateOrder(id, dataToSend);
             alert("Ordine aggiornato con successo!");
             navigate('/admin/orders');
         } catch (err) {
-            setError("Errore durante l'aggiornamento dell'ordine.");
             console.error("Errore aggiornamento ordine:", err.response?.data || err.message);
-            setFormErrors(err.response?.data?.errors || {});
+            const apiErrorMessage = err.response?.data?.message || "Impossibile salvare l'ordine.";
+            setError(apiErrorMessage);
+            if (err.response?.data?.errors) {
+                setFormErrors(err.response.data.errors || {});
+            }
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <Container className="text-center mt-5">
-                            <Spinner animation="border" />
-                        </Container>;
-    if (error) return <Container className="mt-5">
-                            <Alert variant="danger">{error}</Alert>
-                        </Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento dati utente...</span>
+                </Spinner>
+                <p>Caricamento dati utente...</p>
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+            </Container>
+        );
+    }
     if (!order) return <Container className="mt-5">
                             <Alert variant="info">Ordine non trovato.</Alert>
                         </Container>;
@@ -178,12 +209,12 @@ function AdminOrdersFormPage() {
                     <Form.Label>Via</Form.Label>
                     <Form.Control
                         type="text"
-                        name="shippingAddress.street"
-                        value={order.shippingAddress?.street || ''}
+                        name="shippingAddress.address"
+                        value={order.shippingAddress?.address || ''}
                         onChange={handleChange}
-                        isInvalid={!!formErrors['shippingAddress.street']}
+                        isInvalid={!!formErrors['shippingAddress.address']}
                     />
-                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.street']}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.address']}</Form.Control.Feedback>
                     </Form.Group>
                 </Col>
                 <Col md={6}>
@@ -191,12 +222,12 @@ function AdminOrdersFormPage() {
                     <Form.Label>Numero Civico</Form.Label>
                     <Form.Control
                         type="text"
-                        name="shippingAddress.streetNumber"
-                        value={order.shippingAddress?.streetNumber || ''}
+                        name="shippingAddress.addressNumber"
+                        value={order.shippingAddress?.addressNumber || ''}
                         onChange={handleChange}
-                        isInvalid={!!formErrors['shippingAddress.streetNumber']}
+                        isInvalid={!!formErrors['shippingAddress.addressNumber']}
                     />
-                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.streetNumber']}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.addressNumber']}</Form.Control.Feedback>
                     </Form.Group>
                 </Col>
                 </Row>
@@ -219,12 +250,12 @@ function AdminOrdersFormPage() {
                     <Form.Label>CAP</Form.Label>
                     <Form.Control
                         type="text"
-                        name="shippingAddress.zipCode"
-                        value={order.shippingAddress?.zipCode || ''}
+                        name="shippingAddress.postalCode"
+                        value={order.shippingAddress?.postalCode || ''}
                         onChange={handleChange}
-                        isInvalid={!!formErrors['shippingAddress.zipCode']}
+                        isInvalid={!!formErrors['shippingAddress.postalCode']}
                     />
-                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.zipCode']}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.postalCode']}</Form.Control.Feedback>
                     </Form.Group>
                 </Col>
                 <Col md={4}>
@@ -260,12 +291,12 @@ function AdminOrdersFormPage() {
                     <Form.Label>Numero di Telefono</Form.Label>
                     <Form.Control
                         type="text"
-                        name="shippingAddress.phoneNumber"
-                        value={order.shippingAddress?.phoneNumber || ''}
+                        name="user.phone"
+                        value={order.user?.phone || ''}
                         onChange={handleChange}
-                        isInvalid={!!formErrors['shippingAddress.phoneNumber']}
+                        isInvalid={!!formErrors['user.phone']}
                     />
-                    <Form.Control.Feedback type="invalid">{formErrors['shippingAddress.phoneNumber']}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formErrors['user.phone']}</Form.Control.Feedback>
                     </Form.Group>
                 </Col>
                 </Row>
@@ -331,16 +362,24 @@ function AdminOrdersFormPage() {
                 <h6>Prodotti:</h6>
                 <ul>
                 {order.items?.map(item => (
-                    <li key={item.item + item.variant}>{item.productName} ({item.variantName}) - {item.quantity} x {item.price.amount?.toFixed(2)} {item.price.currency}</li>
+                    <li key={item.item + item.variant}>{item.productName} ({item.variant.name}) - {item.quantity} x {item.price.amount?.toFixed(2)} {item.price.currency}</li>
                 ))}
                 </ul>
             </Card.Body>
             </Card>
 
-            <Button variant="primary" type="submit" disabled={submitting}>
-            {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> : <Save className="me-2" />}
-            Salva Modifiche
-            </Button>
+            <div className="d-flex flex-items-center gap-3 mt-3 mb-5">
+                <Button variant="primary" type="submit" disabled={submitting}>
+                {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> : <Save className="me-2" />}
+                Salva Modifiche
+                </Button>
+                <Button variant="outline-primary" type="submit" 
+                    disabled={submitting} 
+                    onClick={() => navigate(-1)}
+                >
+                    Annulla
+                </Button>
+            </div>
         </Form>
         </Container>
     )

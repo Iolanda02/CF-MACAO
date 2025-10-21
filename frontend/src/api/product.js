@@ -22,3 +22,60 @@ export async function getProduct(id) {
         throw error;
     }
 }
+
+
+export async function createProduct(newProduct) {
+    try {
+        const response = await publicApi.post(`/item`, newProduct);
+        // console.log("(API) createProduct: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function updateProduct(id, newData) {
+    try {
+        const URL = `/items/${id}`;
+        const response = await publicApi.patch(URL, newData);
+        // console.log("(API) updateProduct: ", response);
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function removeProduct(id) {
+    try {
+        const response = await protectedApi.delete(`/items/${id}`);
+        // console.log("(API) removeProduct: ", response);
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function getItemVariantsByItemId(id) {
+    try {
+        const response = await publicApi.get(`/items/${id}/variants`);
+        // console.log("(API) getItemVariantsByItemId: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function getReviewsByItemId(id) {
+    try {
+        const response = await publicApi.get(`/items/${id}/reviews`);
+        // console.log("(API) getReviewsByItemId: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}

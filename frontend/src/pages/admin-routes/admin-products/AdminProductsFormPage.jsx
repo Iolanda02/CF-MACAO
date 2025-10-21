@@ -1,5 +1,9 @@
-import { Container } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Col, Container, Form, InputGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
+import { createProduct, getProduct } from "../../../api/product";
+import { updateOrder } from "../../../api/order";
+import { ArrowLeft, PersonPlus, PlusCircle, Save, Trash } from "react-bootstrap-icons";
 
 // Funzione per inizializzare lo stato del prodotto vuoto
 const getInitialProductState = () => ({
@@ -45,6 +49,26 @@ function AdminProductsFormPage() {
     const [message, setMessage] = useState(null);
 
     
+    const getProductDetails = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            setError(false);
+            const foundProduct = await getProduct(id);
+            setProduct({
+              ...foundProduct.data,
+            //   intensity: foundProduct.intensity ? foundProduct.intensity.toString() : '',
+            //   tags: foundProduct.tags ? foundProduct.tags.join(', ') : '',
+            //   systemCompatibility: foundProduct.systemCompatibility ? foundProduct.systemCompatibility.join(', ') : '',
+            //   variants: foundProduct.variants || []
+            });
+        } catch(error) {
+            console.error(error);
+            setError("Non è stato possibile caricare i dettagli del prodotto. Riprova più tardi.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (isEditing) {
             getProductDetails(id);
@@ -52,28 +76,6 @@ function AdminProductsFormPage() {
             setProduct(getInitialProductState());
         }
     }, [id, isEditing, getProductDetails]);
-
-        
-    const getProductDetails = useCallback(async (id) => {
-        try {
-            setLoading(true);
-            setError(false);
-            const foundProduct = await fetchProductDetails(id);
-            setProduct({
-              ...foundProduct,
-              intensity: foundProduct.intensity ? foundProduct.intensity.toString() : '',
-              tags: foundProduct.tags ? foundProduct.tags.join(', ') : '',
-              systemCompatibility: foundProduct.systemCompatibility ? foundProduct.systemCompatibility.join(', ') : '',
-              variants: foundProduct.variants || []
-            });
-        } catch(error) {
-            setError(true);
-            console.error(error);
-            navigate('/404', { replace: true });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
     
     // Gestore per i campi del prodotto principale
     const handleChange = (e) => {
@@ -196,40 +198,62 @@ function AdminProductsFormPage() {
 
         try {
             if (isEditing) {
-                // Chiamata API PUT/PATCH per aggiornare il prodotto
-                // const response = await api.put(`/items/${id}`, dataToSend);
-                // console.log('Prodotto modificato:', response.data);
-                console.log('Modifica prodotto (simulato):', dataToSend);
+                await updateOrder(id, dataToSend);
+                alert("Utente aggiornato con successo!");
                 setMessage('Prodotto modificato con successo!');
             } else {
                 // Chiamata API POST per aggiungere il prodotto
                 // const response = await api.post('/items', dataToSend);
                 // console.log('Prodotto aggiunto:', response.data);
-                console.log('Aggiungi prodotto (simulato):', { ...dataToSend }); 
+                await createProduct({...dataToSend});
+                alert("Prodotto creato con successo!");
                 setMessage('Prodotto aggiunto con successo!');
             }
+            setFormErrors({}); // Resetta gli errori del form
 
             // Reindirizza alla lista dei prodotti
-            setTimeout(() => navigate('/admin/products'));
-
+            navigate('/admin/products');
         } catch (err) {
-            setError(`Errore durante ${isEditing ? 'la modifica' : 'l\'aggiunta'} del prodotto.`);
             console.error(err);
+            const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
+            setError(apiErrorMessage);
+            if (err.response?.data?.errors) {
+                setFormErrors(err.response.data.errors);
+            }
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) 
-        return <Container className="my-4"><h3>Caricamento prodotto...</h3></Container>;
-    if (isEditing && !product) 
-        return <Container className="my-4"><Alert variant="info">Prodotto non disponibile per la modifica.</Alert></Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento dati utente...</span>
+                </Spinner>
+                <p>Caricamento dati utente...</p>
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+            </Container>
+        );
+    }
 
     return (
         <Container className="my-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <Button variant="secondary" onClick={() => navigate("/admin/products")}>
+                    <ArrowLeft className="me-2" />Torna alla lista prodotti
+                </Button>
+            </div>
+            <h1>{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
         <Row>
             <Col>
-            <h2>{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h2>
             {error && <Alert variant="danger">{error}</Alert>}
             {message && <Alert variant="success">{message}</Alert>}
             <Form onSubmit={handleSubmit} className="mt-4">
@@ -557,12 +581,28 @@ function AdminProductsFormPage() {
                     <PlusCircle className="me-2" /> Aggiungi Nuova Variante
                 </Button>
 
-                <Button variant="primary" type="submit" className="w-100 mt-3" disabled={submitting}>
-                    {submitting ? (isEditing ? 'Salvataggio...' : 'Aggiunta...') : (isEditing ? 'Salva Modifiche' : 'Aggiungi Prodotto')}
-                </Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/products')} className="w-100 mt-2" disabled={submitting}>
-                    Annulla
-                </Button>
+                <div className="d-flex flex-items-center gap-3 mt-3 mb-5">
+                    <Button variant={isEditing ? "primary" : "success"} type="submit" disabled={submitting}>
+                        {submitting ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                {isEditing ? "Salvataggio..." : "Creazione..."}
+                            </>
+                        ) : (
+                            <>
+                                {isEditing ? <Save className="me-2" /> : <PersonPlus className="me-2" />}
+                                {isEditing ? "Salva Modifiche" : "Crea Prodotto"}
+                            </>
+                        )}
+                    </Button>
+                    
+                    <Button variant={isEditing ? "outline-primary" : "outline-success"} type="submit" 
+                        disabled={submitting} 
+                        onClick={() => navigate(-1)}
+                    >
+                        Annulla
+                    </Button>
+                </div>
             </Form>
             </Col>
         </Row>

@@ -65,9 +65,7 @@ export async function getUser(request, response, next) {
         
         response.status(200).json({
             status: 'success',
-            data: {
-                user
-            }
+            data: user
         });
     } catch(error) {
         next(error);

@@ -1,16 +1,18 @@
-import { Container, Navbar } from "react-bootstrap";
+import { Container, Nav, Navbar } from "react-bootstrap";
+import { ArrowLeftSquareFill } from "react-bootstrap-icons";
+import { Link } from "react-router";
 
 const AdminNavbar = () => {
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container fluid>
-        <Navbar.Brand as={Link} to="/admin">Pannello Admin</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/admin">Pannello di Amministrazione</Navbar.Brand>
         <Navbar.Toggle aria-controls="admin-navbar-nav" />
         <Navbar.Collapse id="admin-navbar-nav">
           <Nav className="ms-auto">
             <Nav.Link as={Link} to="/">
               <ArrowLeftSquareFill className="me-2" />
-              Torna al Negozio Pubblico
+              Vai al Negozio Pubblico
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>

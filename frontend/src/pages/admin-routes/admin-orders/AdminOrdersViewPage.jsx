@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Col, ListGroup, Row } from "react-bootstrap";
-import { useNavigate } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, ListGroup, Row, Spinner } from "react-bootstrap";
+import { Link, useNavigate, useParams } from "react-router";
+import { getOrderById } from "../../../api/order";
+import { ArrowLeft } from "react-bootstrap-icons";
 
 function AdminOrdersViewPage() {
     const { id } = useParams();
@@ -9,34 +11,49 @@ function AdminOrdersViewPage() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
+    const getOrderDetails = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            setError(false);
+            const result = await getOrderById(id);
+            setOrder(result.data);
+        } catch(error) {
+            console.error(error);
+            setError("Non è stato possibile recuperare i dati dell'ordine. Riprova più tardi.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (id) {
             getOrderDetails(id);
         }
     }, [id, getOrderDetails]);
 
-        
-    const getOrderDetails = useCallback(async (id) => {
-        try {
-            setLoading(true);
-            setError(false);
-            const result = await fetchOrderDetails(id);
-            setOrder(result);
-        } catch(error) {
-            setError(true);
-            console.error(error);
-            navigate('/404', { replace: true });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
     
-    if (loading) return <Container className="text-center mt-5">
-                            <Spinner animation="border" />
-                        </Container>;
-    if (error) return <Container className="mt-5">
-                            <Alert variant="danger">{error}</Alert>
-                        </Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento ordine...</span>
+                </Spinner>
+                <p>Caricamento ordine...</p>
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+                <Button variant="secondary" onClick={() => navigate("/admin/orders")} className="mt-3">
+                    <ArrowLeft className="me-2" />Torna alla lista
+                </Button>
+            </Container>
+        );
+    }
+
     if (!order) return <Container className="mt-5">
                             <Alert variant="info">Ordine non trovato.</Alert>
                         </Container>;
@@ -59,7 +76,7 @@ function AdminOrdersViewPage() {
             </Link>
         </div>
 
-        <Card className="mb-4">
+        <Card className="my-4">
             <Card.Header as="h5">Informazioni Generali</Card.Header>
             <Card.Body>
             <Row>
@@ -95,10 +112,10 @@ function AdminOrdersViewPage() {
             <Card.Body>
             {order.shippingAddress ? (
                 <>
-                <p>{order.shippingAddress.street}, {order.shippingAddress.streetNumber}</p>
-                <p>{order.shippingAddress.city}, {order.shippingAddress.zipCode} - {order.shippingAddress.province}</p>
+                <p>{order.shippingAddress.address}</p>
+                <p>{order.shippingAddress.city}, {order.shippingAddress.postalCode}</p>
                 <p>{order.shippingAddress.country}</p>
-                <p>Telefono: {order.shippingAddress.phoneNumber}</p>
+                <p><strong>Telefono:</strong> {order.user.phone? order.user.phone : 'N/A'}</p>
                 </>
             ) : (
                 <p>Nessun indirizzo di spedizione specificato.</p>
@@ -119,9 +136,9 @@ function AdminOrdersViewPage() {
                         )}
                     </Col>
                     <Col md={5}>
-                        <strong>{item.productName}</strong> - {item.variantName}
+                        <strong>{item.productName}</strong>{item.variantName? (' - '+ item.variant?.name): ('')}
                         <br />
-                        <small>SKU: {item.sku}</small>
+                        <small>SKU: {item.variant?.sku}</small>
                     </Col>
                     <Col md={2}>Quantità: {item.quantity}</Col>
                     <Col md={2}>Prezzo Unitario: {item.price.amount?.toFixed(2)} {item.price.currency}</Col>

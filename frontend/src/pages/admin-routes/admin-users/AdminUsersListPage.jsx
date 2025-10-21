@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { Pagination } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Container, Form, InputGroup, Pagination, Spinner, Table } from "react-bootstrap";
 import DeleteModal from "../../../components/modals/DeleteModal";
+import { Link, useNavigate } from "react-router";
+import { getAllUsers, removeUser } from "../../../api/user";
+import { Eye, PencilSquare, PersonPlus, Search, Trash } from "react-bootstrap-icons";
 
 function AdminUsersListPage() {
     const [users, setUsers] = useState([]);
@@ -28,16 +31,13 @@ function AdminUsersListPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`/api/admin/users`, {
-                params: {
-                    page: page,
-                    limit: usersPerPage,
-                    search: searchTerm
-                }
-            });
-            setUsers(response.data.users);
-            setTotalPages(response.data.totalPages);
-            setLoading(false);
+            const response = await getAllUsers(searchTerm, paginator);
+            setUsers(response.data);
+            setPaginator(prev => ({
+                ...prev,
+                totalCount: response.totalCount,
+                totalPages: response.totalPages
+            }));
         } catch (err) {
             console.error("Errore nel recupero utenti:", err);
             setError("Impossibile caricare gli utenti. Riprova più tardi.");
@@ -46,6 +46,16 @@ function AdminUsersListPage() {
             setLoading(false);
         }
     };
+
+    // Funzione per cambiare la pagina (clic sul numero)
+    const handlePageChange = useCallback((number) => {
+        if (number !== paginator.page && number <= paginator.totalPages && number >= 1) {
+            setPaginator(prev => ({
+                ...prev,
+                page: number,
+            }));
+        }
+    }, [paginator.page, paginator.totalPages]);
 
     // Aggiorna gli elementi della paginazione quando i parametri del paginatore cambiano
     useEffect(() => {
@@ -60,16 +70,6 @@ function AdminUsersListPage() {
         }
         setPaginationItems(pages);
     }, [paginator.totalPages, paginator.page]);
-
-    // Funzione per cambiare la pagina (clic sul numero)
-    const handlePageChange = useCallback((number) => {
-        if (number !== paginator.page && number <= paginator.totalPages && number >= 1) {
-            setPaginator(prev => ({
-                ...prev,
-                page: number,
-            }));
-        }
-    }, [paginator.page, paginator.totalPages]);
 
     // Funzione per applicare il filtro (clic sul pulsante Cerca)
     const applyFilter = () => {
@@ -91,7 +91,7 @@ function AdminUsersListPage() {
 
     const confirmDeleteUser = async () => {
         try {
-            await axios.delete(`/api/admin/users/${userToDelete._id}`);
+            await removeUser(userToDelete._id);
             fetchUsers(); // Ricarica la lista dopo la cancellazione
             setShowDeleteModal(false);
             setUserToDelete(null);
@@ -134,12 +134,12 @@ function AdminUsersListPage() {
                         onChange={handleSearchChange}
                     />
                 </InputGroup>
-                <LinkContainer to="/admin/users/new">
+                <Link to="/admin/users/new">
                     <Button variant="success">
                         <PersonPlus className="me-2" />
                         Nuovo Utente
                     </Button>
-                </LinkContainer>
+                </Link>
             </div>
 
             {users.length === 0 ? (
@@ -159,22 +159,22 @@ function AdminUsersListPage() {
                     <tbody>
                         {users.map((user, index) => (
                             <tr key={user._id}>
-                                <td>{(page - 1) * usersPerPage + index + 1}</td>
+                                <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
                                 <td>{user.fullName || `${user.firstName} ${user.lastName}`}</td>
                                 <td>{user.email}</td>
                                 <td><span className={`badge bg-${user.role === 'admin' ? 'primary' : 'secondary'}`}>{user.role}</span></td>
                                 <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                                 <td className="text-center">
-                                    <LinkContainer to={`/admin/users/${user._id}`}>
+                                    <Link to={`/admin/users/${user._id}`}>
                                         <Button variant="primary" size="sm" className="me-2" title="Visualizza Dettagli">
                                             <Eye />
                                         </Button>
-                                    </LinkContainer>
-                                    <LinkContainer to={`/admin/users/${user._id}`}>
+                                    </Link>
+                                    <Link to={`/admin/users/edit/${user._id}`}>
                                         <Button variant="info" size="sm" className="me-2" title="Modifica">
                                             <PencilSquare />
                                         </Button>
-                                    </LinkContainer>
+                                    </Link>
                                     <Button variant="danger" size="sm" onClick={() => handleDeleteClick(user)} title="Elimina">
                                         <Trash />
                                     </Button>
@@ -207,7 +207,7 @@ function AdminUsersListPage() {
                 onHide={() => setShowDeleteModal(false)}
                 onConfirm={confirmDeleteUser}
                 textToShow={"Sei sicuro di voler eliminare l'utente " +
-                    userToDelete ? '**' + (userToDelete.fullName || `${userToDelete.firstName} ${userToDelete.lastName}`) + '**' : '' + "?"
+                    (userToDelete ? (userToDelete.fullName || `${userToDelete.firstName} ${userToDelete.lastName}`) : '') + "?"
                 }
             />
         </Container>

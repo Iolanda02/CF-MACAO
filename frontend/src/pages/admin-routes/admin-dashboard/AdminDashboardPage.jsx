@@ -1,10 +1,12 @@
 import { Card, Col, Row } from "react-bootstrap";
+import { BoxSeamFill, CartFill, PeopleFill } from "react-bootstrap-icons";
+import { Link } from "react-router";
 
 const AdminDashboardPage = () => {
   return (
     <div className="admin-dashboard-content mt-4">
-      <h2>Benvenuto nella Dashboard Admin!</h2>
-      <Row className="mt-4 justify-content-center">
+      {/* <h2>Benvenuto nella Dashboard Admin!</h2> */}
+      <Row className="my-5 justify-content-center">
         <Col md={4} lg={3} className="mb-4">
           <Card className="text-center p-3 h-100">
             <Card.Body>

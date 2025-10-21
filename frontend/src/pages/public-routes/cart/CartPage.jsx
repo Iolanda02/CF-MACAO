@@ -51,7 +51,7 @@ function CartPage() {
                 <Col>
                     <h1 className="cart-title mb-4">Carrello</h1>
                     {cart?.items?.length === 0 && 
-                        <p className="cart-summary">{cart.items.length} Articoli | € {subtotal.toFixed(2).replace('.', ',')}</p>
+                        <p className="cart-summary">{cart.items.length} Articoli | € {cart?.subtotal.toFixed(2).replace('.', ',')}</p>
                     }
                 </Col>
             </Row>
@@ -59,7 +59,7 @@ function CartPage() {
                 <Col md={8}>
                     <div className="cart-items-list">
                         {cart?.items?.length === 0 ? (
-                            <p className="text-center">Il carrello è vuoto.</p>
+                            <p>Il carrello è vuoto.</p>
                         ) : (
                             cart?.items?.map(item => (
                                 <Card className="cart-item mb-3" key={`${item._id}-${item.variant._id}`}>

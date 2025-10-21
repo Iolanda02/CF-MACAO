@@ -14,9 +14,9 @@ userRouter.get("/", restrictTo('admin'), getAllUsers);
 
 userRouter.get("/:id", authorizeOwnerOrAdmin(User, 'id', '_id'), getUser);
 
-userRouter.put("/:id", authorizeOwner(User, 'id', '_id'), putUser);
+userRouter.put("/:id", authorizeOwnerOrAdmin(User, 'id', '_id'), putUser);
 
-userRouter.delete("/:id", authorizeOwner(User, 'id', '_id'), removeUser);
+userRouter.delete("/:id", authorizeOwnerOrAdmin(User, 'id', '_id'), removeUser);
 
 userRouter.patch("/:id/avatar", 
     authorizeOwner(User, 'id', '_id'), 

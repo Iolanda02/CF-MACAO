@@ -1,8 +1,11 @@
-import { useState } from "react";
-import { Alert, Button, Container, Spinner } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, Form, Image, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import "./styles.css";
 import AddressForm from "./AddressForm";
+import { useAuth } from "../../../contexts/AuthContext";
+import { profile } from "../../../api/authentication";
+import { ArrowLeft, PencilFill, PersonCircle, TrashFill, XCircleFill } from "react-bootstrap-icons";
 
 
 function ProfilePage() {
@@ -49,7 +52,7 @@ function ProfilePage() {
         try {
             setLoading(true);
             setError(null);
-            const result = await getUserProfile(id);
+            const result = await profile(id);
             setUser(result);
             // Inizializza formData con i valori correnti dell'utente per la modifica
             setFormData({
@@ -208,8 +211,8 @@ function ProfilePage() {
         return (
             <Container className="mt-5">
                 <Alert variant="danger">
-                    <Alert.Heading>Errore!</Alert.Heading>
-                    <p>{error}</p>
+                    <Alert.Heading>Si è verificato un problema</Alert.Heading>
+                    <div>{error}</div>
                 </Alert>
             </Container>
         );
@@ -231,6 +234,11 @@ function ProfilePage() {
     return (
         <div className="user-profile-root py-4">
             <Container>
+                <div className="d-flex mb-3">
+                    <Button variant="secondary" onClick={() => navigate('/')}>
+                        <ArrowLeft className="me-2" />Torna alla home
+                    </Button>
+                </div>
                 <h1 className='pb-4'>Il Mio Profilo</h1>
 
                 <Row className='align-items-center mb-4'>

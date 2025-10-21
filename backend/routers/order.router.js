@@ -8,6 +8,7 @@ orderRouter.use(protect);
 // Ottiene tutti gli ordini dell'utente autenticato
 orderRouter.get("/", getAllOrders);
 
+
 // Ottiene tutti gli ordini del negozio
 orderRouter.get("/admin", restrictTo('admin'), getAllOrders);
 

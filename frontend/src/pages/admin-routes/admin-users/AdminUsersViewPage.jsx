@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Card, ListGroup } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Button, Card, Col, Container, Image, ListGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
+import { getUser } from "../../../api/user";
+import { ArrowLeft, PencilSquare } from "react-bootstrap-icons";
 
 function AdminUsersViewPage() {
     const { id } = useParams();
@@ -9,6 +11,19 @@ function AdminUsersViewPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
+    const getUserDetails = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            setError(false);
+            const result = await getUser(id);
+            setUser(result.data);
+        } catch(error) {
+            console.error(error);
+            setError("Non è stato possibile recuperare i dati dell'utente. Riprova più tardi.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (id) {
@@ -16,29 +31,13 @@ function AdminUsersViewPage() {
         }
     }, [id, getUserDetails]);
 
-        
-    const getUserDetails = useCallback(async (id) => {
-        try {
-            setLoading(true);
-            setError(false);
-            const result = await fetchUserDetails(id);
-            setOrder(result);
-        } catch(error) {
-            setError(true);
-            console.error(error);
-            navigate('/404', { replace: true });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     if (loading) {
         return (
             <Container className="text-center mt-5">
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Caricamento utente...</span>
                 </Spinner>
-                <p>Caricamento dettagli utente...</p>
+                <p>Caricamento utente...</p>
             </Container>
         );
     }
@@ -47,7 +46,7 @@ function AdminUsersViewPage() {
         return (
             <Container className="mt-5">
                 <Alert variant="danger">{error}</Alert>
-                <Button variant="secondary" onClick={() => navigate(-1)} className="mt-3">
+                <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
                     <ArrowLeft className="me-2" />Torna alla lista
                 </Button>
             </Container>
@@ -58,7 +57,7 @@ function AdminUsersViewPage() {
         return (
             <Container className="mt-5">
                 <Alert variant="warning">Utente non trovato.</Alert>
-                <Button variant="secondary" onClick={() => navigate(-1)} className="mt-3">
+                <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
                     <ArrowLeft className="me-2" />Torna alla lista
                 </Button>
             </Container>
@@ -78,7 +77,7 @@ function AdminUsersViewPage() {
 
             <h1 className="mb-4">Dettagli Utente: {user.fullName || `${user.firstName} ${user.lastName}`}</h1>
 
-            <Card className="mb-4">
+            <Card className="my-4">
                 <Card.Body>
                     <Row className="mb-3 align-items-center">
                         <Col md={3} className="text-center">
@@ -97,16 +96,18 @@ function AdminUsersViewPage() {
                             </ListGroup>
                         </Col>
                     </Row>
-                    {user.shippingAddress && (
+                    <h5 className="mt-4 mb-3 border-top pt-3">Indirizzo di Spedizione</h5>
+                    {user.shippingAddress ? (
                         <>
-                            <h5 className="mt-4 mb-3 border-top pt-3">Indirizzo di Spedizione</h5>
                             <ListGroup variant="flush">
-                                <ListGroup.Item><strong>Via:</strong> {user.shippingAddress.street}</ListGroup.Item>
+                                <ListGroup.Item><strong>Via:</strong> {user.shippingAddress.address}</ListGroup.Item>
                                 <ListGroup.Item><strong>Città:</strong> {user.shippingAddress.city}</ListGroup.Item>
-                                <ListGroup.Item><strong>CAP:</strong> {user.shippingAddress.zipCode}</ListGroup.Item>
+                                <ListGroup.Item><strong>CAP:</strong> {user.shippingAddress.postalCode}</ListGroup.Item>
                                 <ListGroup.Item><strong>Paese:</strong> {user.shippingAddress.country}</ListGroup.Item>
                             </ListGroup>
                         </>
+                    ) : (
+                        <span>{'N/A'}</span>
                     )}
                 </Card.Body>
             </Card>

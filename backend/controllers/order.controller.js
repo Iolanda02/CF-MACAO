@@ -13,36 +13,91 @@ export const getAllOrders = async (req, res, next) => {
     if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
         return next(new AppError("ID utente non valido", 400))
     }
+    const searchTerm = req.query.search;
+    const searchField = req.query.searchField || 'orderNumber';
+    
+    const allowedSearchFields = ['orderNumber', 'paymentStatus', 'orderStatus'];
+    if (searchField && !allowedSearchFields.includes(searchField)) {
+        return next(
+            new AppError(
+                `Campo di ricerca non valido. Campi permessi: ${allowedSearchFields.join(', ')}`, 
+                400
+            )
+        );
+    }
+
+    let queryObj = {};
+
+    if (searchTerm) {
+        queryObj[searchField] = new RegExp(searchTerm, "i");
+    }
+    if(user.role == 'user') {
+        queryObj.user = user.id;
+    }
+
+    let page = parseInt(req.query.page) || 1;
+    if (page < 1) page = 1;
+
+    let perPage = parseInt(req.query.perPage) || 3;
+    if (perPage < 1 || perPage > 25) perPage = 10;
 
     try {
-        const { status, page = 1, limit = 10, ...otherQueryParams } = req.query;
-        const baseQuery = buildOrderQuery(user.role, user.id, { status, ...otherQueryParams });
+        const totalCount = await Order.countDocuments(queryObj);
+        const totalPages = Math.ceil(totalCount / perPage);
 
-        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const orders = await Order.find(queryObj)
+            .populate('user', 'firstName lastName email phone')
+            .populate('items.item', 'name description')
+            .populate('items.variant', 'name sku attributes')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * perPage)
+            .limit(perPage);
 
-        const orders = await Order.find(baseQuery)
-                                  .populate('user', 'firstName lastName email')
-                                  .populate('items.item', 'name description')
-                                  .populate('items.variant', 'sku attributes')
-                                  .sort({ createdAt: -1 }) // dal più recente al meno recente
-                                  .skip(skip)
-                                  .limit(parseInt(limit));
-
-        const totalOrders = await Order.countDocuments(baseQuery);
-        const totalPages = Math.ceil(totalOrders / parseInt(limit));
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                orders,
-                totalOrders,
-                currentPage: parseInt(page),
-                totalPages,
-            }
+        res.status(200).send({
+            page,
+            perPage,
+            totalPages,
+            totalCount,
+            data: orders
         });
     } catch (error) {
         next(error);
     }
+
+    // const user = req.user;
+    // if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
+    //     return next(new AppError("ID utente non valido", 400))
+    // }
+
+    // try {
+    //     const { status, page = 1, limit = 10, ...otherQueryParams } = req.query;
+    //     const baseQuery = buildOrderQuery(user.role, user.id, { status, ...otherQueryParams });
+
+    //     const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    //     const orders = await Order.find(baseQuery)
+    //                               .populate('user', 'firstName lastName email')
+    //                               .populate('items.item', 'name description')
+    //                               .populate('items.variant', 'sku attributes')
+    //                               .sort({ createdAt: -1 }) // dal più recente al meno recente
+    //                               .skip(skip)
+    //                               .limit(parseInt(limit));
+
+    //     const totalOrders = await Order.countDocuments(baseQuery);
+    //     const totalPages = Math.ceil(totalOrders / parseInt(limit));
+
+    //     res.status(200).json({
+    //         status: 'success',
+    //         data: {
+    //             orders,
+    //             totalOrders,
+    //             currentPage: parseInt(page),
+    //             totalPages,
+    //         }
+    //     });
+    // } catch (error) {
+    //     next(error);
+    // }
 }
 
 
@@ -152,7 +207,7 @@ export const getOrder = async (req, res, next) => {
     
     if (user.role !== 'admin') {
         query.user = user._id;
-        query.orderStatus = { $ne: 'Pending' };
+        // query.orderStatus = { $ne: 'Pending' };
     }
     
     try {
@@ -333,7 +388,7 @@ export const cancelOrder = async (req, res, next) => {
 
         order.orderStatus = "Cancelled";
         order.paymentStatus = "Refunded";
-        order.cancellationReason = req.body.reason || "Cancellato dall'utente";
+        order.cancellationReason = req.body?.reason || "Cancellato dall'utente";
 
         await order.save({ session });
 

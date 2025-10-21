@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Button, Col, Container, Pagination, Row } from "react-bootstrap";
-import { useNavigate } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Col, Container, Form, InputGroup, Pagination, Row, Spinner, Table } from "react-bootstrap";
+import { Link, useNavigate } from "react-router";
+import { getAllProducts } from "../../../api/product";
+import { CheckCircleFill, EyeFill, PencilFill, PlusCircleFill, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
 
 function AdminProductsListPage() {
     const [products, setProducts] = useState([]);
@@ -20,10 +22,6 @@ function AdminProductsListPage() {
 
     const [paginationItems, setPaginationItems] = useState([]);
 
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
     // Fetch dei prodotti quando cambia la pagina o il filtro
     const fetchProducts = useCallback(async () => {
         try {
@@ -37,13 +35,17 @@ function AdminProductsListPage() {
                 totalPages: result.totalPages
             }));
         } catch(error) {
-            setError(true);
             console.error("Error fetching products:", error);
+            setError("Impossibile caricare i prodotti. Riprova più tardi.");
         } finally {
             setLoading(false);
         }
     }, [filterTerm, paginator.page, paginator.perPage]);
 
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     // Aggiorna gli elementi della paginazione quando i parametri del paginatore cambiano
     useEffect(() => {
@@ -76,6 +78,16 @@ function AdminProductsListPage() {
             page: 1
         }));
     };
+    
+    const clearFilter = () => {
+        setPaginator({
+            page: 1,
+            perPage: 6,
+            totalCount: 0,
+            totalPages: 1
+        });
+        setCurrentFilterInput("");
+    };
 
     const handleDelete = async (id) => {
         if (window.confirm('Sei sicuro di voler eliminare questo prodotto?')) {
@@ -93,15 +105,24 @@ function AdminProductsListPage() {
         }
     };
 
-    if (loading) return <Container className="my-4">
-                            <Alert variant="info" className="text-center">
-                                <h3>Caricamento prodotti...</h3>
-                            </Alert>
-                        </Container>;
-    if (error) return <Container className="my-4">
-                            <Alert variant="danger">Errore durante il caricamento dei prodotti: {error.message}</Alert>
-                        </Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento prodotti...</span>
+                </Spinner>
+                <p>Caricamento prodotti...</p>
+            </Container>
+        );
+    }
 
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+            </Container>
+        );
+    }
     return (
         <Container className="my-4">
         <Row className="mb-4 align-items-center">
@@ -129,7 +150,7 @@ function AdminProductsListPage() {
                             type="text"
                             placeholder="Cerca per nome, brand, tag..."
                             value={currentFilterInput}
-                            onChange={handleFilterChange}
+                            onChange={() => setCurrentFilterInput(e.target.value)}
                             onKeyPress={(e) => {
                                 if (e.key === 'Enter') applyFilter();
                             }}
@@ -150,8 +171,8 @@ function AdminProductsListPage() {
                 <tr>
                     <th>#</th>
                     <th>Nome</th>
-                    <th>Prezzo</th>
-                    <th>Quantità</th>
+                    {/* <th>Prezzo</th>
+                    <th>Quantità</th> */}
                     <th>Varianti</th>
                     <th>Attivo</th>
                     <th className="text-center">Azioni</th>
@@ -161,10 +182,10 @@ function AdminProductsListPage() {
                 {products.length > 0 ? (
                     products.map((product, index) => (
                     <tr key={product.id}>
-                        <td>{indexOfFirstProduct + index + 1}</td>
+                        <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
                         <td>{product.name}</td>
-                        <td>€ {product.price.toFixed(2)}</td>
-                        <td>{product.stock}</td>
+                        {/* <td>€ {product.price.toFixed(2)}</td>
+                        <td>{product.stock}</td> */}
                         <td className="align-middle">{product.variants?.length || 0}</td>
                         <td className="align-middle text-center">
                             {product.isActive ? (
@@ -174,13 +195,13 @@ function AdminProductsListPage() {
                             )}
                         </td>
                         <td className="text-center">
-                        <Button variant="outline-primary" size="sm" className="me-2" onClick={() => navigate(`/admin/products/${product.id}`)}>
+                        <Button variant="outline-primary" size="sm" className="me-2" onClick={() => navigate(`/admin/products/${product._id}`)}>
                             <EyeFill /> Visualizza
                         </Button>
-                        <Button variant="outline-info" size="sm" className="me-2" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                        <Button variant="outline-info" size="sm" className="me-2" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
                             <PencilFill /> Modifica
                         </Button>
-                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete(product.id)}>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete(product)}>
                             <TrashFill /> Elimina
                         </Button>
                         </td>

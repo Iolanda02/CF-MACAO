@@ -1,4 +1,9 @@
-import { Form, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, Form, Image, Row, Spinner } from "react-bootstrap";
+import { ArrowLeft, PersonPlus, Save } from "react-bootstrap-icons";
+import { useNavigate, useParams } from "react-router";
+import { createUser, editUser, getUser } from "../../../api/user";
+import validator from "validator";
 
 function AdminUsersFormPage() {
     const { id } = useParams();
@@ -18,9 +23,9 @@ function AdminUsersFormPage() {
             public_id: null
         },
         shippingAddress: {
-            street: '',
+            address: '',
             city: '',
-            zipCode: '',
+            postalCode: '',
             country: '',
         },
     });
@@ -47,9 +52,9 @@ function AdminUsersFormPage() {
                     public_id: null
                 },
                 shippingAddress: {
-                    street: '',
+                    address: '',
                     city: '',
-                    zipCode: '',
+                    postalCode: '',
                     country: '',
                 },
             });
@@ -63,7 +68,7 @@ function AdminUsersFormPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`/api/admin/users/${id}`);
+            const response = await getUser(id);
             const userData = response.data;
 
             if (userData.birthDate) {
@@ -71,7 +76,7 @@ function AdminUsersFormPage() {
             }
 
             if (!userData.shippingAddress) {
-                userData.shippingAddress = { street: '', city: '', zipCode: '', country: '' };
+                userData.shippingAddress = { address: '', city: '', postalCode: '', country: '' };
             }
 
             userData.password = '';
@@ -90,7 +95,7 @@ function AdminUsersFormPage() {
         const { name, value } = e.target;
         setFormErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
 
-        // Gestione campi annidati come shippingAddress.street
+        // Gestione campi annidati come shippingAddress.address
         if (name.includes('shippingAddress.')) {
             const fieldName = name.split('.')[1];
             setUser(prevUser => ({
@@ -164,7 +169,8 @@ function AdminUsersFormPage() {
                 phone: user.phone || undefined,
                 birthDate: user.birthDate ? new Date(user.birthDate).toISOString() : undefined,
                 avatar: user.avatar,
-                shippingAddress: (user.shippingAddress.street || user.shippingAddress.city || user.shippingAddress.zipCode || user.shippingAddress.country) ? user.shippingAddress : undefined,
+                shippingAddress: (
+                    user.shippingAddress.address || user.shippingAddress.city || user.shippingAddress.postalCode || user.shippingAddress.country) ? user.shippingAddress : undefined,
             };
 
             if (user.password) {
@@ -172,15 +178,15 @@ function AdminUsersFormPage() {
             }
 
             if (isEditMode) {
-                await axios.put(`/api/admin/users/${id}`, dataToSend);
+                await editUser(id, dataToSend);
                 alert("Utente aggiornato con successo!");
             } else {
-                await axios.post(`/api/admin/users`, dataToSend)// Adatta l'endpoint
+                await createUser(dataToSend)
                 alert("Utente creato con successo!");
                 setUser({ // Resetta il form dopo la creazione
                     firstName: '', lastName: '', email: '', password: '', role: 'user', phone: '', birthDate: '',
                     avatar: { url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg', public_id: null },
-                    shippingAddress: { street: '', city: '', zipCode: '', country: '' },
+                    shippingAddress: { address: '', city: '', postalCode: '', country: '' },
                 });
                 setFormErrors({}); // Resetta gli errori del form
             }
@@ -203,26 +209,34 @@ function AdminUsersFormPage() {
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Caricamento dati utente...</span>
                 </Spinner>
-                <p>Caricamento dati utente per la modifica...</p>
+                <p>Caricamento dati utente...</p>
             </Container>
         );
     }
 
-    if (isEditMode && !user.firstName && !error) {
+    if (error) {
         return (
             <Container className="mt-5">
-                <Alert variant="info">Utente non trovato o ID non valido.</Alert>
-                <Button variant="secondary" onClick={() => navigate(-1)} className="mt-3">
-                    <ArrowLeft className="me-2" />Torna alla lista
-                </Button>
+                <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
+
+    // if (isEditMode && !user.firstName && !error) {
+    //     return (
+    //         <Container className="mt-5">
+    //             <Alert variant="info">Utente non trovato o ID non valido.</Alert>
+    //             <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
+    //                 <ArrowLeft className="me-2" />Torna alla lista
+    //             </Button>
+    //         </Container>
+    //     );
+    // }
 
     return (
         <Container className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="secondary" onClick={() => navigate(-1)}>
+                <Button variant="secondary" onClick={() => navigate("/admin/users")}>
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
             </div>
@@ -250,6 +264,7 @@ function AdminUsersFormPage() {
                                     <Form.Control
                                         type="text"
                                         name="firstName"
+                                        placeholder="Inserisci nome"
                                         value={user.firstName}
                                         onChange={handleChange}
                                         isInvalid={!!formErrors.firstName}
@@ -265,6 +280,7 @@ function AdminUsersFormPage() {
                                     <Form.Control
                                         type="text"
                                         name="lastName"
+                                        placeholder="Inserisci cognome"
                                         value={user.lastName}
                                         onChange={handleChange}
                                         isInvalid={!!formErrors.lastName}
@@ -279,8 +295,9 @@ function AdminUsersFormPage() {
                         <Form.Group controlId="formEmail" className="mb-3">
                             <Form.Label>Email</Form.Label>
                             <Form.Control
-                                type="email"
+                                type="text"
                                 name="email"
+                                placeholder="Inserisci email"
                                 value={user.email}
                                 onChange={handleChange}
                                 isInvalid={!!formErrors.email}
@@ -313,7 +330,7 @@ function AdminUsersFormPage() {
                                 onChange={handleChange}
                                 isInvalid={!!formErrors.role}
                             >
-                                <option value="user">Utente Standard</option>
+                                <option value="user">Utente</option>
                                 <option value="admin">Amministratore</option>
                             </Form.Select>
                             <Form.Control.Feedback type="invalid">
@@ -341,6 +358,7 @@ function AdminUsersFormPage() {
                             <Form.Control
                                 type="date"
                                 name="birthDate"
+                                placeholder="gg/mm/aaaa"
                                 value={user.birthDate || ''}
                                 onChange={handleChange}
                                 isInvalid={!!formErrors.birthDate}
@@ -350,19 +368,19 @@ function AdminUsersFormPage() {
                             </Form.Control.Feedback>
                         </Form.Group>
 
-                        <h5 className="mt-4 mb-3">Indirizzo di Spedizione (Opzionale)</h5>
-                        <Form.Group controlId="formShippingStreet" className="mb-3">
+                        <h5 className="mt-4 mb-3">Indirizzo di Spedizione</h5>
+                        <Form.Group controlId="formShippingaddress" className="mb-3">
                             <Form.Label>Via</Form.Label>
                             <Form.Control
                                 type="text"
-                                name="shippingAddress.street"
+                                name="shippingAddress.address"
                                 placeholder="Via e numero civico"
-                                value={user.shippingAddress?.street || ''}
+                                value={user.shippingAddress?.address || ''}
                                 onChange={handleChange}
-                                isInvalid={!!formErrors['shippingAddress.street']}
+                                isInvalid={!!formErrors['shippingAddress.address']}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {formErrors['shippingAddress.street']}
+                                {formErrors['shippingAddress.address']}
                             </Form.Control.Feedback>
                         </Form.Group>
                         <Row>
@@ -383,18 +401,18 @@ function AdminUsersFormPage() {
                                 </Form.Group>
                             </Col>
                             <Col md={3}>
-                                <Form.Group controlId="formShippingZipCode" className="mb-3">
+                                <Form.Group controlId="formShippingpostalCode" className="mb-3">
                                     <Form.Label>CAP</Form.Label>
                                     <Form.Control
                                         type="text"
-                                        name="shippingAddress.zipCode"
+                                        name="shippingAddress.postalCode"
                                         placeholder="CAP"
-                                        value={user.shippingAddress?.zipCode || ''}
+                                        value={user.shippingAddress?.postalCode || ''}
                                         onChange={handleChange}
-                                        isInvalid={!!formErrors['shippingAddress.zipCode']}
+                                        isInvalid={!!formErrors['shippingAddress.postalCode']}
                                     />
                                     <Form.Control.Feedback type="invalid">
-                                        {formErrors['shippingAddress.zipCode']}
+                                        {formErrors['shippingAddress.postalCode']}
                                     </Form.Control.Feedback>
                                 </Form.Group>
                             </Col>
@@ -416,19 +434,28 @@ function AdminUsersFormPage() {
                             </Col>
                         </Row>
 
-                        <Button variant={isEditMode ? "primary" : "success"} type="submit" className="mt-4" disabled={submitting}>
-                            {submitting ? (
-                                <>
-                                    <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
-                                    {isEditMode ? "Salvataggio..." : "Creazione..."}
-                                </>
-                            ) : (
-                                <>
-                                    {isEditMode ? <Save className="me-2" /> : <PersonPlus className="me-2" />}
-                                    {isEditMode ? "Salva Modifiche" : "Crea Utente"}
-                                </>
-                            )}
-                        </Button>
+                        <div className="d-flex flex-items-center gap-3 mt-4">
+                            <Button variant={isEditMode ? "primary" : "success"} type="submit" disabled={submitting}>
+                                {submitting ? (
+                                    <>
+                                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                        {isEditMode ? "Salvataggio..." : "Creazione..."}
+                                    </>
+                                ) : (
+                                    <>
+                                        {isEditMode ? <Save className="me-2" /> : <PersonPlus className="me-2" />}
+                                        {isEditMode ? "Salva Modifiche" : "Crea Utente"}
+                                    </>
+                                )}
+                            </Button>
+                            
+                            <Button variant={isEditMode ? "outline-primary" : "outline-success"} type="submit" 
+                                disabled={submitting} 
+                                onClick={() => navigate(-1)}
+                            >
+                                Annulla
+                            </Button>
+                        </div>
                     </Card.Body>
                 </Card>
             </Form>

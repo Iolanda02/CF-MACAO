@@ -1,5 +1,5 @@
 import { Outlet, Route, Routes } from "react-router";
-import { Container } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 
 import { useAuth } from "./contexts/AuthContext";
 import AdminRoutes from "./pages/admin-routes/AdminRoutes";
@@ -30,9 +30,24 @@ import { CartProvider } from "./contexts/CartContext";
 
 function App() {
 
-  const { isLoading } = useAuth();
+  const { isLoading, error } = useAuth();
   if (isLoading) {
-      return <div>Caricamento App...</div>;
+    return (
+      <Container className="text-center mt-5">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Caricamento...</span>
+        </Spinner>
+        <p>Caricamento...</p>
+      </Container>
+    )
+  }
+
+  if (error) {
+    return (
+      <Container className="mt-5">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
   }
 
   return (
@@ -57,19 +72,20 @@ function App() {
 
         {/* Rotte Admin */}
         <Route path="/admin" element={<AdminRoutes />}>
-          <Route element={<AdminLayout />} />
-          <Route index element={<AdminDashboardPage />} />
-          <Route path="products" element={<AdminProductsListPage />} />
-          <Route path="products/new" element={<AdminProductsFormPage />} />
-          <Route path="products/edit/:id" element={<AdminProductsFormPage />} />
-          <Route path="products:id" element={<AdminProductsViewPage />} />
-          <Route path="orders" element={<AdminOrdersListPage />} />
-          <Route path="orders/edit/:id" element={<AdminOrdersFormPage />} />
-          <Route path="orders/:id" element={<AdminOrdersViewPage />} />
-          <Route path="users" element={<AdminUsersListPage />} />
-          <Route path="users/new" element={<AdminUsersFormPage />} />
-          <Route path="users/edit/:id" element={<AdminUsersFormPage />} />
-          <Route path="users/:id" element={<AdminUsersViewPage />} />
+          <Route element={<AdminLayout />} > 
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="products" element={<AdminProductsListPage />} />
+            <Route path="products/new" element={<AdminProductsFormPage />} />
+            <Route path="products/edit/:id" element={<AdminProductsFormPage />} />
+            <Route path="products/:id" element={<AdminProductsViewPage />} />
+            <Route path="orders" element={<AdminOrdersListPage />} />
+            <Route path="orders/edit/:id" element={<AdminOrdersFormPage />} />
+            <Route path="orders/:id" element={<AdminOrdersViewPage />} />
+            <Route path="users" element={<AdminUsersListPage />} />
+            <Route path="users/new" element={<AdminUsersFormPage />} />
+            <Route path="users/edit/:id" element={<AdminUsersFormPage />} />
+            <Route path="users/:id" element={<AdminUsersViewPage />} />
+          </Route>
         </Route>
 
         {/* Rotta 404 - Pagina non trovata */}

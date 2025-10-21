@@ -1,14 +1,19 @@
-import { useState } from "react";
-import { Button, Col, Container, Pagination, Row } from "react-bootstrap";
-import { Form, Link, useNavigate } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Col, Container, Form, Pagination, Row, Spinner, Table } from "react-bootstrap";
+import { Link, useNavigate } from "react-router";
+import { cancelOrder, getAllOrdersAdmin } from "../../../api/order";
+import { EyeFill, PencilFill, Search, TrashFill } from "react-bootstrap-icons";
+import DeleteModal from "../../../components/modals/DeleteModal";
 
 function AdminOrdersListPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
-    const [message, setMessage] = useState(null);
-    const [filterTerm, setFilterTerm] = useState("");
-    const [currentFilterInput, setCurrentFilterInput] = useState("");
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [orderToDelete, setOrderToDelete] = useState(null);
+
     const navigate = useNavigate();
 
     const [paginator, setPaginator] = useState({
@@ -20,16 +25,13 @@ function AdminOrdersListPage() {
 
     const [paginationItems, setPaginationItems] = useState([]);
 
-    useEffect(() => {
-        fetchOrders();
-    }, [fetchOrders]);
-
+    
     // Fetch dei prodotti quando cambia la pagina o il filtro
     const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
             setError(false);
-            const result = await getAllOrders(filterTerm, paginator);
+            const result = await getAllOrdersAdmin(searchTerm, paginator);
             setOrders(result.data);
             setPaginator(prev => ({
                 ...prev,
@@ -37,13 +39,16 @@ function AdminOrdersListPage() {
                 totalPages: result.totalPages
             }));
         } catch(error) {
-            setError(true);
             console.error("Error fetching orders:", error);
+            setError("Impossibile caricare gli ordini. Riprova più tardi.");
         } finally {
             setLoading(false);
         }
-    }, [filterTerm, paginator.page, paginator.perPage]);
+    }, [searchTerm, paginator.page, paginator.perPage]);
 
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
 
     // Aggiorna gli elementi della paginazione quando i parametri del paginatore cambiano
     useEffect(() => {
@@ -76,32 +81,46 @@ function AdminOrdersListPage() {
             page: 1
         }));
     };
+    
+    const handleStatusFilterChange = (event) => {
+        setFilterStatus(event.target.value);
+    };
+    
+    const handleDelete = (order) => {
+        setOrderToDelete(order);
+        setShowDeleteModal(true);
+    };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Sei sicuro di voler eliminare questo ordine?')) {
-            try {
-                const result = await remove(id);
-                setOrders(orders.filter(order => order._id !== id));
-                setMessage({ type: 'success', text: 'Ordine eliminato con successo!' });
-                // Resetta la paginazione se l'eliminazione causa la scomparsa dell'ultima pagina
-                // if (currentPage > Math.ceil((products.length - 1) / productsPerPage)) {
-                //     setCurrentPage(Math.max(1, currentPage - 1));
-                // }
-            } catch(error) {
-                console.log(error);
-                setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione dell\'ordine.' });
-            }
+    const confirmDeleteUser = async () => {
+        try {
+            await cancelOrder(orderToDelete._id);
+            fetchOrders(); // Ricarica la lista dopo la cancellazione
+            setShowDeleteModal(false);
+            setOrderToDelete(null);
+        } catch (err) {
+            console.error("Errore nella cancellazione utente:", err);
+            setError("Impossibile cancellare l'utente.");
         }
     };
 
-    if (loading) return <Container className="my-4">
-                            <Alert variant="info" className="text-center">
-                                <h3>Caricamento prodotti...</h3>
-                            </Alert>
-                        </Container>;
-    if (error) return <Container className="my-4">
-                            <Alert variant="danger">Errore durante il caricamento dei prodotti: {error.message}</Alert>
-                        </Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento prodotti...</span>
+                </Spinner>
+                <p>Caricamento prodotti...</p>
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+            </Container>
+        );
+    }
 
     return (
         <Container className="mt-4">
@@ -109,14 +128,14 @@ function AdminOrdersListPage() {
 
         <Row className="mb-3 align-items-center">
             <Col md={6}>
-            <Form onSubmit={handleSearchSubmit}>
+            <Form onSubmit={applyFilter}>
                 <Form.Group as={Row}>
                 <Col sm={9}>
                     <Form.Control
                     type="text"
                     placeholder="Cerca per N. ordine, Cliente..."
                     value={searchTerm}
-                    onChange={handleSearchChange}
+                    onChange={() => setSearchTerm(e.target.value)}
                     />
                 </Col>
                 <Col sm={3}>
@@ -156,8 +175,8 @@ function AdminOrdersListPage() {
             </tr>
             </thead>
             <tbody>
-            {filteredOrders.length > 0 ? (
-                filteredOrders.map(order => (
+            {orders.length > 0 ? (
+                orders.map(order => (
                 <tr key={order._id}>
                     <td>{order.orderNumber}</td>
                     <td>{order.user?.email || 'N/A'}</td>
@@ -176,7 +195,7 @@ function AdminOrdersListPage() {
                         <PencilFill />
                         </Button>
                     </Link>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteOrder(order._id)} title="Elimina Ordine">
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(order)} title="Elimina Ordine">
                         <TrashFill />
                     </Button>
                     </td>
@@ -206,6 +225,15 @@ function AdminOrdersListPage() {
                 </Col>
             </Row>
         )}
+        
+        <DeleteModal
+            show={showDeleteModal}
+            onHide={() => setShowDeleteModal(false)}
+            onConfirm={confirmDeleteUser}
+            textToShow={"Sei sicuro di voler eliminare l'ordine " +
+                (orderToDelete ? (orderToDelete.orderNumber) : '') + "?"
+            }
+        />
         </Container>
     )
 }

@@ -1,5 +1,4 @@
-import { Card } from "react-bootstrap";
-import { Form } from "react-router";
+import { Card, Form } from "react-bootstrap";
 
 // Componente per gestire l'indirizzo di spedizione
 const AddressForm = ({ address, onChange, readOnly = false }) => {

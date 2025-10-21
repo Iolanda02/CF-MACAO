@@ -1,15 +1,22 @@
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Image } from 'react-bootstrap';
 import logo from "../../assets/logo.png";
 import "./styles.css";
+import LoginModal from '../modals/LoginModal';
+import { useState } from 'react';
 
 
 function PublicNavbar() {
-    const { isAuthenticated, authUser, logout } = useAuth();
+    const { isAuthenticated, authUser, login, logout } = useAuth();
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const navigate = useNavigate();
+
+    const handleShowLoginModal = () => setShowLoginModal(true);
+    const handleCloseLoginModal = () => setShowLoginModal(false);
 
     return (
         <Navbar expand="lg" className="bg-body-tertiary">
@@ -25,7 +32,7 @@ function PublicNavbar() {
                                 <Nav.Link as={NavLink} to="/">
                                     Prodotti
                                 </Nav.Link>
-                                {authUser?.role === 'user' && <Nav.Link as={NavLink} to="/cart">
+                                {(authUser?.role === 'user' || authUser?.role === 'admin') && <Nav.Link as={NavLink} to="/cart">
                                     Carrello
                                 </Nav.Link>}
                                 {authUser?.role === 'admin' && <Nav.Link as={NavLink} to="/admin">
@@ -37,8 +44,11 @@ function PublicNavbar() {
                                         <Nav.Link as={NavLink} onClick={logout}>
                                             Logout
                                         </Nav.Link>
+                                        <Nav.Link as={NavLink} to={`/orders`}>
+                                            Storico ordini
+                                        </Nav.Link>
                                         <Nav.Link as={NavLink} to={`/profile`}>
-                                            {authUser?.nome} {authUser?.cognome}
+                                            {authUser?.firstName} {authUser?.lastName}
                                         </Nav.Link>
                                         <Image className="avatar" src={authUser?.avatar?.path} roundedCircle />
                                     </div>
@@ -47,7 +57,7 @@ function PublicNavbar() {
                                     <Nav.Link as={NavLink} to="/">
                                         Register
                                     </Nav.Link>
-                                    <Nav.Link as={NavLink} to="/login">
+                                    <Nav.Link onClick={handleShowLoginModal}>
                                         Login
                                     </Nav.Link>
                                 </div>
@@ -56,6 +66,22 @@ function PublicNavbar() {
                     </Nav>
                 </Navbar.Collapse>
             </Container>
+            
+            <LoginModal
+                show={showLoginModal}
+                handleClose={handleCloseLoginModal}
+                onProceedAsGuest={() => {
+                    handleAddToCart(); 
+                }}
+                onLogin={async (email, password) => {
+                    try {
+                        await login({email, password}); 
+                        navigate("/");
+                    } catch (loginError) {
+                        console.error("Errore durante il login dalla modale:", loginError);
+                    }
+                }}
+            />
         </Navbar>
     );
 }

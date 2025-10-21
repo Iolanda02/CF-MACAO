@@ -1,4 +1,9 @@
-import { Alert, Card, Image, Modal, Pagination } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, Image, Modal, Pagination, Row, Spinner, Table } from "react-bootstrap";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getAllOrdersUser, getOrderById } from "../../../api/order";
+import { ArrowLeft, EyeFill, XLg } from "react-bootstrap-icons";
+import { useNavigate } from "react-router";
 
 // Componente per visualizzare i dettagli di un singolo ordine nella modale
 const OrderDetailModal = ({ show, onHide, order }) => {
@@ -6,13 +11,8 @@ const OrderDetailModal = ({ show, onHide, order }) => {
 
     // Funzione helper per formattare la data
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('it-IT', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleString();
     };
 
     return (
@@ -25,11 +25,25 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                     <Col md={6}>
                         <p><strong>Data Ordine:</strong> {formatDate(order.createdAt)}</p>
                         <p><strong>Stato Pagamento:</strong> {order.paymentStatus}</p>
-                        <p><strong>Stato Ordine:</strong> {order.orderStatus}</p>
+                        {/* <p><strong>Stato Ordine:</strong> {order.orderStatus}</p> */}
                     </Col>
                     <Col md={6}>
-                        <p><strong>Totale:</strong> {order.totalAmount?.toFixed(2)} {order.currency}</p>
+                        {/* <p><strong>Totale:</strong> {order.totalAmount?.toFixed(2)} {order.currency}</p> */}
+                        <p><strong>Stato Ordine:</strong> {order.orderStatus}</p>
                         <p><strong>Metodo di Pagamento:</strong> {order.paymentMethod || 'Non specificato'}</p>
+                    </Col>
+                    <Col>
+                        <p><strong>Indirizzo di spedizione:</strong> 
+                        {order.shippingAddress ? (
+                            <span> {order.shippingAddress.address} 
+                            {order.shippingAddress.postalCode? ', ' + order.shippingAddress.postalCode: ''} 
+                            {order.shippingAddress.city? ', ' + order.shippingAddress.city: ''} 
+                            {order.shippingAddress.country? ', ' + order.shippingAddress.country: ''}
+                            </span>
+                        ) : (
+                            <Alert variant="warning">Indirizzo di spedizione non disponibile.</Alert>
+                        )}
+                        </p>
                         {order.notes && <p><strong>Note:</strong> {order.notes}</p>}
                     </Col>
                 </Row>
@@ -91,7 +105,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                     <Alert variant="info">Nessun articolo trovato per questo ordine.</Alert>
                 )}
 
-                <h5 className="mt-4 mb-3">Indirizzo di Spedizione</h5>
+                {/* <h5 className="mt-4 mb-3">Indirizzo di Spedizione</h5>
                 {order.shippingAddress ? (
                     <Card className="p-3">
                         <p className="mb-1">{order.shippingAddress.street}</p>
@@ -100,7 +114,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                     </Card>
                 ) : (
                     <Alert variant="warning">Indirizzo di spedizione non disponibile.</Alert>
-                )}
+                )} */}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
@@ -116,48 +130,84 @@ function OrdersPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-
+    const [searchTerm, setSearchTerm] = useState('');
+    const navigate = useNavigate();
     const { authUser } = useAuth();
-    const ordersPerPage = 10;
 
+    const [paginator, setPaginator] = useState({
+        page: 1,
+        perPage: 6,
+        totalCount: 0,
+        totalPages: 1
+    });
+    
+    const [paginationItems, setPaginationItems] = useState([]);
+    
     useEffect(() => {
-        if (authUser?._id) {
-            fetchOrders(authUser._id, currentPage, ordersPerPage);
-        } else {
-            setError("Utente non autenticato.");
-            setLoading(false);
-        }
-    }, [authUser, currentPage]);
+        fetchOrders();
+    }, [paginator.page, paginator.perPage, searchTerm]);
 
-    const fetchOrders = async (userId, page, limit) => {
+    const fetchOrders = async () => {
         setLoading(true);
         setError(null);
         try {
-            const result = await getUserOrders(userId, page, limit);
-            setOrders(result.orders);
-            setTotalPages(result.totalPages);
+            const response = await getAllOrdersUser(searchTerm, paginator);
+            setOrders(response.data);
+            setPaginator(prev => ({
+                ...prev,
+                totalCount: response.totalCount,
+                totalPages: response.totalPages
+            }));
         } catch (err) {
-            setError("Errore durante il recupero dello storico ordini.");
-            console.error("Errore fetch ordini:", err);
+            console.error("Errore nel recupero dello storico ordini:", err);
+            setError("Impossibile caricare gli ordini. Riprova più tardi.");
+            setLoading(false);
         } finally {
             setLoading(false);
         }
     };
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    
+    // Funzione per cambiare la pagina (clic sul numero)
+    const handlePageChange = useCallback((number) => {
+        if (number !== paginator.page && number <= paginator.totalPages && number >= 1) {
+            setPaginator(prev => ({
+                ...prev,
+                page: number,
+            }));
+        }
+    }, [paginator.page, paginator.totalPages]);
+    
+    // Aggiorna gli elementi della paginazione quando i parametri del paginatore cambiano
+    useEffect(() => {
+        const pages = [];
+        for (let number = 1; number <= paginator.totalPages; number++) {
+            pages.push(
+                <Pagination.Item key={number} active={number === paginator.page}
+                    onClick={() => handlePageChange(number)}>
+                    {number}
+                </Pagination.Item>,
+            );
+        }
+        setPaginationItems(pages);
+    }, [paginator.totalPages, paginator.page]);
+    
+    // Funzione per applicare il filtro (clic sul pulsante Cerca)
+    const applyFilter = () => {
+        setPaginator(prev => ({
+            ...prev,
+            page: 1
+        }));
     };
+
 
     const handleViewDetails = async (orderId) => {
         setLoading(true);
         setError(null);
         try {
             const fullOrderDetails = await getOrderById(orderId); 
-            setSelectedOrder(fullOrderDetails);
+            setSelectedOrder(fullOrderDetails.data);
             setShowDetailModal(true);
         } catch (err) {
             setError("Errore durante il caricamento dei dettagli dell'ordine.");
@@ -185,7 +235,7 @@ function OrdersPage() {
         return (
             <Container className="text-center mt-5">
                 <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Caricamento...</span>
+                    <span className="visually-hidden">Caricamento ordini...</span>
                 </Spinner>
                 <p>Caricamento ordini...</p>
             </Container>
@@ -206,6 +256,11 @@ function OrdersPage() {
     return (
         <div className="order-history-root py-4">
             <Container>
+                <div className="d-flex mb-3">
+                    <Button variant="secondary" onClick={() => navigate('/')}>
+                        <ArrowLeft className="me-2" />Torna alla home
+                    </Button>
+                </div>
                 <h1 className="mb-4">Storico Ordini</h1>
 
                 {orders.length === 0 ? (
@@ -246,17 +301,22 @@ function OrdersPage() {
                             </tbody>
                         </Table>
 
-                        <Pagination className="justify-content-center mt-4">
-                            {[...Array(totalPages)].map((_, index) => (
-                                <Pagination.Item
-                                    key={index + 1}
-                                    active={index + 1 === currentPage}
-                                    onClick={() => handlePageChange(index + 1)}
-                                >
-                                    {index + 1}
-                                </Pagination.Item>
-                            ))}
-                        </Pagination>
+                        {/* Paginazione */}
+                        {paginator.totalPages > 1 && (
+                            <Row className="mt-5 justify-content-center">
+                                <Col xs="auto">
+                                    <Pagination>
+                                        <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
+                                        <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
+
+                                        {paginationItems}
+
+                                        <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
+                                        <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
+                                    </Pagination>
+                                </Col>
+                            </Row>
+                        )}
                     </>
                 )}
             </Container>

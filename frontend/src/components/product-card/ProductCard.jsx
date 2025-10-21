@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Form, InputGroup } from "react-bootstrap";
+import { Button, Card, Form, InputGroup, Toast, ToastContainer } from "react-bootstrap";
 import { Link } from "react-router";
 import "./styles.css";
 import { CartPlusFill, Dash, Plus } from "react-bootstrap-icons";
 import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../contexts/AuthContext";
+import LoginModal from "../modals/LoginModal";
+import { useToast } from "../../contexts/ToastContext";
 
 
 function ProductCard({ product }) {
     const { addItemToCart, isLoading, error } = useCart();
+    const { isAuthenticated, authUser, login } = useAuth();
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(product.variants[0]?.name || '');
     const [currentPrice, setCurrentPrice] = useState(product.variants[0]?.price?.amount || 0);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const { addToast } = useToast();
 
     useEffect(() => {
         // Reset di quantità e variante quando cambia il prodotto
@@ -30,9 +36,16 @@ function ProductCard({ product }) {
     const handleQuantityChange = (delta) => {
         setQuantity(prev => Math.max(1, prev + delta));
     };
+
+    const handleShowLoginModal = () => setShowLoginModal(true);
+    const handleCloseLoginModal = () => setShowLoginModal(false);
     
     const handleAddToCart = async () => {
         try {
+            if(!isAuthenticated) {
+                handleShowLoginModal();
+                return;
+            }
             // Qui devi passare l'ID del prodotto, la quantità e l'ID della variante selezionata
             const selectedVariantObj = product.variants.find(v => v.name === selectedVariant);
             if (!selectedVariantObj) {
@@ -40,9 +53,10 @@ function ProductCard({ product }) {
                 return;
             }
             await addItemToCart(product._id, quantity, selectedVariantObj._id);
-            // Feedback visivo (es. toast) qui
+            addToast(`"${product.name}" (${selectedVariant}) aggiunto al carrello!`, "info");
         } catch (error) {
             console.error("Errore nell'aggiunta al carrello:", error);
+            addToast("Errore nell'aggiunta al carrello. Riprova.", "danger");
         }
     };
     
@@ -117,6 +131,25 @@ function ProductCard({ product }) {
                     </Button>
                 </div>
             </Card.Body>
+            
+            <LoginModal
+                show={showLoginModal}
+                handleClose={handleCloseLoginModal}
+                onProceedAsGuest={() => {
+                    handleAddToCart(); 
+                }}
+                onLogin={async (email, password) => {
+                    try {
+                        await login({email, password}); 
+                        handleAddToCart();
+                    } catch (loginError) {
+                        console.error("Errore durante il login dalla modale:", loginError);
+                        addToast("Credenziali di accesso non valide.", "danger");
+                        setError("Credenziali di accesso non valide.")
+                    }
+                }}
+            />
+        
         </Card>
     );
 }

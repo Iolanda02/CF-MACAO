@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { Button, Card, Col, Container, Row } from "react-bootstrap";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, ListGroup, Row, Spinner } from "react-bootstrap";
+import { getProduct } from "../../../api/product";
+import { useNavigate, useParams } from "react-router";
+import { ArrowLeft, PencilFill } from "react-bootstrap-icons";
 
 function AdminProductsViewPage() {
     const { id } = useParams();
@@ -8,34 +11,48 @@ function AdminProductsViewPage() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
+    const getProductDetails = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            setError(false);
+            const result = await getProduct(id);
+            setProduct(result.data);
+        } catch(error) {
+            console.error(error);
+            setError("Non è stato possibile recuperare i dati del prodotto. Riprova più tardi.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (id) {
             getProductDetails(id);
         }
     }, [id, getProductDetails]);
-
         
-    const getProductDetails = useCallback(async (id) => {
-        try {
-            setLoading(true);
-            setError(false);
-            const result = await fetchProductDetails(id);
-            setProduct(result);
-            setSelectedFormat(result.formats[0].quantity);
-            setQuantity(1);
-        } catch(error) {
-            setError(true);
-            console.error(error);
-            navigate('/404', { replace: true });
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-    
-    if (loading) 
-        return <Container className="my-4"><h3>Caricamento prodotto...</h3></Container>;
-    if (error) 
-        return <Container className="my-4"><Alert variant="danger">{error}</Alert></Container>;
+    if (loading) {
+        return (
+            <Container className="text-center mt-5">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Caricamento prodotto...</span>
+                </Spinner>
+                <p>Caricamento prodotto...</p>
+            </Container>
+        );
+    }
+
+    if (error) {
+        return (
+            <Container className="mt-5">
+                <Alert variant="danger">{error}</Alert>
+                <Button variant="secondary" onClick={() => navigate("/admin/items")} className="mt-3">
+                    <ArrowLeft className="me-2" />Torna alla lista
+                </Button>
+            </Container>
+        );
+    }
+
     if (!product) 
         return <Container className="my-4"><Alert variant="info">Prodotto non disponibile.</Alert></Container>;
 
@@ -46,23 +63,24 @@ function AdminProductsViewPage() {
     };
 
     return (
-        <Container className="my-4">
-        <Row className="mb-4 align-items-center">
-            <Col>
-            <h2>Dettagli Prodotto: {product.name}</h2>
-            </Col>
-            <Col xs="auto">
+        <Container className="mt-4">
+        
+        <div className="d-flex justify-content-between align-items-center mb-3">
+            <Button variant="secondary" onClick={() => navigate('/admin/products')} className="mt-3">
+                Torna alla Lista Prodotti
+            </Button>
             <Button variant="info" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
                 <PencilFill className="me-2" />Modifica Prodotto
             </Button>
-            </Col>
-        </Row>
+        </div>
+            
+        <h1>Dettagli Prodotto: {product.name}</h1>
 
-        <Card className="mb-4">
+        <Card className="my-4">
             <Card.Header as="h5">Informazioni Generali</Card.Header>
             <Card.Body>
             <ListGroup variant="flush">
-                <ListGroup.Item><strong>ID:</strong> {product.id}</ListGroup.Item>
+                <ListGroup.Item><strong>ID:</strong> {product._id}</ListGroup.Item>
                 <ListGroup.Item><strong>Nome:</strong> {product.name}</ListGroup.Item>
                 {/* <ListGroup.Item><strong>Slug:</strong> {product.slug}</ListGroup.Item> */}
                 <ListGroup.Item><strong>Brand:</strong> {product.brand || 'N/A'}</ListGroup.Item>
@@ -138,9 +156,6 @@ function AdminProductsViewPage() {
             </Card.Body>
         </Card> */}
 
-        <Button variant="secondary" onClick={() => navigate('/admin/products')} className="mt-3">
-            Torna alla Lista Prodotti
-        </Button>
         </Container>
     )
 }

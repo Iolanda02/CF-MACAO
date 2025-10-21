@@ -1,4 +1,6 @@
 
+import { Button, Col, Container, Row } from "react-bootstrap";
+import { HouseDoorFill } from "react-bootstrap-icons";
 import { Link } from "react-router";
 
 function NotFoundPage() {
@@ -14,7 +16,7 @@ function NotFoundPage() {
                             <Image src={notFoundImage} alt="Pagina non trovata" fluid className="mb-4" style={{ maxWidth: '400px' }} />
                         ) : (
                             <h1 className="display-1 text-danger mb-4">
-                                <span className="d-block">404</span>
+                                {/* <span className="d-block">404</span> */}
                                 <span className="d-block">Pagina Non Trovata</span>
                             </h1>
                         )}
@@ -23,7 +25,7 @@ function NotFoundPage() {
                         {!notFoundImage && <h1 className="display-4 mb-3">Oops!</h1>}
                         <p className="lead mb-4">
                             Siamo spiacenti, la pagina che stavi cercando non è stata trovata.
-                            <br></br>
+                            <br />
                             Potrebbe essere stata rimossa, il nome è cambiato o non è mai esistita.
                         </p>
 
