@@ -264,7 +264,7 @@ function OrdersPage() {
                 <h1 className="mb-4">Storico Ordini</h1>
 
                 {orders.length === 0 ? (
-                    <Alert variant="info">Non hai ancora effettuato nessun ordine.</Alert>
+                    <Alert variant="info">Non hai ancora effettuato ordini.</Alert>
                 ) : (
                     <>
                         <Table striped bordered hover responsive className="shadow-sm">

@@ -6,6 +6,7 @@ import AddressForm from "./AddressForm";
 import { useAuth } from "../../../contexts/AuthContext";
 import { profile } from "../../../api/authentication";
 import { ArrowLeft, PencilFill, PersonCircle, TrashFill, XCircleFill } from "react-bootstrap-icons";
+import { addAvatar, editUser, removeAvatar } from "../../../api/user";
 
 
 function ProfilePage() {
@@ -30,23 +31,27 @@ function ProfilePage() {
     const [avatarFile, setAvatarFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [successMessage, setSuccessMessage] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { authUser, setAuthUser, setToken } = useAuth();
     const navigate = useNavigate();
-    const { id } = useParams(); 
 
     
     useEffect(() => {
         if (authUser?._id) {
             readUserProfile(authUser._id);
-        } else if (id) {
-            readUserProfile(id);
         } else {
             setError("Nessun utente specificato o autenticato.");
             setLoading(false);
         }
-    }, [authUser, id]);
+    }, [authUser]);
 
+    useEffect(() => {
+        // Reset messaggi quando si cambia modalità
+        setFormErrors({});
+        setSuccessMessage(null);
+    }, [isEdit]);
         
     async function readUserProfile(id) {
         try {
@@ -107,19 +112,34 @@ function ProfilePage() {
             reader.readAsDataURL(file);
         } else {
             setAvatarFile(null);
-            setPreviewUrl(user.avatar?.url || null);
+            setPreviewUrl(user.avatar?.url);
         }
     };
 
-    const handleRemoveAvatar = () => {
-        setAvatarFile(null);
-        setPreviewUrl(null); // invio una richiesta al backend per rimuovere l'avatar anche lì?
+    const handleRemoveAvatar = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const updatedUser = await removeAvatar(user._id);
+            setUser(updatedUser.data);
+            setAuthUser(updatedUser.data);
+            setAvatarFile(null);
+            setPreviewUrl(updatedUser.avatar?.url || null);
+        } catch (err) {
+            setError("Errore durante l'aggiornamento del profilo.");
+            console.error("Errore aggiornamento profilo:", err);
+        } finally {
+            setLoading(false);
+        }
+        
     };
     
     async function handleSubmit(e) {
         e.preventDefault();
         if (!validateForm()) return;
 
+        setIsSubmitting(true);
+        setSuccessMessage(null);
         setLoading(true);
         setError(null);
         try {
@@ -134,19 +154,14 @@ function ProfilePage() {
                 birthDate: formData.birthDate,
                 shippingAddress: formData.shippingAddress
             };
-            const result = await updateUserProfile(user._id, profileUpdateData);
-            updatedUser = { ...updatedUser, ...result };
+            const result = await editUser(user._id, profileUpdateData);
+            updatedUser = { ...updatedUser, ...result.data };
 
             if (avatarFile) {
                 const formDataForAvatar = new FormData();
                 formDataForAvatar.append('avatar', avatarFile);
-                const avatarResult = await uploadAvatar(user._id, formDataForAvatar);
-                updatedUser = { ...updatedUser, avatar: avatarResult.avatar };
-            } else if (previewUrl === null && user.avatar?.url) {
-                 // Se l'avatar è stato rimosso e prima c'era un URL, invia una richiesta per rimuoverlo dal backend
-                 // DEVI IMPLEMENTARE LA LOGICA NELLA TUA API updateUserProfile o in una funzione dedicata
-                //  const avatarRemoveResult = await updateUserProfile(user._id, { avatar: { url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg', public_id: null } });
-                //  updatedUser = { ...updatedUser, avatar: avatarRemoveResult.avatar };
+                const avatarResult = await addAvatar(user._id, formDataForAvatar);
+                updatedUser = { ...updatedUser, avatar: avatarResult?.data?.avatar };
             }
 
             setUser(updatedUser);
@@ -159,6 +174,7 @@ function ProfilePage() {
             console.error("Errore aggiornamento profilo:", err);
         } finally {
             setLoading(false);
+            setIsSubmitting(false);
         }
     }
 

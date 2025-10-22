@@ -1,3 +1,4 @@
+import protectedApi from "./protectedApi";
 import publicApi from "./publicApi";
 
 export async function getAllProducts(search, paginator) {
@@ -26,7 +27,7 @@ export async function getProduct(id) {
 
 export async function createProduct(newProduct) {
     try {
-        const response = await publicApi.post(`/item`, newProduct);
+        const response = await protectedApi.post(`/items`, newProduct);
         // console.log("(API) createProduct: ", response)
         return response.data;
     } catch(error) {
@@ -38,7 +39,7 @@ export async function createProduct(newProduct) {
 export async function updateProduct(id, newData) {
     try {
         const URL = `/items/${id}`;
-        const response = await publicApi.patch(URL, newData);
+        const response = await protectedApi.patch(URL, newData);
         // console.log("(API) updateProduct: ", response);
         return response.data;
     } catch(error) {
@@ -73,6 +74,32 @@ export async function getReviewsByItemId(id) {
     try {
         const response = await publicApi.get(`/items/${id}/reviews`);
         // console.log("(API) getReviewsByItemId: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+
+
+export async function addImages(id, fData) {
+    try {
+        const response = await protectedApi.patch(`/items/${id}/images`, fData,
+            {headers: {'Content-Type': 'multipart/form-data'}}
+        );
+        // console.log("(API) addImages: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function removeImage(productId, imageId) {
+    try {
+        const response = await protectedApi.delete(`/items/${productId}/images/${imageId}`);
+        // console.log("(API) removeImage: ", response)
         return response.data;
     } catch(error) {
         // console.log(error);

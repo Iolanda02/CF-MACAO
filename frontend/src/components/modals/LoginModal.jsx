@@ -4,28 +4,53 @@ import { useState } from "react";
 import { EyeFill, EyeSlashFill } from "react-bootstrap-icons";
 
 
-const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin }) => {
+const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin, onSwitchToRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        onLogin(email, password);
-        handleClose();
+        setLoading(true);
+        setError(null);
+
+        try {
+            await onLogin(email, password);
+            handleClose();
+        } catch (err) {
+            setError(err.message || "Credenziali non valide. Riprova.");
+            console.error("Errore durante il login:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
+    
+    const handleModalClose = () => {
+        console.log("handleModalClose");
+        if(error) {
+            return;
+        }
+        setEmail('');
+        setPassword('');
+        setError(null);
+        setLoading(false);
+        handleClose();
+    };
 
     return (
-        <Modal show={show} onHide={handleClose} centered className="login-modal-wrapper">
+        <Modal show={show} onHide={handleModalClose} centered className="login-modal-wrapper">
             <Modal.Header closeButton className="border-0 pb-0">
             </Modal.Header>
             <Modal.Body className="px-4 pt-0 pb-4 text-center">
                 <h3 className="modal-title mb-3">Entra in Macao</h3>
 
+                {error && <Alert variant="danger">{error}</Alert>}
                 {/* <div className="guest-checkout-section mb-5">
                     <p className="section-subtitle mb-3 fw-bold">Come ospite</p>
                     <Button variant="dark" className="proceed-guest-button w-100 mb-4" onClick={() => { onProceedAsGuest(); handleClose(); }}>
@@ -53,7 +78,7 @@ const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin }) => {
 
                     <Form onSubmit={handleLogin}>
                         <Form.Group className="mb-3 text-start" controlId="formBasicEmail">
-                            <Form.Label srOnly>Email</Form.Label>
+                            <Form.Label>Email</Form.Label>
                             <Form.Control
                                 type="email"
                                 placeholder="Email"
@@ -65,7 +90,7 @@ const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin }) => {
                         </Form.Group>
 
                         <Form.Group className="mb-3 text-start" controlId="formBasicPassword">
-                            <Form.Label srOnly>Password</Form.Label>
+                            <Form.Label>Password</Form.Label>
                             <InputGroup>
                                 <Form.Control
                                     type={showPassword ? 'text' : 'password'}
@@ -92,7 +117,7 @@ const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin }) => {
                 <div className="separator mt-4">
                     <hr className="flex-grow-1" />
                     <span className="text-muted">Nuovo utente? </span>
-                    <Button variant="link" className="register-link fw-bold">REGISTRATI</Button>
+                    <Button variant="link" className="register-link fw-bold" onClick={onSwitchToRegister}>REGISTRATI</Button>
                 </div>
             </Modal.Body>
         </Modal>

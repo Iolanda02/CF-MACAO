@@ -1,8 +1,8 @@
 import express from "express";
-import {  addAvatarUser, createUser, getAllUsers, getUser, putUser, removeUser } from "../controllers/user.controllers.js";
-import { uploadCloudinary } from "../middlewares/uploadCloudinary.js";
+import {  addAvatarUser, createUser, deleteAvatarUser, getAllUsers, getUser, putUser, removeUser } from "../controllers/user.controllers.js";
 import { authorizeOwner, authorizeOwnerOrAdmin, protect, restrictTo } from "../middlewares/authentication.js";
 import User from "../models/User.js";
+import { uploadUserAvatar } from "../middlewares/uploadCloudinary.js";
 
 const userRouter = express.Router();
 
@@ -20,8 +20,12 @@ userRouter.delete("/:id", authorizeOwnerOrAdmin(User, 'id', '_id'), removeUser);
 
 userRouter.patch("/:id/avatar", 
     authorizeOwner(User, 'id', '_id'), 
-    uploadCloudinary.single('avatar'), 
+    uploadUserAvatar.single('avatar'), 
     addAvatarUser
+);
+
+userRouter.delete("/:id/avatar",
+    deleteAvatarUser
 );
 
 export default userRouter;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Col, Container, Form, InputGroup, Pagination, Row, Spinner, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router";
-import { getAllProducts } from "../../../api/product";
+import { getAllProducts, removeProduct } from "../../../api/product";
 import { CheckCircleFill, EyeFill, PencilFill, PlusCircleFill, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
 
 function AdminProductsListPage() {
@@ -89,15 +89,16 @@ function AdminProductsListPage() {
         setCurrentFilterInput("");
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (product) => {
         if (window.confirm('Sei sicuro di voler eliminare questo prodotto?')) {
             try {
-                const result = await remove(id);
+                const result = await removeProduct(product._id);
                 setMessage({ type: 'success', text: 'Prodotto eliminato con successo!' });
                 // Resetta la paginazione se l'eliminazione causa la scomparsa dell'ultima pagina
                 // if (currentPage > Math.ceil((products.length - 1) / productsPerPage)) {
                 //     setCurrentPage(Math.max(1, currentPage - 1));
                 // }
+                fetchProducts();
             } catch(error) {
                 console.log(error);
                 setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione del prodotto.' });
@@ -181,7 +182,7 @@ function AdminProductsListPage() {
                 <tbody>
                 {products.length > 0 ? (
                     products.map((product, index) => (
-                    <tr key={product.id}>
+                    <tr key={product._id}>
                         <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
                         <td>{product.name}</td>
                         {/* <td>€ {product.price.toFixed(2)}</td>

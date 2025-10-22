@@ -27,6 +27,7 @@ export const getAllOrders = async (req, res, next) => {
     }
 
     let queryObj = {};
+    queryObj.orderStatus = { $ne: 'Pending' };
 
     if (searchTerm) {
         queryObj[searchField] = new RegExp(searchTerm, "i");

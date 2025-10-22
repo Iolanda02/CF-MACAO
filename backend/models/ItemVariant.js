@@ -1,4 +1,6 @@
 import { model, Schema } from "mongoose";
+import { DEFAULT_PRODUCT_IMAGE_PUBLIC_ID, DEFAULT_PRODUCT_IMAGE_URL } from "../config/cloudinary.config.js";
+import validator from "validator";
 
 const itemVariantSchema = new Schema({
     item: {
@@ -56,31 +58,39 @@ const itemVariantSchema = new Schema({
             default: Date.now
         }
     },
-    images: [{
-        url: {
-            type: String,
-            // required: [true, "L\'URL dell'immagine è obbligatorio"],
-            trim: true,
-            validate: {
-                validator: function(v) {
-                    return (v === this.default) || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
-                },
-                message: props => `${props.value} non è un URL valido per l'avatar`
-            }
-        },
-        public_id: {
-            type: String,
-            trim: true
-        },
-        altText: { 
-            type: String, 
-            trim: true 
-        },
-        isMain: {
-            type: Boolean,
-            default: false
-        } 
-    }],
+    images: {
+        type: [{
+            url: {
+                type: String,
+                // required: [true, "L\'URL dell'immagine è obbligatorio"],
+                trim: true,
+                validate: {
+                    validator: function(v) {
+                        return !v || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
+                    },
+                    message: props => `Il path ${props.value} non è un URL valido per il prodotto`
+                }
+            },
+            public_id: {
+                type: String,
+                trim: true
+            },
+            altText: { 
+                type: String, 
+                trim: true 
+            },
+            isMain: {
+                type: Boolean,
+                default: false
+            } 
+        }],
+        default: [{
+            url: DEFAULT_PRODUCT_IMAGE_URL,
+            public_id: DEFAULT_PRODUCT_IMAGE_PUBLIC_ID,
+            altText: "Nessuna immagine disponibile",
+            isMain: true
+        }]
+    },
     weight: { 
         value: { 
             type: Number, 
@@ -102,12 +112,14 @@ const itemVariantSchema = new Schema({
 }, 
 { 
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
     discriminatorKey: 'itemType' 
 });
 
 
 // ---- INDICI -----
-itemVariantSchema.index({ itemId: 1, name: 1 }, { unique: true });
+// itemVariantSchema.index({ itemId: 1, name: 1 }, { unique: true });
 
 
 const ItemVariant = model("ItemVariant", itemVariantSchema);

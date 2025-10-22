@@ -1,5 +1,5 @@
 import { Outlet, Route, Routes } from "react-router";
-import { Container, Spinner } from "react-bootstrap";
+import { Alert, Container, Spinner } from "react-bootstrap";
 
 import { useAuth } from "./contexts/AuthContext";
 import AdminRoutes from "./pages/admin-routes/AdminRoutes";
@@ -43,11 +43,11 @@ function App() {
   }
 
   if (error) {
-    return (
-      <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
-      </Container>
-    );
+    // return (
+    //   <Container className="mt-5">
+    //     <Alert variant="danger">{error}</Alert>
+    //   </Container>
+    // );
   }
 
   return (

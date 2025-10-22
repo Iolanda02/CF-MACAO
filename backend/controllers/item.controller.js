@@ -4,6 +4,7 @@ import ItemVariant from '../models/ItemVariant.js';
 import AppError from '../utils/appError.js';
 import * as factory from './factory.controller.js';
 import Review from '../models/Review.js';
+import { deleteCloudinaryAsset } from '../config/cloudinary.config.js';
 
 
 // export const getAllItems = factory.getAll(Item);
@@ -291,5 +292,121 @@ export const getReviewsByItemId = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+}
+
+
+export const addProductImages = async (request, response, next) => {
+    try {
+        const { id } = request.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(new AppError("ID prodotto non valido.", 400));
+        }
+
+        if (!request.files || request.files.length === 0) {
+            return next(new AppError("Nessun file immagine fornito.", 400));
+        }
+
+        const product = await Item.findById(id);
+        if (!product) {
+            return next(new AppError("Prodotto non trovato.", 404));
+        }
+
+        const newImages = request.files.map(file => ({
+            url: file.path,
+            public_id: file.filename,
+            altText: `Immagine per ${product.name}`
+        }));
+
+        let currentImages = product.images.toObject(); // Converti in JS array per manipolazione
+
+        // Controllo se l'immagine di default se è l'unica presente
+        if (currentImages.length === 1 && currentImages[0].public_id === DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
+            currentImages = [];
+        }
+
+        currentImages.push(...newImages);
+
+        // Se non c'era un'immagine principale, imposta la prima come tale
+        if (!currentImages.some(img => img.isMain) && currentImages.length > 0) {
+            currentImages[0].isMain = true;
+        }
+
+        product.images = currentImages;
+
+        const updatedProduct = await product.save(); 
+        
+        response.status(200).json({
+            status: 'success',
+            data:  updatedProduct
+        });
+    } catch (error) {
+        if (error instanceof multer.MulterError) {
+            return next(new AppError(`Errore di caricamento: ${error.message}`, 400));
+        }
+        return next(error);
+    }
+}
+
+export const deleteProductImage = async (request, response, next) => {
+    try {
+        const { productId, imageId } = request.params;
+
+        if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(imageId)) {
+            return next(new AppError("ID prodotto o immagine non valido.", 400));
+        }
+
+        const product = await Item.findById(productId);
+        if (!product) {
+            return next(new AppError("Prodotto non trovato.", 404));
+        }
+
+        // Trova l'immagine da cancellare nell'array
+        const imageToDelete = product.images.id(imageId); 
+        if (!imageToDelete) {
+            return next(new AppError("Immagine non trovata nel prodotto.", 404));
+        }
+
+        // Prevenire la cancellazione dell'immagine di default se è l'unica rimasta
+        if (product.images.length === 1 && imageToDelete.public_id === DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
+            return next(new AppError("Non puoi cancellare l'ultima immagine di default. Carica prima una nuova immagine o lascia l'immagine di default.", 400));
+        }
+
+        // Tenta di cancellare da Cloudinary
+        if (imageToDelete.public_id && imageToDelete.public_id !== DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
+            try {
+                await deleteCloudinaryAsset(imageToDelete.public_id);
+            } catch (destroyError) {
+                console.warn(`Avviso: Impossibile cancellare l'asset Cloudinary per ${imageToDelete.public_id}.`, destroyError.message);
+            }
+        }
+
+        // Rimuovi il sottodocumento dall'array
+        imageToDelete.remove(); // Metodo di Mongoose per rimuovere sottodocumenti
+
+        // Se l'immagine cancellata era la principale, e ci sono altre immagini,
+        // imposta la prima rimanente come principale (se non ce n'è già una)
+        if (imageToDelete.isMain && product.images.length > 0 && !product.images.some(img => img.isMain)) {
+            product.images[0].isMain = true;
+        }
+        // Se non ci sono più immagini dopo la cancellazione, ripristina l'immagine di default
+        if (product.images.length === 0) {
+             product.images.push({
+                url: DEFAULT_PRODUCT_IMAGE_URL,
+                public_id: DEFAULT_PRODUCT_IMAGE_PUBLIC_ID,
+                altText: "Nessuna immagine disponibile",
+                isMain: true
+            });
+        }
+
+
+        const updatedProduct = await product.save();
+
+        response.status(200).json({
+            status: 'success',
+            data: updatedProduct
+        });
+    } catch (error) {
+        return next(error);
     }
 }

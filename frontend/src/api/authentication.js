@@ -3,11 +3,7 @@ import publicApi from "./publicApi";
 
 export async function registerApi(body) {
     try {
-        const response = await publicApi.post('/auth/register', body, {
-            headers: { 
-                "Content-Type": "application/json"
-            }   
-        });
+        const response = await publicApi.post('/auth/register', body);
         // console.log("(API) - register: ", response)
         return response.data;
     } catch(error) {

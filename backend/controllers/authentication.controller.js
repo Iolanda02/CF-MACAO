@@ -10,8 +10,8 @@ export async function register(request, response, next) {
     // let insertedUser;
 
     try {
-        if (!email || !password || !firstName || !lastName || !phone) {
-            return next(new AppError('Email, password, nome, cognome e numero di telefono sono richiesti.', 400));
+        if (!email || !password || !firstName || !lastName) {
+            return next(new AppError('Email, password, nome e cognome sono richiesti.', 400));
         }
 
         const existingUser = await User.findOne({ email: email.toLowerCase() });

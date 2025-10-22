@@ -180,15 +180,15 @@ function AdminProductsFormPage() {
 
         setSubmitting(true);
 
-        // Prepara i dati per l'invio (converti stringhe in numeri/array se necessario)
+        // Prepara i dati per l'invio
         const dataToSend = {
             ...product,
             intensity: product.intensity ? parseInt(product.intensity) : undefined,
-            tags: product.tags ? product.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-            systemCompatibility: product.systemCompatibility ? product.systemCompatibility.split(',').map(sys => sys.trim()).filter(sys => sys) : [],
+            // tags: product.tags ? product.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+            systemCompatibility: product.systemCompatibility ? product.systemCompatibility.map(sys => sys.trim()).filter(sys => sys) : [],
             variants: product.variants.map(variant => ({
                 ...variant,
-                // Assicurati che price.amount e stock.quantity siano numeri
+                itemType: product.itemType,
                 price: { ...variant.price, amount: parseFloat(variant.price.amount) },
                 discountPrice: parseFloat(variant.discountPrice),
                 stock: { ...variant.stock, quantity: parseInt(variant.stock.quantity) },
@@ -209,7 +209,6 @@ function AdminProductsFormPage() {
                 alert("Prodotto creato con successo!");
                 setMessage('Prodotto aggiunto con successo!');
             }
-            setFormErrors({}); // Resetta gli errori del form
 
             // Reindirizza alla lista dei prodotti
             navigate('/admin/products');
@@ -217,9 +216,9 @@ function AdminProductsFormPage() {
             console.error(err);
             const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
             setError(apiErrorMessage);
-            if (err.response?.data?.errors) {
-                setFormErrors(err.response.data.errors);
-            }
+            // if (err.response?.data?.errors) {
+            //     setFormErrors(err.response.data.errors);
+            // }
         } finally {
             setSubmitting(false);
         }

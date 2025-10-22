@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import AppError from "../utils/appError.js";
-import { cloudinary } from "../middlewares/uploadCloudinary.js";
+import { DEFAULT_AVATAR_PUBLIC_ID, DEFAULT_AVATAR_URL, deleteCloudinaryAsset } from "../config/cloudinary.config.js";
 
 
 export async function getAllUsers(request, response, next) {
@@ -86,9 +86,7 @@ export async function createUser(request, response, next) {
 
         response.status(201).json({ 
             status: 'success',
-            data: {
-                user: newUser
-            }
+            data: newUser
         });
     } catch(error) {
         next(error);
@@ -127,9 +125,7 @@ export async function putUser(request, response, next) {
 
         response.status(200).json({
             status: 'success',
-            data: {
-                user: updatedUser
-            }
+            data: updatedUser
         });
     } catch(error) {
         next(error);
@@ -172,13 +168,9 @@ export async function addAvatarUser(request, response, next) {
         }
 
         // Se esiste un vecchio avatar lo cancello da Cloudinary
-        if (user.avatar && user.avatar.public_id) {
+        if (user.avatar && user.avatar.public_id && user.avatar.public_id !== DEFAULT_AVATAR_PUBLIC_ID) {
             try {
-                await cloudinary.uploader.destroy(
-                    user.avatar.public_id,
-                    { invalidate: true }
-                );
-                // console.log(`Vecchio avatar ${user.avatar.public_id} cancellato con successo.`);
+                await deleteCloudinaryAsset(user.avatar.public_id);
             } catch (destroyError) {
                 // Non blocco il processo se la cancellazione fallisce, ma loggo l'errore
                 console.error(`Errore durante la cancellazione del vecchio avatar ${user.avatar.public_id}:`, destroyError);
@@ -198,9 +190,7 @@ export async function addAvatarUser(request, response, next) {
 
         response.status(200).json({
             status: 'success',
-            data: {
-                author: updatedUser
-            }
+            data: updatedUser
         });
     } catch (error) {
         if (error instanceof multer.MulterError) {
@@ -209,6 +199,49 @@ export async function addAvatarUser(request, response, next) {
         if (error.message.includes('Tipo di file non supportato')) {
             return next(new AppError(error.message, 400));
         }
+        return next(error);
+    }
+}
+
+export async function deleteAvatarUser(request, response, next) {
+    try {
+        const { id } = request.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(new AppError("ID utente non valido.", 400));
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return next(new AppError("Utente non trovato.", 404));
+        }
+
+        // Tenta di cancellare l'avatar personalizzato
+        if (user.avatar && user.avatar.public_id && user.avatar.public_id !== DEFAULT_AVATAR_PUBLIC_ID) {
+            try {
+                await deleteCloudinaryAsset(user.avatar.public_id);
+            } catch (destroyError) {
+                // Non blocco il processo se la cancellazione fallisce, ma loggo l'errore
+                console.error(`Errore durante la cancellazione del vecchio avatar ${user.avatar.public_id}:`, destroyError);
+            }
+        }
+
+        // Ripristina l'avatar di default
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            {
+                avatar: {
+                    url: DEFAULT_AVATAR_URL,
+                    public_id: DEFAULT_AVATAR_PUBLIC_ID
+                }
+            },
+            { new: true, runValidators: true }
+        );
+
+        response.status(200).json({
+            status: 'success',
+            data: updatedUser
+        });
+    } catch (error) {
         return next(error);
     }
 }

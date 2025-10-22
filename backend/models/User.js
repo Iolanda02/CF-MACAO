@@ -2,6 +2,7 @@ import { model, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import validator from "validator";
 import addressSchema from "./sub-schemas/Address.js";
+import { DEFAULT_AVATAR_PUBLIC_ID, DEFAULT_AVATAR_URL } from "../config/cloudinary.config.js";
 
 const userSchema = new Schema({
     email: {
@@ -73,23 +74,24 @@ const userSchema = new Schema({
             url: {
                 type: String,
                 trim: true,
-                default: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg',
+                default: DEFAULT_AVATAR_URL,
                 validate: {
                     validator: function(v) {
-                        return (v === this.default) || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
+                        return (v === this.DEFAULT_AVATAR_URL) || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
                     },
                     message: props => `${props.value} non è un URL valido per l'avatar`
                 }
             },
             public_id: {
                 type: String,
-                trim: true
+                trim: true,
+                default: DEFAULT_AVATAR_PUBLIC_ID
             }
         },
         _id: false,
         default: {
-            url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg',
-            public_id: null
+            url: DEFAULT_AVATAR_URL,
+            public_id: DEFAULT_AVATAR_PUBLIC_ID
         }
     },
     googleId: String,

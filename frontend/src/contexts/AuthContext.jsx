@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { loginApi, profile } from '../api/authentication';
+import { useToast } from './ToastContext';
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(localStorage.getItem('token'));
@@ -8,6 +9,7 @@ export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { addToast } = useToast();
     
     // Funzione per caricare il profilo utente in base al token
     const loadUserProfile = useCallback(async (authToken) => {
@@ -56,20 +58,19 @@ export function AuthProvider({ children }) {
             setToken(newToken); // triggera l'useEffect per loadUserProfile
             setAuthUser(user);
 
-            // Vai alla home
-            navigate('/', { replace: true });
+            // // Vai alla home
+            // navigate('/', { replace: true });
 
-            // Login ok 
-            return true;
+            // // Login ok 
+            // return true;
         } catch (err) {
             console.error("Login failed:", err);
-            setError(err.message || "Accesso non riuscito. Controlla le tue credenziali.");
+            setError("Accesso non riuscito. Controlla le tue credenziali.");
+            addToast("Accesso non riuscito. Controlla le tue credenziali.", "danger");
             setToken(null);
             setAuthUser(null);
             setIsLoading(false);
-
-            // Login ko
-            return false;
+            throw new Error(err); 
         }
     };
 
@@ -120,12 +121,12 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('token');
         setToken(null);
         setAuthUser(null);
-        navigate('/', { replace: true });
     };
 
     const value = {
         token,
         authUser,
+        setAuthUser,
         isAuthenticated: !!token && !!authUser,
         isLoading,
         error,

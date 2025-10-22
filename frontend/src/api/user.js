@@ -59,10 +59,21 @@ export async function removeUser(id) {
 
 export async function addAvatar(id, fData) {
     try {
-        const response = await axiosAuthenticated.patch(`users/${id}/avatar`, fData,
+        const response = await protectedApi.patch(`/users/${id}/avatar`, fData,
             {headers: {'Content-Type': 'multipart/form-data'}}
         );
         // console.log("(API) addAvatar: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function removeAvatar(id) {
+    try {
+        const response = await protectedApi.delete(`/users/${id}/avatar`);
+        // console.log("(API) removeAvatar: ", response)
         return response.data;
     } catch(error) {
         // console.log(error);
