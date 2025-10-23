@@ -40,7 +40,7 @@ export const ToastProvider = ({ children }) => {
         <ToastContainer className="p-3" 
         style={{
             position: 'fixed', // Questo è il cambiamento chiave
-            top: '20px',       // Distanza dal top del viewport
+            top: '16vh',       // Distanza dal top del viewport
             right: '20px',     // Distanza dal bordo destro del viewport
             zIndex: 9999,      // Assicurati che sia sopra tutto il resto
           }}

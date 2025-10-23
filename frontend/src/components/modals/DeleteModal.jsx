@@ -4,7 +4,7 @@ function DeleteModal({ show, onHide, onConfirm, textToShow }) {
     return (
         <Modal show={show} onHide={onHide} backdrop="static" keyboard={false}>
             <Modal.Header closeButton>
-                <Modal.Title>Conferma Eliminazione Utente</Modal.Title>
+                <Modal.Title>Conferma Eliminazione</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {textToShow} Questa operazione è irreversibile.

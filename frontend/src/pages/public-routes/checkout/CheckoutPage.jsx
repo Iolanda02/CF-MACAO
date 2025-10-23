@@ -477,7 +477,7 @@ function CheckoutPage() {
                                 <h4 className="mb-3">Indirizzo di Spedizione</h4>
                                 <div className="summary-item mb-3">
                                     <p className="fw-bold">{authUser.firstName} {authUser.lastName}</p>
-                                    <p className="mb-1">{autdeliveryAddresshUser.address} {deliveryAddress.postalCode} {deliveryAddress.city}</p>
+                                    <p className="mb-1">{deliveryAddress.address} {deliveryAddress.postalCode} {deliveryAddress.city}</p>
                                     <p className="mb-1">{deliveryAddress.country}</p>
                                     <p className="mb-0">Email: {authUser.email}</p>
                                     <p className="mb-3">Cellulare: {deliveryAddress.mobilePhoneNumber}</p>

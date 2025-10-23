@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Alert, Button, Col, Container, Form, Image, InputGroup, Row, Spinner } from "react-bootstrap";
@@ -13,9 +13,10 @@ function ProductDetailsPage() {
     const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
+    const [mainImage, setMainImage] = useState(null);
     const params = useParams();
     const { authUser } = useAuth();
-    const { addToCart } = useCart(); 
+    const { addItemToCart } = useCart(); 
     const navigate = useNavigate();
     
     const getProductDetails = useCallback(async (id) => {
@@ -23,8 +24,16 @@ function ProductDetailsPage() {
             setLoading(true);
             setError(null);
             const result = await getProduct(id);
-            setProduct(result.data);
-            setSelectedVariant(result.data.variants[0].name);
+            const fetchedProduct = result.data;
+            setProduct(fetchedProduct);
+
+            if (fetchedProduct.variants && fetchedProduct.variants.length > 0) {
+                setSelectedVariant(fetchedProduct.variants[0]);
+
+                const mainVarImage = fetchedProduct.variants[0].images.find(img => img.isMain);
+                setMainImage(mainVarImage || fetchedProduct.variants[0].images[0] || null);
+            }
+            
             setQuantity(1);
         } catch(error) {
             console.error(error);
@@ -43,21 +52,45 @@ function ProductDetailsPage() {
         }
     }, [productId, getProductDetails]);
 
+    const currentPrice = selectedVariant?.price?.amount;
+    const currentStock = selectedVariant?.stock?.quantity;
+    const variantImages = selectedVariant?.images || [];
+
+    useEffect(() => {
+        if (selectedVariant) {
+            const mainVarImage = selectedVariant.images.find(img => img.isMain);
+            setMainImage(mainVarImage || selectedVariant.images[0] || null);
+        }
+    }, [selectedVariant]);
+
     const handleQuantityChange = (delta) => {
-        setQuantity(prev => Math.max(1, prev + delta));
+        setQuantity(prev => Math.max(1, Math.min(prev + delta, currentStock || 1)));
     };
 
-    const handleFormatChange = (formatQuantity) => {
-        setSelectedVariant(parseInt(formatQuantity));
+    const handleVariantChange = (variantId) => {
+        const newSelectedVariant = product?.variants.find(v => v._id === variantId);
+        if (newSelectedVariant) {
+            setSelectedVariant(newSelectedVariant);
+            setQuantity(1);
+        }
     };
 
     const handleAddToCart = () => {
         if (product && quantity > 0 && selectedVariant) {
-            addToCart(product, quantity, selectedVariant);
+            addItemToCart(product?._id, quantity, selectedVariant._id);
         }
     };
 
-    const currentPrice = product?.variants.find(f => f.name === selectedVariant)?.price?.amount || product?.price;
+    const { averageRating, totalReviews } = useMemo(() => {
+        if (!product?.reviews || product.reviews.length === 0) {
+            return { averageRating: 0, totalReviews: 0 };
+        }
+        const sumRatings = product.reviews.reduce((acc, review) => acc + review.rating, 0);
+        return {
+            averageRating: (sumRatings / product.reviews.length),
+            totalReviews: product.reviews.length
+        };
+    }, [product?.reviews]);
 
     // Per i prodotti correlati
     // const relatedProducts = productsData //--- recuperare i dati
@@ -93,24 +126,60 @@ function ProductDetailsPage() {
 
     return (
         <Container className="my-5">
-            <Row className="mb-5 align-items-center">
-                <Col md={6}>
-                    <Image src={product.image?.path} fluid rounded className="shadow-sm" style={{ maxHeight: '400px', width: '100%', objectFit: 'cover' }} />
-                    {/* <div className="mt-3 d-flex gap-2">
-                        <Image src={product.thumbnail1} thumbnail style={{ width: '80px', height: '80px', objectFit: 'cover' }} />
-                        <Image src={product.thumbnail2} thumbnail style={{ width: '80px', height: '80px', objectFit: 'cover' }} />
-                    </div> */}
+            <Row className="mb-5">
+                <Col md={6} className="mt-3">
+                
+                    {mainImage && (
+                        <Image 
+                            src={mainImage.url} 
+                            alt={mainImage.altText || product.name} 
+                            fluid 
+                            rounded 
+                            className="shadow-sm mb-3" 
+                            style={{ maxHeight: '450px', width: '100%', objectFit: 'contain' }} 
+                        />
+                    )}
+                    {/* Slider di immagini secondarie */}
+                    {variantImages.length > 1 && (
+                        <div className="d-flex gap-2 overflow-auto py-2" style={{ maxWidth: '100%' }}>
+                            {variantImages.map((img, index) => (
+                                <Image 
+                                    key={index} 
+                                    src={img.url} 
+                                    alt={img.altText || product.name} 
+                                    thumbnail 
+                                    style={{ 
+                                        width: '100px', 
+                                        height: '100px', 
+                                        objectFit: 'cover',
+                                        cursor: 'pointer',
+                                        border: img.url === mainImage?.url ? '2px solid var(--bs-primary)' : '1px solid #dee2e6'
+                                    }} 
+                                    onClick={() => setMainImage(img)}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </Col>
                 <Col md={6}>
                     <h1 className="display-4 mb-3">{product.name}</h1>
                     {/* Rating medio (mock) */}
                     <div className="d-flex align-items-center mb-3">
-                        <StarFill className="text-warning me-1" />
-                        <StarFill className="text-warning me-1" />
-                        <StarFill className="text-warning me-1" />
-                        <StarFill className="text-warning me-1" />
-                        <StarFill className="text-secondary" />
-                        <span className="ms-2 text-muted">(4.2 / 5 - 120 Recensioni)</span>
+                        {totalReviews > 0 ? (
+                            <>
+                                {[...Array(5)].map((_, i) => (
+                                    <StarFill 
+                                        key={i} 
+                                        className={i < Math.round(averageRating) ? "text-warning me-1" : "text-secondary me-1"} 
+                                    />
+                                ))}
+                                <span className="ms-2 text-muted">
+                                    ({averageRating.toFixed(1)} / 5 - {totalReviews} Recensioni)
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-muted">Nessuna recensione disponibile.</span>
+                        )}
                     </div>
 
                     <h2 className="mb-4 text-primary">€{currentPrice ? currentPrice.toFixed(2) : 'N/D'}</h2>
@@ -121,12 +190,12 @@ function ProductDetailsPage() {
                     <Form.Group className="mb-3">
                         <Form.Label>Seleziona Formato:</Form.Label>
                         <Form.Select
-                            value={selectedVariant || ''}
-                            onChange={(e) => handleFormatChange(e.target.value)}
+                            value={selectedVariant?._id || ''}
+                            onChange={(e) => handleVariantChange(e.target.value)}
                             className="w-auto"
                         >
                             {product.variants.map(variant => (
-                                <option key={variant._id} value={variant.name}>
+                                <option key={variant._id} value={variant._id}>
                                     {variant.name}
                                 </option>
                             ))}
@@ -136,17 +205,26 @@ function ProductDetailsPage() {
                     {/* Controlli quantità e Aggiungi al Carrello */}
                     <div className="d-flex align-items-center mb-4">
                         <InputGroup className="w-auto me-3">
-                            <Button variant="outline-secondary" onClick={() => handleQuantityChange(-1)}><Dash /></Button>
-                            <Form.Control type="text" readOnly value={quantity} className="text-center" style={{ maxWidth: '60px' }} />
-                            <Button variant="outline-secondary" onClick={() => handleQuantityChange(1)}><Plus /></Button>
+                            <Button variant="outline-secondary" 
+                                onClick={() => handleQuantityChange(-1)}
+                                disabled={quantity <= 1}
+                            ><Dash /></Button>
+                            <Form.Control type="text" readOnly value={quantity}  className="text-center" style={{ maxWidth: '60px' }} />
+                            <Button variant="outline-secondary" 
+                                onClick={() => handleQuantityChange(1)}
+                                disabled={quantity >= currentStock}
+                            ><Plus /></Button>
                         </InputGroup>
-                        <Button variant="primary" size="lg" onClick={handleAddToCart}>
+                        <Button variant="primary" size="lg" 
+                            onClick={handleAddToCart}
+                            disabled={!selectedVariant || currentStock <= 0 || quantity > currentStock}
+                        >
                             <CartPlusFill className="me-2" /> Aggiungi al Carrello
                         </Button>
                     </div>
 
                     {/* Info aggiuntive */}
-                    <p className="text-muted">Disponibilità: {product.stock > 0 ? `${product.stock} in magazzino` : 'Esaurito'}</p>
+                    <p className="text-muted">Disponibilità: {currentStock  > 0 ? `${currentStock } in magazzino` : 'Esaurito'}</p>
                     {/* <p className="text-muted">SKU: COF{product.id}CAP</p> */}
                 </Col>
             </Row>
@@ -164,7 +242,7 @@ function ProductDetailsPage() {
             {/* Sezione Recensioni */}
             <Row className="mb-5">
                 <Col>
-                    <ProductReviewsArea productId={product.id} productReviews={product.reviews || []} />
+                    <ProductReviewsArea productId={product._id} productReviews={product.reviews || []} />
                 </Col>
             </Row>
 

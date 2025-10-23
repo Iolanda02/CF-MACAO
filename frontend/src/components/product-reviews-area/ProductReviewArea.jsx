@@ -3,6 +3,9 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Alert, Button, Card, Col, Container, Form, ListGroup, Row } from "react-bootstrap";
 import { PencilFill, StarFill, TrashFill } from "react-bootstrap-icons";
 import { Link } from "react-router";
+import { createReview, removeReview, updateReview } from "../../api/review";
+import { useToast } from "../../contexts/ToastContext";
+import DeleteModal from "../modals/DeleteModal";
 
 function ProductReviewsArea({ productId, productReviews }) {
     const { authUser, isAuthenticated } = useAuth();
@@ -12,6 +15,9 @@ function ProductReviewsArea({ productId, productReviews }) {
     const [editingReviewId, setEditingReviewId] = useState(null);
     const [editingReviewText, setEditingReviewText] = useState("");
     const [editingReviewRating, setEditingReviewRating] = useState(0);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState(null);
+    const { addToast } = useToast();
 
     // const fetchReviews = useCallback(async () => {
     //     try {
@@ -19,36 +25,32 @@ function ProductReviewsArea({ productId, productReviews }) {
     //         setReviews(fetchedReviews);
     //     } catch (error) {
     //         console.error("Error fetching reviews:", error);
+    //         addToast("Errore durante il caricamento delle recensioni.", "danger");
     //     }
     // }, [productId]);
-
-    // useEffect(() => {
-    //     fetchReviews();
-    // }, [fetchReviews]);
     
     useEffect(() => {
-        setReviews(productReviews);
-    }, [reviews]);
+        if (productReviews.length !== reviews.length || productReviews.some((pr, i) => pr._id !== reviews[i]?._id)) {
+            setReviews(productReviews);
+        }
+    }, [productReviews, reviews]);
 
     const handlePostReview = async () => {
-        if (!newReviewText.trim() || newReviewRating === 0) {
-            alert("Per favore, inserisci un testo e un rating per la recensione.");
-            return;
-        }
         try {
-            await createReview(productId, { text: newReviewText, rating: newReviewRating });
+            const newReview = await createReview({item: productId, comment: newReviewText, rating: newReviewRating });
             setNewReviewText("");
             setNewReviewRating(0);
-            fetchReviews();
+            addToast("Recensione salvata con successo!", "success");
+            setReviews(prevReviews => [...prevReviews, newReview]);
         } catch (error) {
             console.error("Error posting review:", error);
-            alert("Errore durante l'invio della recensione.");
+            addToast("Errore durante l'invio della recensione. Riprova più tardi.", "danger");
         }
     };
 
     const handleEditReviewClick = (review) => {
         setEditingReviewId(review._id);
-        setEditingReviewText(review.text);
+        setEditingReviewText(review.comment);
         setEditingReviewRating(review.rating);
     };
 
@@ -59,64 +61,47 @@ function ProductReviewsArea({ productId, productReviews }) {
     };
 
     const handleUpdateReview = async (reviewId) => {
-        if (!editingReviewText.trim() || editingReviewRating === 0) {
-            alert("Per favore, inserisci un testo e un rating per la recensione modificata.");
-            return;
-        }
         try {
-            await editReview(productId, reviewId, { text: editingReviewText, rating: editingReviewRating });
+            const updatedReview = await updateReview(reviewId, { comment: editingReviewText, rating: editingReviewRating });
+            addToast("Recensione modificata con successo!", "info");
             handleCancelEdit();
-            fetchReviews();
+            setReviews(prevReviews => 
+                prevReviews.map(rev => (rev._id === reviewId ? { ...rev, ...updatedReview } : rev))
+            );
         } catch (error) {
             console.error("Error updating review:", error);
-            alert("Errore durante la modifica della recensione.");
+            addToast("Errore durante la modifica della recensione. Riprova più tardi.", "danger");
         }
     };
 
     const handleRemoveReview = async (reviewId) => {
-        if (window.confirm("Sei sicuro di voler eliminare questa recensione?")) {
-            try {
-                await removeReview(productId, reviewId);
-                fetchReviews();
-            } catch (error) {
-                console.error("Error removing review:", error);
-                alert("Errore durante l'eliminazione della recensione.");
-            }
+        try {
+            await removeReview(commentToDelete._id);
+            addToast("Recensione eliminata con successo!", "info");
+            setReviews(prevReviews => prevReviews.filter(rev => rev._id !== commentToDelete._id));
+            setShowDeleteModal(false);
+            setCommentToDelete(null);
+        } catch (error) {
+            console.error("Error removing review:", error);
+            addToast("Errore durante l'eliminazione della recensione. Riprova più tardi.", "danger");
         }
+    };
+    
+    const handleDelete = (comment) => {
+        setCommentToDelete(comment);
+        setShowDeleteModal(true);
     };
 
     // Funzione per renderizzare le stelle del rating
-    const renderStars = (rating) => {
+    const renderStars = (currentRating, setRating = null, disabled = false) => {
         const stars = [];
         for (let i = 1; i <= 5; i++) {
             stars.push(
                 <StarFill
                     key={i}
-                    className={i <= rating ? "text-warning" : "text-secondary"}
-                    style={{ cursor: editingReviewId === null ? 'pointer' : 'default' }}
-                    onClick={() => {
-                        if (editingReviewId === null) {
-                            setNewReviewRating(i);
-                        } else if (editingReviewId !== null && i <= 5) {
-                            setEditingReviewRating(i);
-                        }
-                    }}
-                />
-            );
-        }
-        return stars;
-    };
-
-    // Renderizza le stelle per il rating della nuova recensione
-    const renderNewReviewStars = () => {
-        const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <StarFill
-                    key={i}
-                    className={i <= newReviewRating ? "text-warning" : "text-secondary"}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setNewReviewRating(i)}
+                    className={i <= currentRating ? "text-warning" : "text-secondary"}
+                    style={{ cursor: setRating && !disabled ? 'pointer' : 'default' }}
+                    onClick={() => setRating && !disabled && setRating(i)}
                 />
             );
         }
@@ -131,30 +116,39 @@ function ProductReviewsArea({ productId, productReviews }) {
                 <Col md={7} className="pb-3">
                     {reviews.length === 0 && <Alert variant="info">Nessuna recensione ancora. Sii il primo a recensire questo prodotto!</Alert>}
                     <ListGroup variant="flush">
-                        {reviews.map((review) => (
-                            <ListGroup.Item key={review._id} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
+                        {reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                            .map((review, index) => (
+                            <ListGroup.Item key={index} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <strong>{review.user?.firstName || ''} {review.user?.lastName || ''}</strong>
                                         <span className="text-muted ms-2">{new Date(review.createdAt).toLocaleDateString()}</span>
                                     </div>
                                     <div className="d-flex align-items-center">
-                                        {renderStars(review.rating)}
-                                        {isAuthenticated && authUser?._id === review.user._id && (
+                                        {editingReviewId === review._id ? 
+                                            // Stelle editabili in modalità editing
+                                            renderStars(editingReviewRating, setEditingReviewRating) 
+                                            : 
+                                            // Stelle non editabili in modalità visualizzazione
+                                            renderStars(review.rating, null, true)
+                                        }
+                                        
+                                        {isAuthenticated && authUser?._id === review.user?._id && (
                                             <>
                                                 {editingReviewId === review._id ? (
-                                                     <Button variant="outline-success" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
+                                                    <>
+                                                        <Button variant="outline-success" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
+                                                        <Button variant="outline-danger" size="sm" className="ms-2" onClick={handleCancelEdit}>Annulla</Button>
+                                                    </>
                                                 ) : (
-                                                    <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleEditReviewClick(review)}>
-                                                        <PencilFill />
-                                                    </Button>
-                                                )}
-                                                {editingReviewId === review._id ? (
-                                                    <Button variant="outline-danger" size="sm" className="ms-2" onClick={handleCancelEdit}>Annulla</Button>
-                                                ) : (
-                                                    <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleRemoveReview(review._id)}>
-                                                        <TrashFill />
-                                                    </Button>
+                                                    <>
+                                                        <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleEditReviewClick(review)}>
+                                                            <PencilFill />
+                                                        </Button>
+                                                        <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleDelete(review)}>
+                                                            <TrashFill />
+                                                        </Button>
+                                                    </>
                                                 )}
                                             </>
                                         )}
@@ -163,7 +157,6 @@ function ProductReviewsArea({ productId, productReviews }) {
                                 {editingReviewId === review._id ? (
                                     <>
                                         <Form.Group className="mb-2">
-                                            <div className="d-flex mb-2">{renderStars(editingReviewRating)}</div> 
                                             <Form.Control
                                                 as="textarea"
                                                 rows={3}
@@ -173,7 +166,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                                         </Form.Group>
                                     </>
                                 ) : (
-                                    <p className="mb-0">{review.text}</p>
+                                    <p className="mb-0">{review.comment}</p>
                                 )}
                             </ListGroup.Item>
                         ))}
@@ -188,7 +181,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                             <Form.Group className="mb-3">
                                 <Form.Label>Il tuo voto:</Form.Label>
                                 <div className="d-flex gap-1 mb-2">
-                                    {renderNewReviewStars()}
+                                    {renderStars(newReviewRating, setNewReviewRating)}
                                 </div>
                             </Form.Group>
                             <Form.Group className="mb-3">
@@ -201,7 +194,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                                     placeholder="Condividi la tua opinione su questo prodotto..."
                                 />
                             </Form.Group>
-                            <Button variant="primary" onClick={handlePostReview} disabled={!newReviewText.trim() || newReviewRating === 0}>
+                            <Button variant="primary" onClick={handlePostReview} disabled={!newReviewText.trim() && newReviewRating === 0}>
                                 Invia
                             </Button>
                         </Card>
@@ -212,6 +205,14 @@ function ProductReviewsArea({ productId, productReviews }) {
                     )}
                 </Col>
             </Row>
+            
+            <DeleteModal
+                show={showDeleteModal}
+                onHide={() => setShowDeleteModal(false)}
+                onConfirm={handleRemoveReview}
+                textToShow={"Sei sicuro di voler eliminare il commento?"
+                }
+            />
         </Container>
     );
 }

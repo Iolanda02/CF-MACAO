@@ -53,7 +53,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                     <Table striped bordered hover responsive size="sm">
                         <thead>
                             <tr>
-                                <th></th> {/* Per l'immagine */}
+                                <th></th>
                                 <th>Prodotto</th>
                                 <th>Variante</th>
                                 <th>Quantità</th>
