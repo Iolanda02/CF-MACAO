@@ -60,9 +60,9 @@ export async function removeCartItemApi(itemId, variantId) {
 
 
 // Aggiorna l'indirizzo di spedizione e il metodo di pagamento del carrello
-export async function updateCheckoutDetails() {
+export async function updateCheckoutDetails(checkoutData) {
     try {
-        const response = await protectedApi.put(`/checkout-details`);
+        const response = await protectedApi.put(`/cart/checkout-details`, checkoutData);
         // console.log("(API) updateCheckoutDetails: ", response);
         return response.data;
     } catch(error) {

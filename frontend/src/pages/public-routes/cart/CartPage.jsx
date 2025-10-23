@@ -1,10 +1,12 @@
 import { Alert, Button, Card, Col, Container, Row, Spinner } from "react-bootstrap";
-import "./styles.css";
 import { DashCircleFill, PlusCircleFill, TrashFill } from "react-bootstrap-icons";
 import { useCart } from "../../../contexts/CartContext";
+import { useNavigate } from 'react-router';
+import "./styles.css";
 
 function CartPage() {
     const { cart, isLoading, error, updateCartItemQuantity, removeCartItem } = useCart();
+    const navigate = useNavigate();
     // const [promoCode, setPromoCode] = useState('');
     // const [showPromoInput, setShowPromoInput] = useState(false);
 
@@ -25,6 +27,10 @@ function CartPage() {
             console.error("Errore nella rimozione dell'articolo:", error);
         }
     }
+
+    const handleCheckout = () => {
+        navigate("/checkout", { state: { cartData: cart } });
+    };
     
     if (isLoading) {
         return (
@@ -84,7 +90,7 @@ function CartPage() {
                                                                 <DashCircleFill />
                                                             </Button>
                                                             <span className="mx-2 item-quantity-display">{item.quantity}</span>
-                                                            <Button variant="light" size="sm" onClick={() => handleQuantityChange(item.item._id, item.variant._id, item.quantity + 1)} aria-label="Aumenta quantità">
+                                                            <Button variant="light" size="sm" onClick={() => handleQuantityChange(item.item?._id, item.variant?._id, item.quantity + 1)} aria-label="Aumenta quantità">
                                                                 <PlusCircleFill />
                                                             </Button>
                                                         </div>
@@ -158,7 +164,8 @@ function CartPage() {
                             <p className="text-muted small text-end">IVA inclusa</p>
                         </div>
 
-                        <Button variant="dark" size="lg" className="checkout-btn w-100">
+                        <Button variant="dark" size="lg" className="checkout-btn w-100"
+                        onClick={handleCheckout}>
                             CHECKOUT
                         </Button>
                     </Card>

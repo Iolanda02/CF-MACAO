@@ -156,6 +156,7 @@ export const createOrder = async (req, res, next) => {
             
             if (shippingAddress) {
                 cart.shippingAddress = shippingAddress;
+                cart.phone = shippingAddress.mobilePhoneNumber || '';
             } else if (!cart.shippingAddress || Object.keys(cart.shippingAddress).length === 0) {
                 return next(new AppError("L\'indirizzo di spedizione è obbligatorio per finalizzare l'ordine", 400));
             }

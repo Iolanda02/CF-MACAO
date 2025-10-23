@@ -1,6 +1,7 @@
 import { model, Schema } from "mongoose";
 import itemOrderSchema from "./ItemOrder.js";
 import addressSchema from "./sub-schemas/Address.js";
+import validator from "validator";
 // import { v4 as uuidv4 } from 'uuid'; 
 
 const orderSchema = new Schema({
@@ -46,6 +47,19 @@ const orderSchema = new Schema({
         enum: ["EUR"]
     },
     shippingAddress: addressSchema,
+    phone: {
+        type: String,
+        trim: true,
+        validate: {
+            validator: function(v) {
+                if (!v) return true;
+                // return /^[0-9\s\-\(\)\+]+$/.test(v);
+                return validator.isMobilePhone(v, 'any');
+            },
+            message: props => `${props.value} non è un numero di telefono valido`
+        },
+        maxlength: [20, "Il numero di telefono non può superare i 20 caratteri"]
+    },
     paymentMethod: {
         type: String,
         enum: ["Credit Card", "PayPal", "Bank Transfer", "Cash on Delivery"],

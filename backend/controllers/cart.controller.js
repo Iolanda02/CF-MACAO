@@ -367,9 +367,9 @@ export const removeCartItem = async (req, res, next) => {
  * @access Privato (utente autenticato)
  */
 export const updateCheckoutDetails = async (req, res, next) => {
-    const { userId } = req.user.id;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return next(new AppError("ID utente non valido", 400));
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        return next(new AppError("ID utente non valido", 400))
     }
 
     const { shippingAddress, paymentMethod } = req.body;
@@ -398,6 +398,7 @@ export const updateCheckoutDetails = async (req, res, next) => {
         // Validazione e Aggiornamento dell'Indirizzo di Spedizione
         if (shippingAddress) {
             cart.shippingAddress = shippingAddress;
+            cart.phone = shippingAddress.mobilePhoneNumber;
         }
 
         await cart.save();
