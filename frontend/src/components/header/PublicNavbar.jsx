@@ -1,7 +1,7 @@
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
-import { Link, NavLink, useNavigate } from 'react-router';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Dropdown, Image } from 'react-bootstrap';
 import logo from "../../assets/logo.png";
@@ -9,15 +9,18 @@ import "./styles.css";
 import LoginModal from '../modals/LoginModal';
 import { useEffect, useRef, useState } from 'react';
 import RegisterModal from '../modals/RegistrerModal';
+import { useToast } from '../../contexts/ToastContext';
 
 
 function PublicNavbar() {
-    const { isAuthenticated, authUser, login, logout } = useAuth();
+    const { isAuthenticated, authUser, login, logout, handleSocialLogin } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const navbarRef = useRef(null);
+    const { addToast } = useToast();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -54,6 +57,25 @@ function PublicNavbar() {
         }
     }, [scrolled]);
 
+        
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const jwt = queryParams.get('jwt');
+        const error = queryParams.get('error');
+        
+        const oauthCallbackPath = import.meta.env.OAUTH_PATH_FRONTEND || '/oauth-callback';
+
+        if (location.pathname === oauthCallbackPath) {
+            if (jwt) {
+                handleSocialLogin(jwt);
+                navigate('/', { replace: true });
+            } else if (error) {
+                console.error("Errore durante il login social:", error);
+                addToast("Errore durante il login social", "danger");
+            }
+        }
+    }, [location, navigate, handleSocialLogin]);
+
     const handleShowLogin = () => {
         setShowRegisterModal(false); // Chiudi la modale di registrazione se aperta
         setShowLoginModal(true);
@@ -68,8 +90,8 @@ function PublicNavbar() {
 
     const handleLogin = async (email, password) => {
         try {
-            await login({email, password}); 
-            // navigate("/");
+            await login({email, password});
+            setShowLoginModal(false);
         } catch (loginError) {
             console.error("Errore durante il login dalla modale:", loginError);
             throw new Error(loginError)

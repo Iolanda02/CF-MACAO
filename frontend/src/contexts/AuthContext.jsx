@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { loginApi, profile } from '../api/authentication';
+import { loginApi, profile, registerApi } from '../api/authentication';
 import { useToast } from './ToastContext';
 
 export function AuthProvider({ children }) {
@@ -26,13 +26,14 @@ export function AuthProvider({ children }) {
         } catch (err) {
             console.error("Failed to load user profile:", err);
             localStorage.removeItem('token');
-            setToken(null); // triggera l'useEffect successivo
+            setToken(null);
             setAuthUser(null);
             setError("Sessione scaduta o token non valido. Effettua nuovamente l'accesso.");
+            // addToast("Sessione scaduta o token non valido. Effettua nuovamente l'accesso.", "danger");
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [addToast]);
 
     // Effetto per gestire l'inizializzazione del token e caricare il profilo
     useEffect(() => {
@@ -55,14 +56,9 @@ export function AuthProvider({ children }) {
             const user = response.data.user;
 
             localStorage.setItem('token', newToken);
-            setToken(newToken); // triggera l'useEffect per loadUserProfile
-            setAuthUser(user);
-
-            // // Vai alla home
-            // navigate('/', { replace: true });
-
-            // // Login ok 
-            // return true;
+            setToken(newToken);
+            // setAuthUser(user);
+            addToast("Accesso effettuato con successo!", "success");
         } catch (err) {
             console.error("Login failed:", err);
             setError("Accesso non riuscito. Controlla le tue credenziali.");
@@ -73,6 +69,27 @@ export function AuthProvider({ children }) {
             throw new Error(err); 
         }
     };
+
+     
+    const handleSocialLogin = useCallback(async (jwt) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            localStorage.setItem('token', jwt);
+            setToken(jwt);
+            addToast("Accesso con Google effettuato con successo!", "success");
+            return true;
+        } catch (err) {
+            console.error("Social Login failed:", err);
+            setError("Accesso con Google non riuscito. Riprova.");
+            addToast("Accesso con Google non riuscito. Riprova.", "danger");
+            localStorage.removeItem('token');
+            setToken(null);
+            setAuthUser(null);
+            setIsLoading(false);
+            return false;
+        }
+    }, [addToast]);
 
     // Funzione di Registrazione
     const register = async (userData) => {
@@ -104,23 +121,10 @@ export function AuthProvider({ children }) {
         
     // Funzione di Logout
     const logout = async () => {
-        // setIsLoading(true);
-        // setError(null);
-        // try {
-        //     await apiLogout(token);
-        // } catch (err) {
-        //     console.warn("Logout API call failed with error:", err);
-        // } finally {
-        //     localStorage.removeItem('token');
-        //     setToken(null);
-        //     setAuthUser(null);
-        //     setIsLoading(false);
-        //     navigate('/', { replace: true });
-        // }
-        
         localStorage.removeItem('token');
         setToken(null);
         setAuthUser(null);
+        addToast("Disconnessione effettuata.", "info")
     };
 
     const value = {
@@ -133,6 +137,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        handleSocialLogin
     };
 
     return (

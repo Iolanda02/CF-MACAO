@@ -39,7 +39,7 @@ const strategyGoogle = new GoogleStrategy(
                 }
             } 
 
-            const jwt = await generateJWT({ userId: auth.id });
+            const jwt = await generateJWT({ id: auth.id });
             cb(null, { jwt });
         } catch (error) {
             console.error('Errore durante l\'autenticazione Google:', error);

@@ -18,7 +18,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: [true, "La password è obbligatoria"],
+        // required: [true, "La password è obbligatoria"],
         minlength: [8, "La password deve contenere almeno 8 caratteri"],
         select: false
     },

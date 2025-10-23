@@ -2,6 +2,7 @@ import { Button, Form, InputGroup, Modal } from "react-bootstrap";
 import "./styles.css";
 import { useState } from "react";
 import { EyeFill, EyeSlashFill } from "react-bootstrap-icons";
+import googleIcon from "../../assets/google.svg";
 
 
 const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin, onSwitchToRegister }) => {
@@ -42,6 +43,10 @@ const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin, onSwitchToRe
         setLoading(false);
         handleClose();
     };
+    
+    const handleGoogleLogin = () => {
+        window.location.href = `${import.meta.env.VITE_API_URL}/auth/login-google`;
+    };
 
     return (
         <Modal show={show} onHide={handleModalClose} centered className="login-modal-wrapper">
@@ -64,8 +69,11 @@ const LoginModal = ({ show, handleClose, onProceedAsGuest, onLogin, onSwitchToRe
                     <p className="modal-subtitle mb-3 text-muted">Accedi con</p>
 
                     <div className="social-login-buttons d-grid gap-2 mb-3">
-                        <Button variant="outline-secondary" className="social-button d-flex align-items-center justify-content-center">
-                            <img src="" alt="Google" className="social-icon me-2" />
+                        <Button variant="outline-secondary" 
+                            className="social-button d-flex align-items-center justify-content-center"
+                            onClick={handleGoogleLogin}
+                        >
+                            <img src={googleIcon} alt="Google" className="social-icon me-2" style={{ width: '20px', height: '20px' }} />
                             GOOGLE
                         </Button>
                     </div>

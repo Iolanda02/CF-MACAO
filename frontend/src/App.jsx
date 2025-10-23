@@ -27,10 +27,13 @@ import AdminUsersFormPage from "./pages/admin-routes/admin-users/AdminUsersFormP
 import AdminUsersViewPage from "./pages/admin-routes/admin-users/AdminUsersViewPage";
 import NotFoundPage from "./pages/public-routes/not-found/NotFoundPage";
 import HelpPage from "./pages/public-routes/help/HelpPage";
+import OAuthCallback from "./components/social-login/OAuthCallback";
 
 function App() {
 
   const { isLoading, error } = useAuth();
+  const oauthCallbackPath = import.meta.env.OAUTH_PATH_FRONTEND || '/oauth-callback';
+
   if (isLoading) {
     return (
       <Container className="text-center mt-5">
@@ -62,7 +65,8 @@ function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="help" element={<HelpPage />} />
-
+          <Route path={oauthCallbackPath} element={<OAuthCallback />} />
+          
           {/* Rotte protette */}
           <Route element={<ProtectedRoutes />}>
             <Route path="profile" element={<ProfilePage />} />
