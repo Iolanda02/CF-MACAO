@@ -1,5 +1,5 @@
 import express from "express";
-import { addProductImages, createItem, deleteItem, deleteProductImage, getAllItems, getItem, getItemVariantsByItemId, getReviewsByItemId, updateItem } from "../controllers/item.controller.js";
+import { addProductImages, createItem, deleteItem, deleteProductImage, getAllItems, getItem, getItemVariantsByItemId, getReviewsByItemId, updateItem, updateVariantImage } from "../controllers/item.controller.js";
 import { protect, restrictTo } from "../middlewares/authentication.js";
 import { uploadProductImage } from "../middlewares/uploadCloudinary.js";
 
@@ -21,12 +21,18 @@ itemRouter.put("/:id", restrictTo('admin'), updateItem);
 
 itemRouter.delete("/:id", restrictTo('admin'), deleteItem);
 
-itemRouter.patch("/:id/images", 
+itemRouter.patch("/:productId/variants/:variantId/images", 
     restrictTo('admin'), 
-    uploadProductImage.array('images', 5), 
+    uploadProductImage.single('image'),
     addProductImages
 );
+    // uploadProductImage.array('images', 5), 
+    
+itemRouter.patch("/:productId/variants/:variantId/images/:imageId",
+    restrictTo('admin'),
+    updateVariantImage
+);
 
-itemRouter.delete("/:productId/images/:imageId", restrictTo('admin'), deleteProductImage);
+itemRouter.delete("/:productId/variants/:variantId/images/:imageId", restrictTo('admin'), deleteProductImage);
 
 export default itemRouter;

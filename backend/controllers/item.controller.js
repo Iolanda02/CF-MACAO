@@ -4,7 +4,8 @@ import ItemVariant from '../models/ItemVariant.js';
 import AppError from '../utils/appError.js';
 import * as factory from './factory.controller.js';
 import Review from '../models/Review.js';
-import { deleteCloudinaryAsset } from '../config/cloudinary.config.js';
+import { DEFAULT_PRODUCT_IMAGE_PUBLIC_ID, DEFAULT_PRODUCT_IMAGE_URL, deleteCloudinaryAsset } from '../config/cloudinary.config.js';
+import multer from 'multer';
 
 
 // export const getAllItems = factory.getAll(Item);
@@ -298,43 +299,74 @@ export const getReviewsByItemId = async (req, res, next) => {
 
 export const addProductImages = async (request, response, next) => {
     try {
-        const { id } = request.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        const { productId, variantId } = request.params;
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
             return next(new AppError("ID prodotto non valido.", 400));
         }
+        if (!mongoose.Types.ObjectId.isValid(variantId)) {
+            return next(new AppError("ID variante non valido.", 400));
+        }
 
-        if (!request.files || request.files.length === 0) {
+        if (!request.file) {
             return next(new AppError("Nessun file immagine fornito.", 400));
         }
 
-        const product = await Item.findById(id);
+        // if (!request.files || request.files.length === 0) {
+        //     return next(new AppError("Nessun file immagine fornito.", 400));
+        // }
+
+        const product = await Item.findById(productId);
         if (!product) {
             return next(new AppError("Prodotto non trovato.", 404));
         }
 
-        const newImages = request.files.map(file => ({
-            url: file.path,
-            public_id: file.filename,
-            altText: `Immagine per ${product.name}`
-        }));
+        // if (!product.variants || !Array.isArray(product.variants)) {
+        //     return next(new AppError('Varianti non disponibili per questo prodotto', 404));
+        // }
 
-        let currentImages = product.images.toObject(); // Converti in JS array per manipolazione
+        const variant = await ItemVariant.findById(variantId);
+        if (!variant) {
+            return next(new AppError("Variante non trovata.", 404));
+        }
+
+        const { altText, isMain } = request.body;
+
+        // const newImages = request.files.map(file => ({
+        //     url: file.path,
+        //     public_id: file.filename,
+        //     altText: `Immagine per ${product.name}`,
+        //     altText: altText || `Immagine per ${variant.name}`,
+        //     isMain: isMain === 'true' || false
+        // }));
+        
+        const newImages = {
+            url: request.file.path,
+            public_id: request.file.filename,
+            altText: `Immagine per ${product.name}`,
+            altText: altText || `Immagine per ${variant.name}`,
+            isMain: isMain === 'true' || false
+        }
+
+        let currentImages = variant.images.toObject(); // Converti in JS array per manipolazione
 
         // Controllo se l'immagine di default se è l'unica presente
         if (currentImages.length === 1 && currentImages[0].public_id === DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
             currentImages = [];
         }
 
-        currentImages.push(...newImages);
+        currentImages.push(newImages);
+        // currentImages.push(...newImages);
 
         // Se non c'era un'immagine principale, imposta la prima come tale
         if (!currentImages.some(img => img.isMain) && currentImages.length > 0) {
             currentImages[0].isMain = true;
         }
 
-        product.images = currentImages;
+        variant.images = currentImages;
 
-        const updatedProduct = await product.save(); 
+        await variant.save(); 
+        const updatedProduct = await Item.findById(productId).populate('variants')
         
         response.status(200).json({
             status: 'success',
@@ -348,12 +380,111 @@ export const addProductImages = async (request, response, next) => {
     }
 }
 
+
+export const updateVariantImage = async (request, response, next) => {
+    try {
+        const { productId, variantId, imageId } = request.params;
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return next(new AppError("ID prodotto non valido.", 400));
+        }
+        if (!mongoose.Types.ObjectId.isValid(variantId)) {
+            return next(new AppError("ID variante non valido.", 400));
+        }
+        if (!mongoose.Types.ObjectId.isValid(imageId)) {
+            return next(new AppError("ID immagine non valido.", 400));
+        }
+        
+        const product = await Item.findById(productId);
+        if (!product) {
+            return next(new AppError("Prodotto non trovato.", 404));
+        }
+        
+        const variant = await ItemVariant.findById(variantId);
+        if (!variant) {
+            return next(new AppError("Variante non trovata.", 404));
+        }
+        
+        if (!variant.images || !Array.isArray(variant.images)) {
+            return next(new AppError('Immagini non disponibili per questa variante', 404));
+        }
+        
+        // Trova l'immagine da cancellare nell'array
+        const indexImageToUpdate = variant.images.findIndex(i => i._id == imageId); 
+
+        if(indexImageToUpdate === undefined || indexImageToUpdate < 0) {
+            return next(new AppError("Indice immagine non trovato.", 404));
+        }
+
+        const imageToUpdate = variant.images[indexImageToUpdate];
+        if (!imageToUpdate) {
+            return next(new AppError("Immagine non trovata nel prodotto.", 404));
+        }
+        const  altText = request.body?.altText;
+        const  isMain = request.body?.isMain;
+
+        if (altText !== undefined) {
+            imageToUpdate.altText = altText;
+        }
+
+        if (isMain !== undefined) {
+            imageToUpdate.isMain = isMain;
+
+            // const newIsMain = isMain === true || isMain === 'true';
+
+            // if (newIsMain && !imageToUpdate.isMain) {
+            //     // Se l'immagine viene impostata come principale, de-seleziona tutte le altre
+            //     variant.images.forEach(img => {
+            //         if (img._id.toString() !== imageId) {
+            //             img.isMain = false;
+            //         }
+            //     });
+            //     imageToUpdate.isMain = true;
+            // } 
+            // else if (!newIsMain && imageToUpdate.isMain && variant.images.length > 1) {
+            //     // Se si sta deselezionando l'immagine principale e ci sono altre immagini,
+            //     // imposta la prima altra immagine come principale (se non ce n'è già una)
+            //     imageToUpdate.isMain = false;
+            //     if (!variant.images.some(img => img.isMain)) {
+            //         const firstOtherImage = variant.images.find(img => img._id.toString() !== imageId);
+            //         if (firstOtherImage) {
+            //             firstOtherImage.isMain = true;
+            //         }
+            //     }
+            // } else if (!newIsMain && imageToUpdate.isMain && variant.images.length === 1) {
+            //     // Se è l'unica immagine e si tenta di deselezionarla come principale
+            //     return next(new AppError("La variante deve avere almeno un'immagine principale.", 400));
+            // } else if (newIsMain && imageToUpdate.isMain) {
+            //     // Già principale, non fare nulla
+            // }
+        }
+
+        variant.images[indexImageToUpdate] = imageToUpdate;
+
+        const updatedVariant = await variant.save();
+        response.status(200).json({
+            status: 'success',
+            data: updatedVariant
+        });
+
+    } catch (error) {
+        return next(error);
+    }
+};
+
+
 export const deleteProductImage = async (request, response, next) => {
     try {
-        const { productId, imageId } = request.params;
+        const { productId, variantId, imageId } = request.params;
 
-        if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(imageId)) {
-            return next(new AppError("ID prodotto o immagine non valido.", 400));
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return next(new AppError("ID prodotto non valido.", 400));
+        }
+        if (!mongoose.Types.ObjectId.isValid(variantId)) {
+            return next(new AppError("ID variante non valido.", 400));
+        }
+        if (!mongoose.Types.ObjectId.isValid(imageId)) {
+            return next(new AppError("ID immagine non valido.", 400));
         }
 
         const product = await Item.findById(productId);
@@ -361,14 +492,23 @@ export const deleteProductImage = async (request, response, next) => {
             return next(new AppError("Prodotto non trovato.", 404));
         }
 
+        const variant = await ItemVariant.findById(variantId);
+        if (!variant) {
+            return next(new AppError("Variante non trovata.", 404));
+        }
+
+        if (!variant.images || !Array.isArray(variant.images)) {
+            return next(new AppError('Immagini non disponibili per questa variante', 404));
+        }
+
         // Trova l'immagine da cancellare nell'array
-        const imageToDelete = product.images.id(imageId); 
+        const imageToDelete = variant.images.find(i => i._id == imageId); 
         if (!imageToDelete) {
             return next(new AppError("Immagine non trovata nel prodotto.", 404));
         }
 
         // Prevenire la cancellazione dell'immagine di default se è l'unica rimasta
-        if (product.images.length === 1 && imageToDelete.public_id === DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
+        if (variant.images.length === 1 && imageToDelete.public_id === DEFAULT_PRODUCT_IMAGE_PUBLIC_ID) {
             return next(new AppError("Non puoi cancellare l'ultima immagine di default. Carica prima una nuova immagine o lascia l'immagine di default.", 400));
         }
 
@@ -382,16 +522,16 @@ export const deleteProductImage = async (request, response, next) => {
         }
 
         // Rimuovi il sottodocumento dall'array
-        imageToDelete.remove(); // Metodo di Mongoose per rimuovere sottodocumenti
+        imageToDelete.deleteOne(); // Metodo di Mongoose per rimuovere sottodocumenti
 
         // Se l'immagine cancellata era la principale, e ci sono altre immagini,
         // imposta la prima rimanente come principale (se non ce n'è già una)
-        if (imageToDelete.isMain && product.images.length > 0 && !product.images.some(img => img.isMain)) {
-            product.images[0].isMain = true;
+        if (imageToDelete.isMain && variant.images.length > 0 && !variant.images.some(img => img.isMain)) {
+            variant.images[0].isMain = true;
         }
         // Se non ci sono più immagini dopo la cancellazione, ripristina l'immagine di default
-        if (product.images.length === 0) {
-             product.images.push({
+        if (variant.images.length === 0) {
+             variant.images.push({
                 url: DEFAULT_PRODUCT_IMAGE_URL,
                 public_id: DEFAULT_PRODUCT_IMAGE_PUBLIC_ID,
                 altText: "Nessuna immagine disponibile",
@@ -400,11 +540,11 @@ export const deleteProductImage = async (request, response, next) => {
         }
 
 
-        const updatedProduct = await product.save();
+        const updatedVariant = await variant.save();
 
         response.status(200).json({
             status: 'success',
-            data: updatedProduct
+            data: updatedVariant
         });
     } catch (error) {
         return next(error);

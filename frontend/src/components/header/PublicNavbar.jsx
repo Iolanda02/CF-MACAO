@@ -7,7 +7,7 @@ import { Dropdown, Image } from 'react-bootstrap';
 import logo from "../../assets/logo.png";
 import "./styles.css";
 import LoginModal from '../modals/LoginModal';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import RegisterModal from '../modals/RegistrerModal';
 
 
@@ -16,6 +16,43 @@ function PublicNavbar() {
     const navigate = useNavigate();
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const navbarRef = useRef(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const isScrolled = window.scrollY > 0;
+            if (isScrolled !== scrolled) {
+                setScrolled(isScrolled);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [scrolled]);
+
+    useEffect(() => {
+        if (navbarRef.current) {
+            const navbarElement = navbarRef.current;
+
+            const updatePadding = () => {
+                const navbarHeight = navbarElement.offsetHeight;
+                document.body.style.paddingTop = `${navbarHeight}px`;
+                // console.log('Navbar Height (after transition):', navbarHeight, 'Padding Top:', navbarHeight);
+            };
+
+            updatePadding();
+
+            navbarElement.addEventListener('transitionend', updatePadding);
+
+            return () => {
+                navbarElement.removeEventListener('transitionend', updatePadding);
+            };
+        }
+    }, [scrolled]);
 
     const handleShowLogin = () => {
         setShowRegisterModal(false); // Chiudi la modale di registrazione se aperta
@@ -51,10 +88,10 @@ function PublicNavbar() {
     };
 
     return (
-        <Navbar expand="lg" className="bg-body-tertiary">
+        <Navbar expand="lg" className={`bg-secondary-subtle ${scrolled ? 'scrolled' : ''}`} fixed='top' ref={navbarRef}>
             <Container>
                 <Navbar.Brand as={Link} to="/" key="navbar-brand">
-                    <img className="blog-navbar-brand" alt="logo" src={logo} />
+                    <img className={`blog-navbar-brand ${scrolled ? 'scrolled-logo' : ''}`} alt="logo" src={logo} />
                 </Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" key="navbar-toggle" />
                 <Navbar.Collapse id="basic-navbar-nav">

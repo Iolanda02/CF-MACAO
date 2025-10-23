@@ -26,7 +26,7 @@ import AdminUsersListPage from "./pages/admin-routes/admin-users/AdminUsersListP
 import AdminUsersFormPage from "./pages/admin-routes/admin-users/AdminUsersFormPage";
 import AdminUsersViewPage from "./pages/admin-routes/admin-users/AdminUsersViewPage";
 import NotFoundPage from "./pages/public-routes/not-found/NotFoundPage";
-import { CartProvider } from "./contexts/CartContext";
+import HelpPage from "./pages/public-routes/help/HelpPage";
 
 function App() {
 
@@ -52,23 +52,23 @@ function App() {
 
   return (
     <>
-      <CartProvider>
       <Routes>
-          {/* Rotte pubbliche */}
-          <Route path="/" element={<MainLayout />}> 
-            <Route index element={<HomePage />} />
-            <Route path="product/:id" element={<ProductDetailsPage />} />
-            <Route path="cart" element={<CartPage />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="login" element={<LoginPage />} />
-            <Route path="register" element={<RegisterPage />} />
-          </Route>
+        {/* Rotte pubbliche */}
+        <Route path="/" element={<MainLayout />}> 
+          <Route index element={<HomePage />} />
+          <Route path="product/:id" element={<ProductDetailsPage />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route path="help" element={<HelpPage />} />
 
           {/* Rotte protette */}
           <Route element={<ProtectedRoutes />}>
             <Route path="profile" element={<ProfilePage />} />
             <Route path="orders" element={<OrdersPage />} />
           </Route>
+        </Route>
 
         {/* Rotte Admin */}
         <Route path="/admin" element={<AdminRoutes />}>
@@ -91,7 +91,6 @@ function App() {
         {/* Rotta 404 - Pagina non trovata */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      </CartProvider>
     </>
   )
 }
@@ -111,7 +110,7 @@ const MainLayout = () => (
 const AdminLayout = () => (
   <div>
     <AdminNavbar />
-    <Container fluid className='min-height-admin-content'>
+    <Container fluid className='min-height-admin-content mb-5'>
       <main>
         <Outlet />
       </main>

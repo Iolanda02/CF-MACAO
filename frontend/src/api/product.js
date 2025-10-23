@@ -39,7 +39,7 @@ export async function createProduct(newProduct) {
 export async function updateProduct(id, newData) {
     try {
         const URL = `/items/${id}`;
-        const response = await protectedApi.patch(URL, newData);
+        const response = await protectedApi.put(URL, newData);
         // console.log("(API) updateProduct: ", response);
         return response.data;
     } catch(error) {
@@ -83,9 +83,9 @@ export async function getReviewsByItemId(id) {
 
 
 
-export async function addImages(id, fData) {
+export async function addImages(productId, variantId, fData) {
     try {
-        const response = await protectedApi.patch(`/items/${id}/images`, fData,
+        const response = await protectedApi.patch(`/items/${productId}/variants/${variantId}/images`, fData,
             {headers: {'Content-Type': 'multipart/form-data'}}
         );
         // console.log("(API) addImages: ", response)
@@ -96,9 +96,20 @@ export async function addImages(id, fData) {
     }
 }
 
-export async function removeImage(productId, imageId) {
+export async function updateImage(productId, variantId, imageId, fData) {
     try {
-        const response = await protectedApi.delete(`/items/${productId}/images/${imageId}`);
+        const response = await protectedApi.patch(`/items/${productId}/variants/${variantId}/images/${imageId}`, fData);
+        // console.log("(API) addImages: ", response)
+        return response.data;
+    } catch(error) {
+        // console.log(error);
+        throw error;
+    }
+}
+
+export async function removeImage(productId, variantId, imageId) {
+    try {
+        const response = await protectedApi.delete(`/items/${productId}/variants/${variantId}/images/${imageId}`);
         // console.log("(API) removeImage: ", response)
         return response.data;
     } catch(error) {

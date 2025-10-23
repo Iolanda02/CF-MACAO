@@ -34,14 +34,21 @@ export const uploadUserAvatar= multer({
 // --- Configurazione per Immagini di Prodotto (cartella macao/products) ---
 const productStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: async (req, file) => {
-        return {
-            folder: 'macao/products',
-            format: async (req, file) => 'png',
-            public_id: (req, file) => `product_${req.params.productId}_${Date.now()}`,
-            // transformation: [{ width: 800, height: 600, crop: "limit" }]
-        }
+    params: {
+        folder: 'macao/products',
+        format: async (req, file) => 'png',
+        public_id: (req, file) => `product_${req.params.productId}_${Date.now()}`,
+        // transformation: [{ width: 800, height: 600, crop: "limit" }]
+        
     },
+    // params: async (req, file) => {
+    //     return {
+    //         folder: 'macao/products',
+    //         format: async (req, file) => 'png',
+    //         public_id: (req, file) => `product_${req.params.productId}_${Date.now()}`,
+    //         // transformation: [{ width: 800, height: 600, crop: "limit" }]
+    //     }
+    // },
 });
 
 export const uploadProductImage = multer({

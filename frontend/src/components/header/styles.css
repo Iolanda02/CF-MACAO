@@ -1,5 +1,28 @@
+.navbar {
+  transition: all 0.3s ease-in-out;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  z-index: 1030; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar.scrolled {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.navbar.scrolled:not(.navbar-admin) {
+  background-color: #f8f9fa !important;
+}
+
 .blog-navbar-brand {
-  width: 130px;
+  height: 80px;
+  width: auto;
+  transition: all 0.3s ease-in-out;
+}
+
+.blog-navbar-brand.scrolled-logo {
+  height: 40px;
 }
 
 /* .avatar {
@@ -10,25 +33,23 @@
 } */
 
 .avatar {
-    width: 40px; /* O la dimensione desiderata per il tuo avatar */
+    width: 40px;
     height: 40px;
     object-fit: cover;
-    border: 2px solid transparent; /* Bordo iniziale trasparente */
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Transizione fluida */
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .avatar:hover {
-    border-color: #007bff; /* Colore del bordo all'hover, ad esempio blu primario di Bootstrap */
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Un leggero effetto ombra/bagliore */
-    cursor: pointer; /* Cambia il cursore per indicare che è cliccabile */
+    border-color: #007bff; 
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); 
+    cursor: pointer; 
 }
 
-/* Stili per il dropdown toggle senza freccetta */
 .no-caret-dropdown-toggle::after {
-    display: none; /* Nasconde la freccetta */
+    display: none;
 }
 
-/* Se usi un Nav.Link come toggle, assicurati che non abbia padding in eccesso */
 .dropdown .nav-link.p-0 {
-    padding: 0 !important;
+  padding: 0 !important;
 }

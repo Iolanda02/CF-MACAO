@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Col, Container, Form, InputGroup, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Col, Container, Form, Image, InputGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
-import { createProduct, getProduct } from "../../../api/product";
+import { addImages, createProduct, getProduct, removeImage, updateImage, updateProduct } from "../../../api/product";
 import { updateOrder } from "../../../api/order";
-import { ArrowLeft, PersonPlus, PlusCircle, Save, Trash } from "react-bootstrap-icons";
+import { ArrowLeft, PersonPlus, PlusCircle, Save, Trash, XCircleFill } from "react-bootstrap-icons";
 
 // Funzione per inizializzare lo stato del prodotto vuoto
 const getInitialProductState = () => ({
@@ -30,7 +30,7 @@ const getInitialVariantState = () => ({
   price: { amount: 0, currency: 'EUR' },
   discountPrice: 0,
   stock: { quantity: 0 },
-  images: [{ url: '', altText: '', isMain: true }],
+  images: [], //{ url: '', altText: '', isMain: true }
   weight: { value: 0, unit: 'g' },
   color: '',
   size: ''
@@ -48,6 +48,9 @@ function AdminProductsFormPage() {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
 
+    // imagesToUpload: { [variantIndex]: { [imageIndex]: { file: File, previewUrl: string, isNew: boolean, isDeleted: boolean } } }
+    const [imagesToProcess, setImagesToProcess] = useState({});
+
     
     const getProductDetails = useCallback(async (id) => {
         try {
@@ -61,6 +64,25 @@ function AdminProductsFormPage() {
             //   systemCompatibility: foundProduct.systemCompatibility ? foundProduct.systemCompatibility.join(', ') : '',
             //   variants: foundProduct.variants || []
             });
+
+            // Inizializza imagesToProcess con le immagini esistenti per la preview
+            const initialImagesToProcess = {};
+            foundProduct.data.variants.forEach((variant, vIdx) => {
+                initialImagesToProcess[vIdx] = {};
+                variant.images.forEach((img, iIdx) => {
+                    initialImagesToProcess[vIdx][iIdx] = {
+                        file: null, // Nessun file, è un'immagine esistente
+                        previewUrl: img.url,
+                        altText: img.altText,
+                        isMain: img.isMain,
+                        isNew: false, // Non è una nuova immagine da caricare
+                        isDeleted: false, // Non è marcata per la cancellazione
+                        _id: img._id // ID dell'immagine esistente
+                    };
+                });
+            });
+            setImagesToProcess(initialImagesToProcess);
+
         } catch(error) {
             console.error(error);
             setError("Non è stato possibile caricare i dettagli del prodotto. Riprova più tardi.");
@@ -92,6 +114,10 @@ function AdminProductsFormPage() {
             ...prev,
             variants: [...prev.variants, getInitialVariantState()]
         }));
+        setImagesToProcess(prev => ({
+            ...prev,
+            [prev.variants?.length || 0]: {} // variant.length è il prossimo indice
+        }));
     };
 
     // Rimuove una variante dall'array dato il suo indice
@@ -100,6 +126,13 @@ function AdminProductsFormPage() {
             ...prev,
             variants: prev.variants.filter((_, index) => index !== indexToRemove)
         }));
+        // Rimuove anche le immagini associate a questa variante
+        setImagesToProcess(prev => {
+            const newImagesToProcess = { ...prev };
+            // delete newImagesToProcess[indexToRemove];
+            newImagesToProcess.splice(indexToRemove, 1);
+            return newImagesToProcess;
+        });
     };
 
     // Gestisce il cambiamento dei campi di una specifica variante
@@ -116,12 +149,13 @@ function AdminProductsFormPage() {
                         [subField]: value
                     }
                 };
-            } else if (field === 'images') {
-                newVariants[index] = {
-                    ...newVariants[index],
-                    images: [{ url: value, altText: newVariants[index].images[0]?.altText || '', isMain: true }]
-                };
-            }
+            } 
+            // else if (field === 'images') {
+            //     newVariants[index] = {
+            //         ...newVariants[index],
+            //         images: [{ url: value, altText: newVariants[index].images[0]?.altText || '', isMain: true }]
+            //     };
+            // }
             else {
                 newVariants[index] = {
                     ...newVariants[index],
@@ -129,6 +163,111 @@ function AdminProductsFormPage() {
                 };
             }
             return { ...prev, variants: newVariants };
+        });
+    };
+        // --- Gestione delle Immagini ---
+
+    // Aggiunge un nuovo campo file input per un'immagine
+    const addImageField = (variantIndex) => {
+        setImagesToProcess(prev => {
+            const newVariantImages = { ...prev[variantIndex] };
+            const nextImageIndex = Object.keys(newVariantImages).length;
+            newVariantImages[nextImageIndex] = {
+                file: null,
+                previewUrl: null,
+                altText: '',
+                isMain: nextImageIndex === 0, // La prima immagine aggiunta è di default main
+                isNew: true,
+                isDeleted: false
+            };
+            return { ...prev, [variantIndex]: newVariantImages };
+        });
+    };
+
+    const handleImageFileChange = (variantIndex, imageIndex, e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagesToProcess(prev => ({
+                    ...prev,
+                    [variantIndex]: {
+                        ...prev[variantIndex],
+                        [imageIndex]: {
+                            ...prev[variantIndex][imageIndex],
+                            file: file,
+                            previewUrl: reader.result,
+                            isNew: true,
+                            isDeleted: false
+                        }
+                    }
+                }));
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Se l'utente cancella la selezione del file
+            setImagesToProcess(prev => ({
+                ...prev,
+                [variantIndex]: {
+                    ...prev[variantIndex],
+                    [imageIndex]: {
+                        ...prev[variantIndex][imageIndex],
+                        file: null,
+                        previewUrl: prev[variantIndex][imageIndex].isNew ? null : product.variants[variantIndex]?.images[imageIndex]?.url,
+                        isNew: prev[variantIndex][imageIndex].isNew ? false : prev[variantIndex][imageIndex].isNew,
+                        isDeleted: prev[variantIndex][imageIndex]._id ? true : false
+                    }
+                }
+            }));
+        }
+    };
+
+    const handleImageAltTextChange = (variantIndex, imageIndex, value) => {
+        setImagesToProcess(prev => ({
+            ...prev,
+            [variantIndex]: {
+                ...prev[variantIndex],
+                [imageIndex]: {
+                    ...prev[variantIndex][imageIndex],
+                    altText: value
+                }
+            }
+        }));
+    };
+
+    const handleImageMainChange = (variantIndex, imageIndex, isChecked) => {
+        setImagesToProcess(prev => {
+            const newVariantImages = { ...prev[variantIndex] };
+            // Imposta tutte le altre isMain a false per questa variante
+            for (const imgIdx in newVariantImages) {
+                newVariantImages[imgIdx].isMain = false;
+            }
+            // Imposta quella selezionata a true
+            newVariantImages[imageIndex].isMain = isChecked;
+            return { ...prev, [variantIndex]: newVariantImages };
+        });
+    };
+
+    const handleRemoveImage = (variantIndex, imageIndex) => {
+        setImagesToProcess(prev => {
+            const newVariantImages = { ...prev[variantIndex] };
+            if (newVariantImages[imageIndex]._id) {
+                // Se ha un ID, marca come eliminata per l'API
+                newVariantImages[imageIndex].isDeleted = true;
+            } else {
+                // Se è una nuova immagine non ancora caricata, rimuovila del tutto dallo stato
+                delete newVariantImages[imageIndex];
+            }
+
+            // Rimuovi l'immagine dal product.variants per coerenza visiva immediata
+            setProduct(currentProduct => {
+                const newProduct = { ...currentProduct };
+                const variant = { ...newProduct.variants[variantIndex] };
+                variant.images = variant.images.filter((_, idx) => idx !== imageIndex);
+                newProduct.variants[variantIndex] = variant;
+                return newProduct;
+            });
+            return { ...prev, [variantIndex]: newVariantImages };
         });
     };
     
@@ -180,6 +319,7 @@ function AdminProductsFormPage() {
 
         setSubmitting(true);
 
+        let savedProduct;
         // Prepara i dati per l'invio
         const dataToSend = {
             ...product,
@@ -198,17 +338,77 @@ function AdminProductsFormPage() {
 
         try {
             if (isEditing) {
-                await updateOrder(id, dataToSend);
-                alert("Utente aggiornato con successo!");
+                savedProduct = await updateProduct(id, dataToSend);
+                savedProduct = savedProduct.data;
                 setMessage('Prodotto modificato con successo!');
             } else {
-                // Chiamata API POST per aggiungere il prodotto
-                // const response = await api.post('/items', dataToSend);
-                // console.log('Prodotto aggiunto:', response.data);
-                await createProduct({...dataToSend});
-                alert("Prodotto creato con successo!");
+                savedProduct = await createProduct({...dataToSend});
+                savedProduct = savedProduct.data;
                 setMessage('Prodotto aggiunto con successo!');
             }
+
+            const currentProductId = savedProduct._id;
+
+            
+            // Gestione immagini per ogni variante
+            const finalVariants = await Promise.all(
+                savedProduct.variants.map(async (variant, vIdx) => {
+                    const currentVariantId = variant._id || savedProduct.variants[vIdx]._id; // Ottieni l'ID della variante salvata
+                    const variantImagesToProcess = imagesToProcess[vIdx] || {};
+                    const newVariantImagesArray = []; // Questo array conterrà le immagini finali per la variante
+
+                    // console.log("variantImagesToProcess ", variantImagesToProcess)
+
+                    // Processa eliminazioni
+                    for (const imgIdx in variantImagesToProcess) {
+                        const imgData = variantImagesToProcess[imgIdx];
+                        if (imgData.isDeleted && imgData._id) {
+                            await removeImage(currentProductId, currentVariantId, imgData._id);
+                        }
+                    }
+
+                    // Processa caricamenti e aggiornamenti metadati
+                    for (const imgIdx in variantImagesToProcess) {
+                        const imgData = variantImagesToProcess[imgIdx];
+                        if (!imgData.isDeleted) { // Solo se l'immagine non è stata marcata per l'eliminazione
+                            if (imgData.file) { // Nuova immagine o immagine cambiata
+                                const formDataForImage = new FormData();
+                                formDataForImage.append('image', imgData.file);
+                                formDataForImage.append('altText', imgData.altText || '');
+                                formDataForImage.append('isMain', imgData.isMain); // Multer gestirà "true"/"false" come stringhe
+
+                                const uploadedImageResult = await addImages(currentProductId, currentVariantId, formDataForImage);
+                                newVariantImagesArray.push(uploadedImageResult.data);
+                            } else if (imgData._id) { // Immagine esistente, potenzialmente con metadati aggiornati
+                                // Verifica se i metadati sono cambiati (altText o isMain)
+                                const originalImage = (variant.images || []).find(img => img._id === imgData._id);
+                                if (originalImage && (originalImage.altText !== imgData.altText || originalImage.isMain !== imgData.isMain)) {
+                                    const updatedImageData = await updateImage(
+                                        currentProductId,
+                                        currentVariantId,
+                                        imgData._id,
+                                        { altText: imgData.altText, isMain: imgData.isMain }
+                                    );
+                                    newVariantImagesArray.push(updatedImageData.data);
+                                } else if (originalImage) {
+                                    // Se non ci sono state modifiche al file o ai metadati, riaggiungi l'immagine originale
+                                    newVariantImagesArray.push(originalImage);
+                                }
+                            }
+                        }
+                    }
+
+                    return {
+                        ...variant,
+                        _id: currentVariantId, // Assicurati di mantenere l'ID della variante
+                        images: newVariantImagesArray // Le immagini finali per questa variante
+                    };
+                })
+            );
+
+            const finalProduct = await getProduct(currentProductId);
+            setProduct(finalProduct.data);
+            setMessage('Prodotto e immagini aggiornate con successo!');
 
             // Reindirizza alla lista dei prodotti
             navigate('/admin/products');
@@ -228,9 +428,9 @@ function AdminProductsFormPage() {
         return (
             <Container className="text-center mt-5">
                 <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Caricamento dati utente...</span>
+                    <span className="visually-hidden">Caricamento dati prodotto...</span>
                 </Spinner>
-                <p>Caricamento dati utente...</p>
+                <p>Caricamento dati prodotto...</p>
             </Container>
         );
     }
@@ -507,7 +707,68 @@ function AdminProductsFormPage() {
                             </Col>
                         </Row>
 
-                        <Form.Group className="mb-3" controlId={`variantImage-${index}`}>
+                        <h5 className="mt-4">Immagini Variante</h5>
+                        {Object.keys(imagesToProcess[index] || {}).length === 0 && (
+                            <Alert variant="secondary">Nessuna immagine aggiunta per questa variante.</Alert>
+                        )}
+                        <div className="d-flex flex-wrap gap-3 mb-3">
+                            {Object.entries(imagesToProcess[index] || {}).map(([imgIdx, imgData]) => (
+                                (!imgData.isDeleted) && ( // Mostra solo le immagini non marcate per la cancellazione
+                                    <div key={imgIdx} className="position-relative border p-2 rounded" style={{ width: '150px', height: 'auto' }}>
+                                        {imgData.previewUrl ? (
+                                            <Image src={imgData.previewUrl} fluid thumbnail />
+                                        ) : (
+                                            <div className="text-center text-muted py-5">No Preview</div>
+                                        )}
+                                        <Button
+                                            variant="danger"
+                                            size="sm"
+                                            className="position-absolute top-0 end-0"
+                                            onClick={() => handleRemoveImage(index, imgIdx)}
+                                            disabled={submitting}
+                                        >
+                                            <XCircleFill />
+                                        </Button>
+                                        <Form.Group className="mt-2">
+                                            <Form.Label>File Immagine</Form.Label>
+                                            <Form.Control
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageFileChange(index, imgIdx, e)}
+                                                disabled={submitting}
+                                            />
+                                            <Form.Label className="mt-2">Alt Text</Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Descrizione immagine"
+                                                value={imgData.altText}
+                                                onChange={(e) => handleImageAltTextChange(index, imgIdx, e.target.value)}
+                                                disabled={submitting}
+                                            />
+                                            <Form.Check
+                                                type="checkbox"
+                                                label="Immagine Principale"
+                                                checked={imgData.isMain}
+                                                onChange={(e) => handleImageMainChange(index, imgIdx, e.target.checked)}
+                                                className="mt-2"
+                                                disabled={submitting}
+                                            />
+                                        </Form.Group>
+                                    </div>
+                                )
+                            ))}
+                        </div>
+                        <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={() => addImageField(index)}
+                            className="d-flex align-items-center"
+                            disabled={submitting}
+                        >
+                            <PlusCircle className="me-2" /> Aggiungi Immagine
+                        </Button>
+
+                        {/* <Form.Group className="mb-3" controlId={`variantImage-${index}`}>
                             <Form.Label>Immagine Principale (URL)</Form.Label>
                             <Form.Control
                                 type="url"
@@ -516,7 +777,7 @@ function AdminProductsFormPage() {
                                 onChange={(e) => handleVariantChange(index, 'images', e.target.value)}
                                 disabled={submitting}
                             />
-                        </Form.Group>
+                        </Form.Group> */}
                         {/* Potresti aggiungere un campo per altText o per aggiungere più immagini */}
 
                         <Row>

@@ -7,6 +7,7 @@ import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
 import LoginModal from "../modals/LoginModal";
 import { useToast } from "../../contexts/ToastContext";
+import defaultProductImage from '../../assets/no-image.png';
 
 
 function ProductCard({ product }) {
@@ -15,6 +16,7 @@ function ProductCard({ product }) {
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(product.variants[0]?.name || '');
     const [currentPrice, setCurrentPrice] = useState(product.variants[0]?.price?.amount || 0);
+    const [mainImage, setMainImage] = useState(product.variants[0]?.images?.[0]);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const { addToast } = useToast();
 
@@ -24,6 +26,7 @@ function ProductCard({ product }) {
             setQuantity(1);
             setSelectedVariant(product.variants[0].name);
             setCurrentPrice(product.variants[0].price.amount);
+            setMainImage(product.variants[0].images?.find(i => i.isMain));
         }
     }, [product._id, product.variants]);
 
@@ -31,6 +34,7 @@ function ProductCard({ product }) {
         // Trova il prezzo del pacco selezionato quando cambia la variante
         const variant = product.variants.find(v => v.name === selectedVariant);
         setCurrentPrice(variant?.price?.amount || 0);
+        setMainImage(variant?.images?.find(i => i.isMain));
     }, [selectedVariant, product.variants])
     
     const handleQuantityChange = (delta) => {
@@ -62,7 +66,8 @@ function ProductCard({ product }) {
     
     return (
         <Card className="h-100 shadow-sm">
-            <Card.Img variant="top" src={product.image?.path} alt={product.name} style={{ height: '200px', objectFit: 'cover' }} />
+            <Card.Img variant="top" src={mainImage?.url || defaultProductImage} 
+                alt={mainImage?.altText || `Immagine per ${product.name}`} style={{ height: '200px', objectFit: 'cover' }} />
             <Card.Body className="d-flex flex-column">
                 <Card.Title className="mb-2">
                     <Link to={`/product/${product._id}`} className="text-decoration-none text-dark">

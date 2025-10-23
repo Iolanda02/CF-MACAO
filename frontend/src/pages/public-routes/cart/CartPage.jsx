@@ -62,19 +62,19 @@ function CartPage() {
                             <p>Il carrello è vuoto.</p>
                         ) : (
                             cart?.items?.map(item => (
-                                <Card className="cart-item mb-3" key={`${item._id}-${item.variant._id}`}>
+                                <Card className="cart-item mb-3" key={`${item._id}-${item.variant?._id}`}>
                                     <Row className="g-0 align-items-center">
                                         <Col xs={3} md={2}>
-                                            <Card.Img src={item.variant.images?.[0]?.url} alt={item.variant.images?.[0]?.url} className="cart-item-img p-2" />
+                                            <Card.Img src={item.variant?.images?.[0]?.url} alt={item.variant?.images?.[0]?.url} className="cart-item-img p-2" />
                                         </Col>
                                         <Col xs={9} md={10}>
                                             <Card.Body>
                                                 <Row className="align-items-center">
                                                     <Col md={6}>
-                                                        <p className="item-brand mb-1">{item.item.brand}</p>
+                                                        <p className="item-brand mb-1">{item.item?.brand}</p>
                                                         <Card.Title className="item-name">{item.productName}</Card.Title>
                                                         <Card.Text className="item-format text-muted">{item.variantName}</Card.Text>
-                                                        <Button variant="link" className="item-remove-btn p-0" onClick={() => handleRemoveItem(item.item._id, item.variant._id)}>
+                                                        <Button variant="link" className="item-remove-btn p-0" onClick={() => handleRemoveItem(item.item?._id, item.variant?._id)}>
                                                             <TrashFill className="me-1" /> Rimuovi
                                                         </Button>
                                                     </Col>

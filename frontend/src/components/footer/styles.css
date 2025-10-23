@@ -1,0 +1,9 @@
+.footer-link {
+  color: #fff !important;
+  padding: 0.1rem 0;
+  display: inline-block;
+}
+
+.footer-link:hover {
+  color: #c0c0c0 !important;
+}

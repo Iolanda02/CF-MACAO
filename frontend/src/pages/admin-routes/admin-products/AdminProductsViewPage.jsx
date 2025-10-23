@@ -69,7 +69,7 @@ function AdminProductsViewPage() {
             <Button variant="secondary" onClick={() => navigate('/admin/products')} className="mt-3">
                 Torna alla Lista Prodotti
             </Button>
-            <Button variant="info" onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+            <Button variant="info" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
                 <PencilFill className="me-2" />Modifica Prodotto
             </Button>
         </div>

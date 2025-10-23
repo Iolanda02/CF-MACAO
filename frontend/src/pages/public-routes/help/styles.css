@@ -1,0 +1,49 @@
+.help-card {
+  border-radius: 0.75rem !important;
+  padding: 1.5rem;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.help-card.bg-primary {
+  background-color: #0d2c4e !important;
+}
+
+.faq-accordion .accordion-item {
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+}
+
+.faq-accordion .accordion-button {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  color: #333;
+  font-weight: 500;
+}
+
+.faq-accordion .accordion-button:not(.collapsed) {
+  color: #0d2c4e;
+  background-color: #e9ecef;
+  box-shadow: none;
+}
+
+.faq-accordion .accordion-button:focus {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.faq-accordion .accordion-body {
+  padding: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.faq-accordion .accordion-item:not(:last-of-type) {
+  margin-bottom: 10px;
+}
+
+.h-full {
+    height: -webkit-fill-available;
+}
