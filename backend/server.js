@@ -12,7 +12,6 @@ import globalErrorHandler from "./middlewares/errorMiddleware.js";
 import authenticationRouter from "./routers/authentication.router.js";
 import userRouter from "./routers/user.router.js";
 import itemRouter from "./routers/item.router.js";
-import itemVariantRouter from "./routers/itemVariant.router.js";
 import reviewRouter from "./routers/review.router.js";
 import orderRouter from "./routers/order.router.js";
 import cartRouter from "./routers/cart.router.js";
@@ -21,7 +20,23 @@ const server = express();
 const apiV1Router = express.Router();
 const port = process.env.PORT;
 
-server.use(cors());
+var whitelist = [process.env.FRONTEND_HOST];
+var corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) {
+            // per il tag <a> del login con Google
+            return callback(null, true);
+        }
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+};
+
+server.use(cors(corsOptions));
+// server.use(cors());
 
 if (process.env.NODE_ENV === 'development') {
     server.use(morgan('dev'));
@@ -34,7 +49,6 @@ passport.use(strategyGoogle);
 apiV1Router.use("/auth", authenticationRouter);
 apiV1Router.use("/users", userRouter);
 apiV1Router.use("/items", itemRouter);
-// apiV1Router.use("/item-variants", itemVariantRouter);
 apiV1Router.use("/reviews", reviewRouter);
 apiV1Router.use("/orders", orderRouter);
 apiV1Router.use("/cart", cartRouter);
