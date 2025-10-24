@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, ListGroup, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Image, ListGroup, Row, Spinner } from "react-bootstrap";
 import { getProduct } from "../../../api/product";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, PencilFill } from "react-bootstrap-icons";
@@ -44,17 +44,25 @@ function AdminProductsViewPage() {
 
     if (error) {
         return (
-            <Container className="mt-5">
-                <Alert variant="danger">{error}</Alert>
-                <Button variant="secondary" onClick={() => navigate("/admin/items")} className="mt-3">
-                    <ArrowLeft className="me-2" />Torna alla lista
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista prodotti
                 </Button>
+                <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
 
-    if (!product) 
-        return <Container className="my-4"><Alert variant="info">Prodotto non disponibile.</Alert></Container>;
+    if (!product) {
+        return ( 
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista prodotti
+                </Button>
+                <Alert variant="info">Prodotto non disponibile.</Alert>
+            </Container>
+        )
+    }
 
     // Formattazione delle date
     const formatDate = (dateString) => {
@@ -62,35 +70,55 @@ function AdminProductsViewPage() {
         return new Date(dateString).toLocaleString();
     };
 
+    const renderInfoItem = (label, value) => (
+        <Col md={6} className="mb-3"> {/* Due colonne su md e lg */}
+            <strong>{label}:</strong> {value}
+        </Col>
+    );
+
     return (
-        <Container className="mt-4">
+        <Container className="my-4">
         
-        <div className="d-flex justify-content-between align-items-center mb-3">
-            <Button variant="secondary" onClick={() => navigate('/admin/products')} className="mt-3">
-                Torna alla Lista Prodotti
-            </Button>
-            <Button variant="info" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
-                <PencilFill className="me-2" />Modifica Prodotto
+        <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mt-3">
+            <ArrowLeft className="me-2" />Torna alla Lista Prodotti
+        </Button>
+
+        <div className="d-flex justify-content-between align-items-end my-3">
+            <h1 className="m-0">Dettagli Prodotto: {product?.name}</h1>
+            <Button variant="outline-secondary" title="Modifica prodotto" 
+                onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
+                <PencilFill />
             </Button>
         </div>
             
-        <h1>Dettagli Prodotto: {product.name}</h1>
 
         <Card className="my-4">
             <Card.Header as="h5">Informazioni Generali</Card.Header>
             <Card.Body>
-            <ListGroup variant="flush">
-                <ListGroup.Item><strong>ID:</strong> {product._id}</ListGroup.Item>
-                <ListGroup.Item><strong>Nome:</strong> {product.name}</ListGroup.Item>
-                {/* <ListGroup.Item><strong>Slug:</strong> {product.slug}</ListGroup.Item> */}
-                <ListGroup.Item><strong>Brand:</strong> {product.brand || 'N/A'}</ListGroup.Item>
-                <ListGroup.Item><strong>Descrizione:</strong> {product.description || 'Nessuna descrizione.'}</ListGroup.Item>
-                <ListGroup.Item><strong>Tipo di Prodotto:</strong> {product.itemType}</ListGroup.Item>
-                <ListGroup.Item><strong>Stato:</strong> {product.isActive ? 'Attivo' : 'Inattivo'}</ListGroup.Item>
-                <ListGroup.Item><strong>Tags:</strong> {product.tags && product.tags.length > 0 ? product.tags.join(', ') : 'N/A'}</ListGroup.Item>
-                <ListGroup.Item><strong>Creato il:</strong> {formatDate(product.createdAt)}</ListGroup.Item>
-                <ListGroup.Item><strong>Ultima Modifica:</strong> {formatDate(product.updatedAt)}</ListGroup.Item>
-            </ListGroup>
+                {/* <ListGroup variant="flush">
+                    <ListGroup.Item><strong>ID:</strong> {product._id}</ListGroup.Item>
+                    <ListGroup.Item><strong>Nome:</strong> {product.name}</ListGroup.Item>
+                    <ListGroup.Item><strong>Brand:</strong> {product.brand || 'N/A'}</ListGroup.Item>
+                    <ListGroup.Item><strong>Descrizione:</strong> {product.description || 'Nessuna descrizione.'}</ListGroup.Item>
+                    <ListGroup.Item><strong>Tipo di Prodotto:</strong> {product.itemType}</ListGroup.Item>
+                    <ListGroup.Item><strong>Stato:</strong> {product.isActive ? 'Attivo' : 'Inattivo'}</ListGroup.Item>
+                    <ListGroup.Item><strong>Tags:</strong> {product.tags && product.tags.length > 0 ? product.tags.join(', ') : 'N/A'}</ListGroup.Item>
+                    <ListGroup.Item><strong>Creato il:</strong> {formatDate(product.createdAt)}</ListGroup.Item>
+                    <ListGroup.Item><strong>Ultima Modifica:</strong> {formatDate(product.updatedAt)}</ListGroup.Item>
+                </ListGroup> */}
+                <Row> 
+                    {renderInfoItem('ID', product._id)}
+                    {renderInfoItem('Nome', product.name)}
+                    {renderInfoItem('Brand', product.brand || 'N/A')}
+                    {renderInfoItem('Tipo di Prodotto', product.itemType)}
+                    {renderInfoItem('Stato', product.isActive ? 'Attivo' : 'Inattivo')}
+                    {renderInfoItem('Tags', product.tags && product.tags.length > 0 ? product.tags.join(', ') : 'N/A')}
+                    {renderInfoItem('Creato il', formatDate(product.createdAt))}
+                    {renderInfoItem('Ultima Modifica', formatDate(product.updatedAt))}
+                    <Col xs={12} className="mb-3">
+                        <strong>Descrizione:</strong> {product.description || 'Nessuna descrizione.'}
+                    </Col>
+                </Row>
             </Card.Body>
         </Card>
 
@@ -99,7 +127,7 @@ function AdminProductsViewPage() {
             <Card className="mb-4">
             <Card.Header as="h5">Dettagli Capsula di Caffè</Card.Header>
             <Card.Body>
-                <ListGroup variant="flush">
+                {/* <ListGroup variant="flush">
                 <ListGroup.Item><strong>Intensità:</strong> {product.intensity || 'N/A'}</ListGroup.Item>
                 <ListGroup.Item><strong>Livello di Tostatura:</strong> {product.roastLevel || 'N/A'}</ListGroup.Item>
                 <ListGroup.Item><strong>Miscela:</strong> {product.blend || 'N/A'}</ListGroup.Item>
@@ -110,7 +138,19 @@ function AdminProductsViewPage() {
                     ? product.systemCompatibility.join(', ')
                     : 'N/A'}
                 </ListGroup.Item>
-                </ListGroup>
+                </ListGroup> */}
+                <Row>
+                    {renderInfoItem('Intensità', product.intensity || 'N/A')}
+                    {renderInfoItem('Livello di Tostatura', product.roastLevel || 'N/A')}
+                    {renderInfoItem('Miscela', product.blend || 'N/A')}
+                    {renderInfoItem('Profilo Aromatico', product.aromaProfile || 'N/A')}
+                    <Col xs={12} className="mb-3">
+                        <strong>Sistemi Compatibili:</strong>{' '}
+                        {product.systemCompatibility && product.systemCompatibility.length > 0
+                        ? product.systemCompatibility.join(', ')
+                        : 'N/A'}
+                    </Col>
+                </Row>
             </Card.Body>
             </Card>
         )}
@@ -119,7 +159,7 @@ function AdminProductsViewPage() {
         <Card className="mb-4">
             <Card.Header as="h5">Varianti Prodotto ({product.variants ? product.variants.length : 0})</Card.Header>
             <Card.Body>
-            {product.variants && product.variants.length > 0 ? (
+            {/* {product.variants && product.variants.length > 0 ? (
                 <ListGroup>
                 {product.variants.map((variant) => (
                     <ListGroup.Item key={variant._id}>
@@ -133,6 +173,66 @@ function AdminProductsViewPage() {
                     </ListGroup.Item>
                 ))}
                 </ListGroup>
+            ) : (
+                <p>Nessuna variante disponibile per questo prodotto.</p>
+            )} */}
+             {product.variants && product.variants.length > 0 ? (
+                <Row xs={1} md={2} className="g-4"> {/* Una colonna su xs, due su md e lg */}
+                {product.variants.map((variant) => (
+                    <Col key={variant._id}>
+                        <Card className="h-100 shadow-sm">
+                            <Card.Body>
+                                <Card.Title className="mb-3">{variant.name}</Card.Title>
+                                
+                                {/* Immagini della variante */}
+                                {variant.images && variant.images.length > 0 && (
+                                    <div className="mb-3 d-flex flex-wrap gap-2">
+                                        {variant.images.map((img, index) => (
+                                            <Image 
+                                                key={index} 
+                                                src={img.url} 
+                                                alt={img.altText || `Immagine ${index + 1} di ${variant.name}`} 
+                                                thumbnail 
+                                                style={{ width: '80px', height: '80px', objectFit: 'cover' }} 
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                                {!variant.images || variant.images.length === 0 && (
+                                    <p className="text-muted small">Nessuna immagine per questa variante.</p>
+                                )}
+
+                                {/* <ListGroup variant="flush">
+                                    <ListGroup.Item><strong>SKU:</strong> {variant.sku || 'N/A'}</ListGroup.Item>
+                                    <ListGroup.Item><strong>Prezzo:</strong> €{variant.price ? variant.price.amount.toFixed(2) : 'N/A'} ({variant.price ? variant.price.currency : 'N/A'})</ListGroup.Item>
+                                    <ListGroup.Item><strong>Sconto:</strong> {variant.discountPrice ? `€${variant.discountPrice.toFixed(2)}` : 'Nessuno'}</ListGroup.Item>
+                                    <ListGroup.Item><strong>Disponibilità:</strong> {variant.stock ? variant.stock.quantity : 'N/A'}</ListGroup.Item>
+                                    <ListGroup.Item><strong>Peso:</strong> {variant.weight ? `${variant.weight.value} ${variant.weight.unit}` : 'N/A'}</ListGroup.Item>
+                                    <ListGroup.Item><strong>Colore:</strong> {variant.color || 'N/A'}</ListGroup.Item>
+                                    <ListGroup.Item><strong>Misura:</strong> {variant.size || 'N/A'}</ListGroup.Item>
+                                    {product.itemType === 'coffee_capsule' && variant.capsulePerPack && (
+                                        <ListGroup.Item><strong>Capsule per Confezione:</strong> {variant.capsulePerPack}</ListGroup.Item>
+                                    )}
+                                    <ListGroup.Item><strong>Ultimo aggiornamento stock:</strong> {formatDate(variant.stock?.lastUpdated)}</ListGroup.Item>
+                                </ListGroup> */}
+                                <Row>
+                                    <Col xs={12} className="mb-3"><strong>SKU:</strong> {variant.sku || 'N/A'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Prezzo:</strong> €{variant.price ? variant.price.amount.toFixed(2) : 'N/A'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Sconto:</strong> {variant.discountPrice ? `€${variant.discountPrice.toFixed(2)}` : 'Nessuno'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Disponibilità:</strong> {variant.stock ? variant.stock.quantity : 'N/A'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Peso:</strong> {variant.weight ? `${variant.weight.value} ${variant.weight.unit}` : 'N/A'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Colore:</strong> {variant.color || 'N/A'}</Col>
+                                    <Col xs={12} className="mb-3"><strong>Misura:</strong> {variant.size || 'N/A'}</Col>
+                                    {product.itemType === 'coffee_capsule' && variant.capsulePerPack && (
+                                        <Col xs={12} className="mb-3"><strong>Capsule per Confezione:</strong> {variant.capsulePerPack}</Col>
+                                    )}
+                                    <Col xs={12} className="mb-3"><strong>Ultimo aggiornamento stock:</strong> {formatDate(variant.stock?.lastUpdated)}</Col>
+                                </Row>
+                            </Card.Body>
+                        </Card>
+                    </Col>
+                ))}
+                </Row>
             ) : (
                 <p>Nessuna variante disponibile per questo prodotto.</p>
             )}

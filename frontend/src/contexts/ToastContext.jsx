@@ -39,10 +39,10 @@ export const ToastProvider = ({ children }) => {
     ? ReactDOM.createPortal(
         <ToastContainer className="p-3" 
         style={{
-            position: 'fixed', // Questo è il cambiamento chiave
-            top: '16vh',       // Distanza dal top del viewport
-            right: '20px',     // Distanza dal bordo destro del viewport
-            zIndex: 9999,      // Assicurati che sia sopra tutto il resto
+            position: 'fixed',
+            top: '16vh',
+            right: '20px',
+            zIndex: 9999, 
           }}
         >
           {toasts.map((toast) => (

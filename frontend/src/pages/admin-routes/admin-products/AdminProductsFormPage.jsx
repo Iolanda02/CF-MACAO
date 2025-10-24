@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Col, Container, Form, Image, InputGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import { addImages, createProduct, getProduct, removeImage, updateImage, updateProduct } from "../../../api/product";
-import { updateOrder } from "../../../api/order";
 import { ArrowLeft, PersonPlus, PlusCircle, Save, Trash, XCircleFill } from "react-bootstrap-icons";
+import { useToast } from "../../../contexts/ToastContext";
 
 // Funzione per inizializzare lo stato del prodotto vuoto
 const getInitialProductState = () => ({
@@ -47,11 +47,11 @@ function AdminProductsFormPage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
+    const { addToast } = useToast();
 
     // imagesToUpload: { [variantIndex]: { [imageIndex]: { file: File, previewUrl: string, isNew: boolean, isDeleted: boolean } } }
     const [imagesToProcess, setImagesToProcess] = useState({});
 
-    
     const getProductDetails = useCallback(async (id) => {
         try {
             setLoading(true);
@@ -116,7 +116,7 @@ function AdminProductsFormPage() {
         }));
         setImagesToProcess(prev => ({
             ...prev,
-            [prev.variants?.length || 0]: {} // variant.length è il prossimo indice
+            [prev.variants?.length || 0]: {}
         }));
     };
 
@@ -165,7 +165,8 @@ function AdminProductsFormPage() {
             return { ...prev, variants: newVariants };
         });
     };
-        // --- Gestione delle Immagini ---
+        
+    // --- Gestione delle Immagini ---
 
     // Aggiunge un nuovo campo file input per un'immagine
     const addImageField = (variantIndex) => {
@@ -259,7 +260,7 @@ function AdminProductsFormPage() {
                 delete newVariantImages[imageIndex];
             }
 
-            // Rimuovi l'immagine dal product.variants per coerenza visiva immediata
+            // Rimuovi l'immagine dal product.variants
             setProduct(currentProduct => {
                 const newProduct = { ...currentProduct };
                 const variant = { ...newProduct.variants[variantIndex] };
@@ -300,7 +301,6 @@ function AdminProductsFormPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
-        setMessage(null);
 
         if (!product.name || !product.itemType) {
         setError('Nome e tipo di prodotto sono campi obbligatori.');
@@ -314,8 +314,6 @@ function AdminProductsFormPage() {
         if (!validateVariants()) {
             return;
         }
-
-        // ... Altre validazioni
 
         setSubmitting(true);
 
@@ -340,11 +338,11 @@ function AdminProductsFormPage() {
             if (isEditing) {
                 savedProduct = await updateProduct(id, dataToSend);
                 savedProduct = savedProduct.data;
-                setMessage('Prodotto modificato con successo!');
+                addToast("Prodotto modificato con successo!", "success");
             } else {
                 savedProduct = await createProduct({...dataToSend});
                 savedProduct = savedProduct.data;
-                setMessage('Prodotto aggiunto con successo!');
+                addToast("Prodotto aggiunto con successo!", "success");
             }
 
             const currentProductId = savedProduct._id;
@@ -408,17 +406,13 @@ function AdminProductsFormPage() {
 
             const finalProduct = await getProduct(currentProductId);
             setProduct(finalProduct.data);
-            setMessage('Prodotto e immagini aggiornate con successo!');
 
             // Reindirizza alla lista dei prodotti
             navigate('/admin/products');
         } catch (err) {
             console.error(err);
-            const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
-            setError(apiErrorMessage);
-            // if (err.response?.data?.errors) {
-            //     setFormErrors(err.response.data.errors);
-            // }
+            // const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
+            addToast("Problemi con il salvataggio delle immagini.", "danger")
         } finally {
             setSubmitting(false);
         }
@@ -434,23 +428,37 @@ function AdminProductsFormPage() {
             </Container>
         );
     }
-
+    
     if (error) {
         return (
-            <Container className="mt-5">
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista
+                </Button>
                 <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
 
+    if (!product) {
+        return ( 
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista
+                </Button>
+                <Alert variant="info">Prodotto non disponibile.</Alert>
+            </Container>
+        )
+    }
+
     return (
         <Container className="my-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="secondary" onClick={() => navigate("/admin/products")}>
-                    <ArrowLeft className="me-2" />Torna alla lista prodotti
-                </Button>
+            <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mt-3">
+                <ArrowLeft className="me-2" />Torna alla Lista Prodotti
+            </Button>
+            <div className="d-flex justify-content-between align-items-center my-3">
+            <h1 className="m-0">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
             </div>
-            <h1>{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
         <Row>
             <Col>
             {error && <Alert variant="danger">{error}</Alert>}
@@ -605,7 +613,7 @@ function AdminProductsFormPage() {
                 </>
                 )}
 
-                {/* Gestione delle Varianti (complessità significativa) */}
+                {/* Gestione delle Varianti */}
                 <h3 className="mt-4">Varianti Prodotto</h3>
                 {product.variants.length === 0 && (
                     <Alert variant="info" className="text-center">
@@ -714,7 +722,7 @@ function AdminProductsFormPage() {
                         <div className="d-flex flex-wrap gap-3 mb-3">
                             {Object.entries(imagesToProcess[index] || {}).map(([imgIdx, imgData]) => (
                                 (!imgData.isDeleted) && ( // Mostra solo le immagini non marcate per la cancellazione
-                                    <div key={imgIdx} className="position-relative border p-2 rounded" style={{ width: '150px', height: 'auto' }}>
+                                    <div key={imgIdx} className="position-relative border p-2 rounded" style={{ width: '250px', height: 'auto' }}>
                                         {imgData.previewUrl ? (
                                             <Image src={imgData.previewUrl} fluid thumbnail />
                                         ) : (

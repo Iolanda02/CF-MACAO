@@ -3,15 +3,18 @@ import { Alert, Button, Col, Container, Form, InputGroup, Pagination, Row, Spinn
 import { Link, useNavigate } from "react-router";
 import { getAllProducts, removeProduct } from "../../../api/product";
 import { CheckCircleFill, EyeFill, PencilFill, PlusCircleFill, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
+import "./styles.css";
+import DeleteModal from "../../../components/modals/DeleteModal";
 
 function AdminProductsListPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false); 
-    const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
     const [filterTerm, setFilterTerm] = useState("");
     const [currentFilterInput, setCurrentFilterInput] = useState("");
     const navigate = useNavigate();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [productToDelete, setProductToDelete] = useState(null);
 
     const [paginator, setPaginator] = useState({
         page: 1,
@@ -26,7 +29,6 @@ function AdminProductsListPage() {
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
-            setError(false);
             const result = await getAllProducts(filterTerm, paginator);
             setProducts(result.data);
             setPaginator(prev => ({
@@ -36,7 +38,7 @@ function AdminProductsListPage() {
             }));
         } catch(error) {
             console.error("Error fetching products:", error);
-            setError("Impossibile caricare i prodotti. Riprova più tardi.");
+            setMessage({ type: 'danger', text: 'Impossibile caricare i prodotti. Riprova più tardi.' });
         } finally {
             setLoading(false);
         }
@@ -89,21 +91,26 @@ function AdminProductsListPage() {
         setCurrentFilterInput("");
     };
 
-    const handleDelete = async (product) => {
-        if (window.confirm('Sei sicuro di voler eliminare questo prodotto?')) {
-            try {
-                const result = await removeProduct(product._id);
-                setMessage({ type: 'success', text: 'Prodotto eliminato con successo!' });
-                // Resetta la paginazione se l'eliminazione causa la scomparsa dell'ultima pagina
-                // if (currentPage > Math.ceil((products.length - 1) / productsPerPage)) {
-                //     setCurrentPage(Math.max(1, currentPage - 1));
-                // }
-                fetchProducts();
-            } catch(error) {
-                console.log(error);
-                setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione del prodotto.' });
+    const handleDeleteProduct = async () => {
+        try {
+            const result = await removeProduct(productToDelete._id);
+            setMessage({ type: 'success', text: 'Prodotto eliminato con successo!' });
+            // Resetta la paginazione se l'eliminazione causa la scomparsa dell'ultima pagina
+            fetchProducts();
+            if (currentPage > Math.ceil((products.length - 1) / productsPerPage)) {
+                setCurrentPage(Math.max(1, currentPage - 1));
             }
+            setShowDeleteModal(false);
+            setProductToDelete(null);
+        } catch(error) {
+            console.log(error);
+            setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione del prodotto.' });
         }
+    };
+
+    const handleDelete = (product) => {
+        setProductToDelete(product);
+        setShowDeleteModal(true);
     };
 
     if (loading) {
@@ -117,13 +124,14 @@ function AdminProductsListPage() {
         );
     }
 
-    if (error) {
-        return (
-            <Container className="mt-5">
-                <Alert variant="danger">{error}</Alert>
-            </Container>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <Container className="mt-5">
+    //             <Alert variant="danger">{error}</Alert>
+    //         </Container>
+    //     );
+    // }
+
     return (
         <Container className="my-4">
         <Row className="mb-4 align-items-center">
@@ -131,7 +139,7 @@ function AdminProductsListPage() {
             <h2>Gestione Prodotti</h2>
             </Col>
             <Col xs="auto">
-            <Button as={Link} to="/admin/products/new" variant="primary">
+            <Button as={Link} to="/admin/products/new" variant="outline-dark">
                 <PlusCircleFill className="me-2" />Aggiungi Prodotto
             </Button>
             </Col>
@@ -149,7 +157,7 @@ function AdminProductsListPage() {
                     <InputGroup>
                         <Form.Control
                             type="text"
-                            placeholder="Cerca per nome, brand, tag..."
+                            placeholder="Cerca prodotti..."
                             value={currentFilterInput}
                             onChange={() => setCurrentFilterInput(e.target.value)}
                             onKeyPress={(e) => {
@@ -180,11 +188,11 @@ function AdminProductsListPage() {
                 </tr>
                 </thead>
                 <tbody>
-                {products.length > 0 ? (
+                {products?.length > 0 ? (
                     products.map((product, index) => (
                     <tr key={product._id}>
                         <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
-                        <td>{product.name}</td>
+                        <td><b>{product.name}</b></td>
                         {/* <td>€ {product.price.toFixed(2)}</td>
                         <td>{product.stock}</td> */}
                         <td className="align-middle">{product.variants?.length || 0}</td>
@@ -196,14 +204,14 @@ function AdminProductsListPage() {
                             )}
                         </td>
                         <td className="text-center">
-                        <Button variant="outline-primary" size="sm" className="me-2" onClick={() => navigate(`/admin/products/${product._id}`)}>
-                            <EyeFill /> Visualizza
+                        <Button variant="outline-dark" size="sm" className="me-2" onClick={() => navigate(`/admin/products/${product._id}`)}>
+                            <EyeFill />
                         </Button>
-                        <Button variant="outline-info" size="sm" className="me-2" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
-                            <PencilFill /> Modifica
+                        <Button variant="outline-secondary" size="sm" className="me-2" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
+                            <PencilFill />
                         </Button>
                         <Button variant="outline-danger" size="sm" onClick={() => handleDelete(product)}>
-                            <TrashFill /> Elimina
+                            <TrashFill />
                         </Button>
                         </td>
                     </tr>
@@ -232,6 +240,16 @@ function AdminProductsListPage() {
                     </Col>
                 </Row>
             )}
+
+            
+            <DeleteModal
+                show={showDeleteModal}
+                onHide={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteProduct}
+                textToShow={"Sei sicuro di voler eliminare il prodotto " +
+                    (productToDelete ? (productToDelete.name) : '') + "?"
+                }
+            />
         </Container>
     )
 }

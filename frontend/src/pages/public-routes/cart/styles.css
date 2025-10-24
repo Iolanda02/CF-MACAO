@@ -108,10 +108,10 @@
 }
 
 .bi-dash-circle-fill, .bi-plus-circle-fill {
-    color: #007bff;
+    /* color: #007bff; */
 }
 .bi-dash-circle-fill:hover, .bi-plus-circle-fill:hover {
-    color: #0056b3;
+    /* color: #0056b3; */
 }
 
 .bi-info-circle-fill {

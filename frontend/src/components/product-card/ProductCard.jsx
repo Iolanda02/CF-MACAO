@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button, Card, Form, InputGroup, Toast, ToastContainer } from "react-bootstrap";
 import { Link } from "react-router";
-import "./styles.css";
 import { CartPlusFill, Dash, Plus } from "react-bootstrap-icons";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
 import LoginModal from "../modals/LoginModal";
 import { useToast } from "../../contexts/ToastContext";
 import defaultProductImage from '../../assets/no-image.png';
+import "./styles.css";
 
 
 function ProductCard({ product }) {

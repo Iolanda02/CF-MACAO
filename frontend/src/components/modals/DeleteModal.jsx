@@ -6,7 +6,7 @@ function DeleteModal({ show, onHide, onConfirm, textToShow }) {
             <Modal.Header closeButton>
                 <Modal.Title>Conferma Eliminazione</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body> 
                 {textToShow} Questa operazione è irreversibile.
             </Modal.Body>
             <Modal.Footer>
