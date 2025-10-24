@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { addImages, createProduct, getProduct, removeImage, updateImage, updateProduct } from "../../../api/product";
 import { ArrowLeft, PersonPlus, PlusCircle, Save, Trash, XCircleFill } from "react-bootstrap-icons";
 import { useToast } from "../../../contexts/ToastContext";
+import "./styles.css";
 
 // Funzione per inizializzare lo stato del prodotto vuoto
 const getInitialProductState = () => ({
@@ -55,7 +56,7 @@ function AdminProductsFormPage() {
     const getProductDetails = useCallback(async (id) => {
         try {
             setLoading(true);
-            setError(false);
+            setError(null);
             const foundProduct = await getProduct(id);
             setProduct({
               ...foundProduct.data,
@@ -456,13 +457,15 @@ function AdminProductsFormPage() {
             <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mt-3">
                 <ArrowLeft className="me-2" />Torna alla Lista Prodotti
             </Button>
-            <div className="d-flex justify-content-between align-items-center my-3">
             <h1 className="m-0">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
-            </div>
+
+            {message && (
+                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                {message.text}
+                </Alert>
+            )}
         <Row>
             <Col>
-            {error && <Alert variant="danger">{error}</Alert>}
-            {message && <Alert variant="success">{message}</Alert>}
             <Form onSubmit={handleSubmit} className="mt-4">
                 <Form.Group className="mb-3" controlId="productName">
                 <Form.Label>Nome Prodotto</Form.Label>

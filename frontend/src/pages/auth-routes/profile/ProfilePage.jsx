@@ -131,7 +131,6 @@ function ProfilePage() {
         } finally {
             setLoading(false);
         }
-        
     };
     
     async function handleSubmit(e) {

@@ -6,9 +6,9 @@ import { uploadUserAvatar } from "../middlewares/uploadCloudinary.js";
 
 const userRouter = express.Router();
 
-userRouter.post("/", createUser);
-
 userRouter.use(protect);
+
+userRouter.post("/", restrictTo('admin'), createUser);
 
 userRouter.get("/", restrictTo('admin'), getAllUsers);
 

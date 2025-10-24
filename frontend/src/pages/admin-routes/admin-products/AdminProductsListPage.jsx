@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Col, Container, Form, InputGroup, Pagination, Row, Spinner, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router";
 import { getAllProducts, removeProduct } from "../../../api/product";
-import { CheckCircleFill, EyeFill, PencilFill, PlusCircleFill, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
-import "./styles.css";
+import { CheckCircleFill, EyeFill, PencilFill, PlusCircle, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
 import DeleteModal from "../../../components/modals/DeleteModal";
+import "./styles.css";
 
 function AdminProductsListPage() {
     const [products, setProducts] = useState([]);
@@ -134,30 +134,30 @@ function AdminProductsListPage() {
 
     return (
         <Container className="my-4">
-        <Row className="mb-4 align-items-center">
-            <Col>
-            <h2>Gestione Prodotti</h2>
-            </Col>
-            <Col xs="auto">
-            <Button as={Link} to="/admin/products/new" variant="outline-dark">
-                <PlusCircleFill className="me-2" />Aggiungi Prodotto
-            </Button>
-            </Col>
-        </Row>
+            <Row className="mb-4 align-items-center">
+                <Col>
+                <h1 className="m-0">Gestione Prodotti</h1>
+                </Col>
+                <Col xs="auto">
+                <Button as={Link} to="/admin/products/new" variant="outline-dark">
+                    <PlusCircle className="me-2" />Aggiungi Prodotto
+                </Button>
+                </Col>
+            </Row>
 
-        {message && (
-            <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
-            {message.text}
-            </Alert>
-        )}
+            {message && (
+                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                {message.text}
+                </Alert>
+            )}
 
-        {/* Componente di Ricerca */}
+            {/* Componente di Ricerca */}
             <Row className="mb-4">
                 <Col>
                     <InputGroup>
                         <Form.Control
                             type="text"
-                            placeholder="Cerca prodotti..."
+                            placeholder="Filtra prodotti..."
                             value={currentFilterInput}
                             onChange={() => setCurrentFilterInput(e.target.value)}
                             onKeyPress={(e) => {
@@ -175,54 +175,54 @@ function AdminProductsListPage() {
                 </Col>
             </Row>
 
-            <Table striped bordered hover responsive className="admin-products-table">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Nome</th>
-                    {/* <th>Prezzo</th>
-                    <th>Quantità</th> */}
-                    <th>Varianti</th>
-                    <th>Attivo</th>
-                    <th className="text-center">Azioni</th>
-                </tr>
-                </thead>
-                <tbody>
-                {products?.length > 0 ? (
-                    products.map((product, index) => (
-                    <tr key={product._id}>
-                        <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
-                        <td><b>{product.name}</b></td>
-                        {/* <td>€ {product.price.toFixed(2)}</td>
-                        <td>{product.stock}</td> */}
-                        <td className="align-middle">{product.variants?.length || 0}</td>
-                        <td className="align-middle text-center">
-                            {product.isActive ? (
-                                <span className="text-success"><CheckCircleFill /></span>
-                            ) : (
-                                <span className="text-danger"><XCircleFill /></span>
-                            )}
-                        </td>
-                        <td className="text-center">
-                        <Button variant="outline-dark" size="sm" className="me-2" onClick={() => navigate(`/admin/products/${product._id}`)}>
-                            <EyeFill />
-                        </Button>
-                        <Button variant="outline-secondary" size="sm" className="me-2" onClick={() => navigate(`/admin/products/edit/${product._id}`)}>
-                            <PencilFill />
-                        </Button>
-                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete(product)}>
-                            <TrashFill />
-                        </Button>
-                        </td>
-                    </tr>
-                    ))
-                ) : (
+            {products?.length === 0 ? (
+                <Alert variant="info">Nessun prodotto disponibile.</Alert>
+            ) : (
+                <Table striped bordered hover responsive className="admin-products-table">
+                    <thead>
                     <tr>
-                    <td colSpan="5" className="text-center">Nessun prodotto disponibile.</td>
+                        <th className="text-dark-emphasis">#</th>
+                        <th className="text-dark-emphasis">Nome</th>
+                        <th className="text-dark-emphasis">Varianti</th>
+                        <th className="text-dark-emphasis">Attivo</th>
+                        <th className="text-dark-emphasis text-center">Azioni</th>
                     </tr>
-                )}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {products.map((product, index) => (
+                            <tr key={product._id}>
+                                <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
+                                <td><b>{product.name}</b></td>
+                                <td className="align-middle">{product.variants?.length || 0}</td>
+                                <td className="align-middle text-center">
+                                    {product.isActive ? (
+                                        <span className="text-success"><CheckCircleFill /></span>
+                                    ) : (
+                                        <span className="text-danger"><XCircleFill /></span>
+                                    )}
+                                </td>
+                                <td className="text-center">
+                                <Button variant="outline-dark" size="sm" className="me-2" title="Visualizza prodotto"
+                                    onClick={() => navigate(`/admin/products/${product._id}`)}
+                                >
+                                    <EyeFill />
+                                </Button>
+                                <Button variant="outline-secondary" size="sm" className="me-2" title="Modifica prodotto"
+                                    onClick={() => navigate(`/admin/products/edit/${product._id}`)}
+                                >
+                                    <PencilFill />
+                                </Button>
+                                <Button variant="outline-danger" size="sm" title="Elimina prodotto"
+                                    onClick={() => handleDelete(product)}
+                                >
+                                    <TrashFill />
+                                </Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            )}
 
             {/* Paginazione */}
             {paginator.totalPages > 1 && (

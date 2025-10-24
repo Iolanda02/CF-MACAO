@@ -1,63 +1,53 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Image, Row, Spinner } from "react-bootstrap";
-import { ArrowLeft, PersonPlus, Save } from "react-bootstrap-icons";
+import { Alert, Button, Card, Col, Container, Form, Image, Row, Spinner, InputGroup } from "react-bootstrap";
+import { ArrowLeft, EyeFill, EyeSlashFill, PersonPlus, Save } from "react-bootstrap-icons";
 import { useNavigate, useParams } from "react-router";
 import { createUser, editUser, getUser } from "../../../api/user";
 import validator from "validator";
+import "./styles.css";
+import { useToast } from "../../../contexts/ToastContext";
+
+// Funzione per inizializzare lo stato del prodotto vuoto
+const getInitialUserState = () => ({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    role: 'user',
+    phone: '',
+    birthDate: '',
+    // avatar: {
+    //     url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg',
+    //     public_id: null
+    // },
+    shippingAddress: {
+        address: '',
+        city: '',
+        postalCode: '',
+        country: '',
+    }
+});
 
 function AdminUsersFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
 
-    const [user, setUser] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        role: 'user',
-        phone: '',
-        birthDate: '',
-        avatar: {
-            url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg',
-            public_id: null
-        },
-        shippingAddress: {
-            address: '',
-            city: '',
-            postalCode: '',
-            country: '',
-        },
-    });
+    const [user, setUser] = useState(getInitialUserState());
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [message, setMessage] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
+    const { addToast } = useToast();
 
     useEffect(() => {
         if (isEditMode) {
             fetchUserDetails();
         } else {
-            setUser({
-                firstName: '',
-                lastName: '',
-                email: '',
-                password: '',
-                role: 'user',
-                phone: '',
-                birthDate: '',
-                avatar: {
-                    url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg',
-                    public_id: null
-                },
-                shippingAddress: {
-                    address: '',
-                    city: '',
-                    postalCode: '',
-                    country: '',
-                },
-            });
+            setUser(getInitialUserState());
             setLoading(false);
             setError(null);
             setFormErrors({});
@@ -84,7 +74,7 @@ function AdminUsersFormPage() {
             setUser(userData);
         } catch (err) {
             console.error("Errore nel recupero utente per modifica:", err);
-            setError("Impossibile caricare i dettagli dell'utente per la modifica.");
+            setError("Impossibile caricare i dettagli dell'utente. Riprova più tardi.");
             navigate('/404', { replace: true });
         } finally {
             setLoading(false);
@@ -153,7 +143,7 @@ function AdminUsersFormPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) {
-            alert("Si prega di correggere gli errori nel modulo.");
+            setMessage({ type: 'danger', text: 'Si prega di correggere gli errori nella pagina.' });
             return;
         }
 
@@ -166,9 +156,9 @@ function AdminUsersFormPage() {
                 lastName: user.lastName,
                 email: user.email,
                 role: user.role,
-                phone: user.phone || undefined,
-                birthDate: user.birthDate ? new Date(user.birthDate).toISOString() : undefined,
-                avatar: user.avatar,
+                phone: user.phone || null,
+                birthDate: user.birthDate ? new Date(user.birthDate).toISOString() : null,
+                // avatar: user.avatar,
                 shippingAddress: (
                     user.shippingAddress.address || user.shippingAddress.city || user.shippingAddress.postalCode || user.shippingAddress.country) ? user.shippingAddress : undefined,
             };
@@ -179,84 +169,86 @@ function AdminUsersFormPage() {
 
             if (isEditMode) {
                 await editUser(id, dataToSend);
-                alert("Utente aggiornato con successo!");
+                addToast("Utente aggiornato con successo!", "success");
             } else {
                 await createUser(dataToSend)
-                alert("Utente creato con successo!");
-                setUser({ // Resetta il form dopo la creazione
-                    firstName: '', lastName: '', email: '', password: '', role: 'user', phone: '', birthDate: '',
-                    avatar: { url: 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg', public_id: null },
-                    shippingAddress: { address: '', city: '', postalCode: '', country: '' },
-                });
-                setFormErrors({}); // Resetta gli errori del form
+                addToast("Utente creato con successo!", "success");
             }
-            navigate('/admin/users'); // Reindirizza alla lista dopo il successo
+            navigate('/admin/users');
         } catch (err) {
             console.error("Errore nel salvataggio utente:", err);
             const apiErrorMessage = err.response?.data?.message || "Impossibile salvare l'utente.";
-            setError(apiErrorMessage);
-            if (err.response?.data?.errors) {
-                setFormErrors(err.response.data.errors);
-            }
+            setMessage("Impossibile salvare l'utente. Riprova più tardi.");
+            addToast("Salvataggio non riuscito", "danger");
         } finally {
             setSubmitting(false);
         }
+    };
+    
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
     };
 
     if (loading) {
         return (
             <Container className="text-center mt-5">
                 <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Caricamento dati utente...</span>
+                    <span className="visually-hidden">Caricamento utente...</span>
                 </Spinner>
-                <p>Caricamento dati utente...</p>
+                <p>Caricamento utente...</p>
             </Container>
         );
     }
 
     if (error) {
         return (
-            <Container className="mt-5">
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista utenti
+                </Button>
                 <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
 
-    // if (isEditMode && !user.firstName && !error) {
-    //     return (
-    //         <Container className="mt-5">
-    //             <Alert variant="info">Utente non trovato o ID non valido.</Alert>
-    //             <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
-    //                 <ArrowLeft className="me-2" />Torna alla lista
-    //             </Button>
-    //         </Container>
-    //     );
-    // }
+    if (!user) {
+        return (
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista utenti
+                </Button>
+                <Alert variant="warning">Utente non trovato.</Alert>
+            </Container>
+        );
+    }
 
     return (
         <Container className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="secondary" onClick={() => navigate("/admin/users")}>
+                <Button variant="outline-dark" onClick={() => navigate("/admin/users")}>
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
             </div>
             <h1 className="mb-4">{isEditMode ? `Modifica Utente: ${user.firstName} ${user.lastName}` : "Crea Nuovo Utente"}</h1>
+            
+            {message && (
+                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                {message.text}
+                </Alert>
+            )}
 
-            {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
+            {isEditMode && (
+                <Row className="mb-3 align-items-center">
+                    <Col className="mx-3">
+                        <Image src={user.avatar?.url || 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg'} 
+                        roundedCircle className="avatar-user" alt="Immagine Utente" />
+                    </Col>
+                </Row>
+            )}
 
-            <Form onSubmit={handleSubmit}>
-                <Card className="mb-4">
+            <Form onSubmit={handleSubmit} noValidate>
+                <Card className="my-4">
                     <Card.Body>
-                        {isEditMode && (
-                            <Row className="mb-3 align-items-center">
-                                <Col md={3} className="text-center">
-                                    <Image src={user.avatar?.url || 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg'} roundedCircle style={{ width: '100px', height: '100px', objectFit: 'cover' }} alt="Avatar Utente" />
-                                    <small className="d-block mt-2 text-muted">Avatar attuale</small>
-                                </Col>
-                                <Col md={9}></Col>
-                            </Row>
-                        )}
-
                         <Row>
                             <Col md={6}>
                                 <Form.Group controlId="formFirstName" className="mb-3">
@@ -267,6 +259,7 @@ function AdminUsersFormPage() {
                                         placeholder="Inserisci nome"
                                         value={user.firstName}
                                         onChange={handleChange}
+                                        disabled={submitting}
                                         isInvalid={!!formErrors.firstName}
                                     />
                                     <Form.Control.Feedback type="invalid">
@@ -283,6 +276,7 @@ function AdminUsersFormPage() {
                                         placeholder="Inserisci cognome"
                                         value={user.lastName}
                                         onChange={handleChange}
+                                        disabled={submitting}
                                         isInvalid={!!formErrors.lastName}
                                     />
                                     <Form.Control.Feedback type="invalid">
@@ -292,91 +286,117 @@ function AdminUsersFormPage() {
                             </Col>
                         </Row>
 
-                        <Form.Group controlId="formEmail" className="mb-3">
-                            <Form.Label>Email</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="email"
-                                placeholder="Inserisci email"
-                                value={user.email}
-                                onChange={handleChange}
-                                isInvalid={!!formErrors.email}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {formErrors.email}
-                            </Form.Control.Feedback>
-                        </Form.Group>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group controlId="formEmail" className="mb-3">
+                                    <Form.Label>Email</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="email"
+                                        placeholder="Inserisci email"
+                                        value={user.email}
+                                        onChange={handleChange}
+                                        disabled={submitting}
+                                        isInvalid={!!formErrors.email}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {formErrors.email}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group controlId="formRole" className="mb-3">
+                                    <Form.Label>Ruolo</Form.Label>
+                                    <Form.Select
+                                        name="role"
+                                        value={user.role}
+                                        onChange={handleChange}
+                                        disabled={submitting}
+                                        isInvalid={!!formErrors.role}
+                                    >
+                                        <option value="user">Utente</option>
+                                        <option value="admin">Amministratore</option>
+                                    </Form.Select>
+                                    <Form.Control.Feedback type="invalid">
+                                        {formErrors.role}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
 
-                        <Form.Group controlId="formPassword" className="mb-3">
-                            <Form.Label>Password {isEditMode && <small className="text-muted">(Lascia vuoto per non modificare)</small>}</Form.Label>
-                            <Form.Control
-                                type="password"
-                                name="password"
-                                placeholder={isEditMode ? "Lascia vuoto per non cambiare la password" : "Inserisci la password"}
-                                value={user.password}
-                                onChange={handleChange}
-                                isInvalid={!!formErrors.password}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {formErrors.password}
-                            </Form.Control.Feedback>
-                        </Form.Group>
+                        {!isEditMode && (
+                            <Form.Group controlId="formPassword" className="mb-3">
+                                <Form.Label>Password {isEditMode && <small className="text-muted">(Lascia vuoto per non modificare)</small>}</Form.Label>
+                                <InputGroup>
+                                    <Form.Control
+                                        type={showPassword ? 'text' : 'password'}
+                                        name="password"
+                                        placeholder="Inserisci la password"
+                                        value={user.password}
+                                        onChange={handleChange}
+                                        disabled={submitting}
+                                        isInvalid={!!formErrors.password}
+                                    />
+                                    <Button variant="outline-secondary" onClick={togglePasswordVisibility} className="password-toggle-button">
+                                        {showPassword ? <EyeFill /> : <EyeSlashFill />}
+                                    </Button>
+                                    <Form.Control.Feedback type="invalid">
+                                        {formErrors.password}
+                                    </Form.Control.Feedback>
+                                </InputGroup>
+                            </Form.Group>
+                        )}
 
-                        <Form.Group controlId="formRole" className="mb-3">
-                            <Form.Label>Ruolo</Form.Label>
-                            <Form.Select
-                                name="role"
-                                value={user.role}
-                                onChange={handleChange}
-                                isInvalid={!!formErrors.role}
-                            >
-                                <option value="user">Utente</option>
-                                <option value="admin">Amministratore</option>
-                            </Form.Select>
-                            <Form.Control.Feedback type="invalid">
-                                {formErrors.role}
-                            </Form.Control.Feedback>
-                        </Form.Group>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group controlId="formPhone" className="mb-3">
+                                    <Form.Label>Numero di Telefono</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="phone"
+                                        placeholder="Es. +39 123 4567890"
+                                        value={user.phone || ''}
+                                        onChange={handleChange}
+                                        disabled={submitting}
+                                        isInvalid={!!formErrors.phone}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {formErrors.phone}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group controlId="formBirthDate" className="mb-3">
+                                    <Form.Label>Data di Nascita</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        name="birthDate"
+                                        placeholder="gg/mm/aaaa"
+                                        value={user.birthDate || ''}
+                                        onChange={handleChange}
+                                        disabled={submitting}
+                                        isInvalid={!!formErrors.birthDate}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {formErrors.birthDate}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
 
-                        <Form.Group controlId="formPhone" className="mb-3">
-                            <Form.Label>Numero di Telefono</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="phone"
-                                placeholder="Es. +39 123 4567890"
-                                value={user.phone || ''}
-                                onChange={handleChange}
-                                isInvalid={!!formErrors.phone}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {formErrors.phone}
-                            </Form.Control.Feedback>
-                        </Form.Group>
+                        <div className="mt-4 mb-3">
+                            <h5 className="mb-0">Indirizzo di Spedizione</h5>
+                        </div>
 
-                        <Form.Group controlId="formBirthDate" className="mb-3">
-                            <Form.Label>Data di Nascita</Form.Label>
-                            <Form.Control
-                                type="date"
-                                name="birthDate"
-                                placeholder="gg/mm/aaaa"
-                                value={user.birthDate || ''}
-                                onChange={handleChange}
-                                isInvalid={!!formErrors.birthDate}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {formErrors.birthDate}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-
-                        <h5 className="mt-4 mb-3">Indirizzo di Spedizione</h5>
                         <Form.Group controlId="formShippingaddress" className="mb-3">
-                            <Form.Label>Via</Form.Label>
+                            <Form.Label>Indirizzo</Form.Label>
                             <Form.Control
                                 type="text"
                                 name="shippingAddress.address"
                                 placeholder="Via e numero civico"
                                 value={user.shippingAddress?.address || ''}
                                 onChange={handleChange}
+                                disabled={submitting}
                                 isInvalid={!!formErrors['shippingAddress.address']}
                             />
                             <Form.Control.Feedback type="invalid">
@@ -393,6 +413,7 @@ function AdminUsersFormPage() {
                                         placeholder="Città"
                                         value={user.shippingAddress?.city || ''}
                                         onChange={handleChange}
+                                        disabled={submitting}
                                         isInvalid={!!formErrors['shippingAddress.city']}
                                     />
                                     <Form.Control.Feedback type="invalid">
@@ -409,6 +430,7 @@ function AdminUsersFormPage() {
                                         placeholder="CAP"
                                         value={user.shippingAddress?.postalCode || ''}
                                         onChange={handleChange}
+                                        disabled={submitting}
                                         isInvalid={!!formErrors['shippingAddress.postalCode']}
                                     />
                                     <Form.Control.Feedback type="invalid">
@@ -425,6 +447,7 @@ function AdminUsersFormPage() {
                                         placeholder="Paese"
                                         value={user.shippingAddress?.country || ''}
                                         onChange={handleChange}
+                                        disabled={submitting}
                                         isInvalid={!!formErrors['shippingAddress.country']}
                                     />
                                     <Form.Control.Feedback type="invalid">
@@ -435,7 +458,7 @@ function AdminUsersFormPage() {
                         </Row>
 
                         <div className="d-flex flex-items-center gap-3 mt-4">
-                            <Button variant={isEditMode ? "primary" : "success"} type="submit" disabled={submitting}>
+                            <Button variant={isEditMode ? "secondary" : "success"} type="submit" disabled={submitting}>
                                 {submitting ? (
                                     <>
                                         <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
@@ -449,7 +472,7 @@ function AdminUsersFormPage() {
                                 )}
                             </Button>
                             
-                            <Button variant={isEditMode ? "outline-primary" : "outline-success"} type="submit" 
+                            <Button variant={isEditMode ? "outline-secondary" : "outline-success"}
                                 disabled={submitting} 
                                 onClick={() => navigate(-1)}
                             >

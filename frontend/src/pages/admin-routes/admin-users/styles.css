@@ -1,0 +1,6 @@
+.avatar-user {
+    max-width: 200px;
+    height: 200px;
+    width: -webkit-fill-available;
+    object-fit: cover;
+}

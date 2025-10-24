@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Container, Form, InputGroup, Pagination, Spinner, Table } from "react-bootstrap";
+import { Alert, Button, Col, Container, Form, InputGroup, Pagination, Row, Spinner, Table } from "react-bootstrap";
 import DeleteModal from "../../../components/modals/DeleteModal";
 import { Link, useNavigate } from "react-router";
 import { getAllUsers, removeUser } from "../../../api/user";
-import { Eye, PencilSquare, PersonPlus, Search, Trash } from "react-bootstrap-icons";
+import { EyeFill, PencilFill,  PersonPlus, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
+import "./styles.css";
 
 function AdminUsersListPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [message, setMessage] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentFilterInput, setCurrentFilterInput] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const navigate = useNavigate();
@@ -29,7 +31,6 @@ function AdminUsersListPage() {
 
     const fetchUsers = async () => {
         setLoading(true);
-        setError(null);
         try {
             const response = await getAllUsers(searchTerm, paginator);
             setUsers(response.data);
@@ -40,7 +41,7 @@ function AdminUsersListPage() {
             }));
         } catch (err) {
             console.error("Errore nel recupero utenti:", err);
-            setError("Impossibile caricare gli utenti. Riprova più tardi.");
+            setMessage({ type: 'danger', text: 'Impossibile caricare gli utenti. Riprova più tardi.' });
             setLoading(false);
         } finally {
             setLoading(false);
@@ -77,11 +78,16 @@ function AdminUsersListPage() {
             ...prev,
             page: 1
         }));
+        setSearchTerm(currentFilterInput);
     };
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setPage(1); // Reset della pagina quando si cerca
+    
+    const clearFilter = () => {
+        setPaginator(prev => ({
+            ...prev,
+            page: 1
+        }));
+        setSearchTerm("");
+        setCurrentFilterInput("");
     };
 
     const handleDeleteClick = (user) => {
@@ -92,12 +98,13 @@ function AdminUsersListPage() {
     const confirmDeleteUser = async () => {
         try {
             await removeUser(userToDelete._id);
+            setMessage({ type: 'success', text: 'Utente eliminato con successo!' });
             fetchUsers(); // Ricarica la lista dopo la cancellazione
             setShowDeleteModal(false);
             setUserToDelete(null);
         } catch (err) {
             console.error("Errore nella cancellazione utente:", err);
-            setError("Impossibile cancellare l'utente.");
+            setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione del\'utente.' });
         }
     };
 
@@ -111,49 +118,64 @@ function AdminUsersListPage() {
             </Container>
         );
     }
-
-    if (error) {
-        return (
-            <Container className="mt-5">
-                <Alert variant="danger">{error}</Alert>
-            </Container>
-        );
-    }
     
     return (
-        <Container className="mt-4">
-            <h1 className="mb-4">Gestione Utenti</h1>
+        <Container className="my-4">
+            <Row className="mb-4 align-items-center">
+                <Col>
+                <h1 className="m-0">Gestione Utenti</h1>
+                </Col>
+                <Col xs="auto">
+                    <Link to="/admin/users/new">
+                        <Button variant="outline-dark">
+                            <PersonPlus className="me-2" />
+                            Aggiungi utente
+                        </Button>
+                    </Link>
+                </Col>
+            </Row>
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <InputGroup className="w-50">
-                    <InputGroup.Text><Search /></InputGroup.Text>
-                    <Form.Control
-                        type="text"
-                        placeholder="Cerca per nome, cognome o email..."
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                    />
-                </InputGroup>
-                <Link to="/admin/users/new">
-                    <Button variant="success">
-                        <PersonPlus className="me-2" />
-                        Nuovo Utente
-                    </Button>
-                </Link>
-            </div>
+            {message && (
+                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                {message.text}
+                </Alert>
+            )}
 
-            {users.length === 0 ? (
+            {/* Componente di Ricerca */}
+            {(users?.length > 0 || currentFilterInput) && 
+                <Row className="mb-4">
+                    <Col>
+                        <InputGroup>
+                            <Form.Control
+                                type="text"
+                                placeholder="Filtra utenti..."
+                                value={currentFilterInput}
+                                onChange={(e) => setCurrentFilterInput(e.target.value)}
+                                disabled={loading}
+                            />
+                            <Button variant="outline-secondary" onClick={applyFilter} disabled={loading}>
+                                <Search className="me-1" />Cerca
+                            </Button>
+                            <Button variant="outline-danger" onClick={clearFilter} disabled={loading || !currentFilterInput}>
+                                <XCircleFill className="me-1" />Reset
+                            </Button>
+                        </InputGroup>
+                    </Col>
+                </Row>
+            }
+
+            {users?.length === 0 ? (
                 <Alert variant="info">Nessun utente trovato.</Alert>
             ) : (
-                <Table striped bordered hover responsive className="mt-3">
+                <Table striped bordered hover responsive className="admin-users-table">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Nome Completo</th>
-                            <th>Email</th>
-                            <th>Ruolo</th>
-                            <th>Data Registrazione</th>
-                            <th className="text-center">Azioni</th>
+                            <th className="text-dark-emphasis">#</th>
+                            <th className="text-dark-emphasis">Nome Completo</th>
+                            <th className="text-dark-emphasis">Email</th>
+                            <th className="text-dark-emphasis">Ruolo</th>
+                            <th className="text-dark-emphasis">Data Registrazione</th>
+                            <th className="text-dark-emphasis text-center">Azioni</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -161,23 +183,25 @@ function AdminUsersListPage() {
                             <tr key={user._id}>
                                 <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
                                 <td>{user.fullName || `${user.firstName} ${user.lastName}`}</td>
-                                <td>{user.email}</td>
+                                <td><b>{user.email}</b></td>
                                 <td><span className={`badge bg-${user.role === 'admin' ? 'primary' : 'secondary'}`}>{user.role}</span></td>
                                 <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                                <td className="text-center">
-                                    <Link to={`/admin/users/${user._id}`}>
-                                        <Button variant="primary" size="sm" className="me-2" title="Visualizza Dettagli">
-                                            <Eye />
+                                <td>
+                                    <div className="d-flex justify-content-center gap-2">
+                                        <Link to={`/admin/users/${user._id}`}>
+                                            <Button variant="outline-dark" size="sm" title="Visualizza utente">
+                                                <EyeFill />
+                                            </Button>
+                                        </Link>
+                                        <Link to={`/admin/users/edit/${user._id}`}>
+                                            <Button variant="outline-secondary" size="sm" title="Modifica utente">
+                                                <PencilFill />
+                                            </Button>
+                                        </Link>
+                                        <Button variant="outline-danger" size="sm" onClick={() => handleDeleteClick(user)} title="Elimina utente">
+                                            <TrashFill />
                                         </Button>
-                                    </Link>
-                                    <Link to={`/admin/users/edit/${user._id}`}>
-                                        <Button variant="info" size="sm" className="me-2" title="Modifica">
-                                            <PencilSquare />
-                                        </Button>
-                                    </Link>
-                                    <Button variant="danger" size="sm" onClick={() => handleDeleteClick(user)} title="Elimina">
-                                        <Trash />
-                                    </Button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -187,8 +211,8 @@ function AdminUsersListPage() {
 
             {/* Paginazione */}
             {paginator.totalPages > 1 && (
-                <Row className="mt-5 justify-content-center">
-                    <Col xs="auto">
+                <Row className="my-3 justify-content-center">
+                    <Col xs="auto" className="d-flex align-items-baseline gap-3 flex-wrap">
                         <Pagination>
                             <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
                             <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
@@ -198,6 +222,7 @@ function AdminUsersListPage() {
                             <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
                             <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
                         </Pagination>
+                        <small className="text-muted">{paginator.totalCount} risultati totali</small>
                     </Col>
                 </Row>
             )}

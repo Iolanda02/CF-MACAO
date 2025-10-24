@@ -72,21 +72,23 @@ export async function getUser(request, response, next) {
     }
 }
 
-export async function createUser(request, response, next) {
+export async function createUser(request, response, next) {    
+    const { email, password, firstName, lastName } = request.body;
+
     try {
-        const {
-            email, password, firstName, lastName, phone, 
-            birthDate, avatar, shippingAddress
-        } = request.body;
+        if (!email || !password || !firstName || !lastName) {
+            return next(new AppError('Email, password, nome e cognome sono richiesti.', 400));
+        }
 
-        const newUser = await User.create({
-            email, password, firstName, lastName, phone,
-            birthDate, avatar, shippingAddress,
-        });
-
-        response.status(201).json({ 
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+    
+        if (existingUser) return next(new AppError('Utente già registrato', 409));
+    
+        const insertedUser = await User.create({ ...request.body});
+    
+        response.status(201).send({ 
             status: 'success',
-            data: newUser
+            data: insertedUser 
         });
     } catch(error) {
         next(error);

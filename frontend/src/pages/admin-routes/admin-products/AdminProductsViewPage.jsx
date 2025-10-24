@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, Image, ListGroup, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Image, Row, Spinner } from "react-bootstrap";
 import { getProduct } from "../../../api/product";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, PencilFill } from "react-bootstrap-icons";
+import "./styles.css";
 
 function AdminProductsViewPage() {
     const { id } = useParams();
@@ -71,7 +72,7 @@ function AdminProductsViewPage() {
     };
 
     const renderInfoItem = (label, value) => (
-        <Col md={6} className="mb-3"> {/* Due colonne su md e lg */}
+        <Col md={6} className="mb-3">
             <strong>{label}:</strong> {value}
         </Col>
     );
@@ -91,7 +92,6 @@ function AdminProductsViewPage() {
             </Button>
         </div>
             
-
         <Card className="my-4">
             <Card.Header as="h5">Informazioni Generali</Card.Header>
             <Card.Body>

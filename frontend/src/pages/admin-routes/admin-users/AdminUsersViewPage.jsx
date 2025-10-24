@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Col, Container, Image, ListGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import { getUser } from "../../../api/user";
-import { ArrowLeft, PencilSquare } from "react-bootstrap-icons";
+import { ArrowLeft, PencilFill } from "react-bootstrap-icons";
+import "./styles.css";
 
 function AdminUsersViewPage() {
     const { id } = useParams();
@@ -44,55 +45,58 @@ function AdminUsersViewPage() {
 
     if (error) {
         return (
-            <Container className="mt-5">
-                <Alert variant="danger">{error}</Alert>
-                <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
-                    <ArrowLeft className="me-2" />Torna alla lista
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
+                <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
 
     if (!user) {
         return (
-            <Container className="mt-5">
-                <Alert variant="warning">Utente non trovato.</Alert>
-                <Button variant="secondary" onClick={() => navigate("/admin/users")} className="mt-3">
-                    <ArrowLeft className="me-2" />Torna alla lista
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
+                <Alert variant="warning">Utente non trovato.</Alert>
             </Container>
         );
     }
 
     return (
-        <Container className="mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="secondary" onClick={() => navigate('/admin/users')}>
-                    <ArrowLeft className="me-2" />Torna alla lista utenti
-                </Button>
-                <Button variant="info" onClick={() => navigate(`/admin/users/edit/${user._id}`)}>
-                    <PencilSquare className="me-2" />Modifica Utente
+        <Container className="my-4">
+
+            <Button variant="outline-dark" onClick={() => navigate('/admin/users')}>
+                <ArrowLeft className="me-2" />Torna alla lista utenti
+            </Button>
+
+            <div className="d-flex justify-content-between align-items-end my-3">
+                <h1 className="m-0">Dettagli Utente: {user.fullName || `${user.firstName} ${user.lastName}`}</h1>
+                <Button variant="outline-secondary" title="Modifica utente"
+                    onClick={() => navigate(`/admin/users/edit/${user._id}`)}
+                >
+                    <PencilFill />
                 </Button>
             </div>
-
-            <h1 className="mb-4">Dettagli Utente: {user.fullName || `${user.firstName} ${user.lastName}`}</h1>
 
             <Card className="my-4">
                 <Card.Body>
                     <Row className="mb-3 align-items-center">
                         <Col md={3} className="text-center">
-                            <Image src={user.avatar?.url || 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg'} roundedCircle style={{ width: '120px', height: '120px', objectFit: 'cover' }} alt="Avatar Utente" />
+                            <Image src={user.avatar?.url || 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg'} roundedCircle className="avatar-user" alt="Immagine Utente" />
                         </Col>
                         <Col md={9}>
                             <ListGroup variant="flush">
-                                <ListGroup.Item><strong>Nome:</strong> {user.firstName}</ListGroup.Item>
-                                <ListGroup.Item><strong>Cognome:</strong> {user.lastName}</ListGroup.Item>
-                                <ListGroup.Item><strong>Email:</strong> {user.email}</ListGroup.Item>
-                                <ListGroup.Item><strong>Ruolo:</strong> <span className={`badge bg-${user.role === 'admin' ? 'primary' : 'secondary'}`}>{user.role}</span></ListGroup.Item>
-                                <ListGroup.Item><strong>Telefono:</strong> {user.phone || 'N/A'}</ListGroup.Item>
-                                <ListGroup.Item><strong>Data di Nascita:</strong> {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : 'N/A'}</ListGroup.Item>
-                                <ListGroup.Item><strong>Registrato il:</strong> {new Date(user.createdAt).toLocaleDateString()} alle {new Date(user.createdAt).toLocaleTimeString()}</ListGroup.Item>
-                                <ListGroup.Item><strong>Ultimo Aggiornamento:</strong> {new Date(user.updatedAt).toLocaleDateString()} alle {new Date(user.updatedAt).toLocaleTimeString()}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Nome:</strong> {user.firstName}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Cognome:</strong> {user.lastName}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Email:</strong> {user.email}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Ruolo:</strong> <span className={`badge bg-${user.role === 'admin' ? 'primary' : 'secondary'}`}>{user.role}</span></ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Telefono:</strong> {user.phone || 'N/A'}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Data di Nascita:</strong> {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : 'N/A'}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Registrato il:</strong> {new Date(user.createdAt).toLocaleDateString()} alle {new Date(user.createdAt).toLocaleTimeString()}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Ultimo Aggiornamento:</strong> {new Date(user.updatedAt).toLocaleDateString()} alle {new Date(user.updatedAt).toLocaleTimeString()}</ListGroup.Item>
                             </ListGroup>
                         </Col>
                     </Row>
@@ -100,10 +104,10 @@ function AdminUsersViewPage() {
                     {user.shippingAddress ? (
                         <>
                             <ListGroup variant="flush">
-                                <ListGroup.Item><strong>Via:</strong> {user.shippingAddress.address}</ListGroup.Item>
-                                <ListGroup.Item><strong>Città:</strong> {user.shippingAddress.city}</ListGroup.Item>
-                                <ListGroup.Item><strong>CAP:</strong> {user.shippingAddress.postalCode}</ListGroup.Item>
-                                <ListGroup.Item><strong>Paese:</strong> {user.shippingAddress.country}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Indirizzo:</strong> {user.shippingAddress.address || 'N/A'}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Città:</strong> {user.shippingAddress.city || 'N/A'}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>CAP:</strong> {user.shippingAddress.postalCode || 'N/A'}</ListGroup.Item>
+                                <ListGroup.Item className="border-0"><strong>Paese:</strong> {user.shippingAddress.country || 'N/A'}</ListGroup.Item>
                             </ListGroup>
                         </>
                     ) : (

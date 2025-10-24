@@ -7,7 +7,6 @@ import mailer from "../helpers/mailer.js";
 
 export async function register(request, response, next) {
     const { email, password, firstName, lastName, phone } = request.body;
-    // let insertedUser;
 
     try {
         if (!email || !password || !firstName || !lastName) {
