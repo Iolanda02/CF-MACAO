@@ -147,7 +147,10 @@ export async function removeUser(request, response, next) {
             return next(new AppError('Utente non trovato con l\'ID specificato per la cancellazione.', 404));
         }
 
-        response.status(204).send();
+        response.status(204).json({
+            status: 'success',
+            data: null
+        });
     } catch(error) {
         next(error);
     }

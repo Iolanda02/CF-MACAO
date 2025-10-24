@@ -34,7 +34,7 @@ function NotFoundPage() {
                             <Button 
                                 as={Link}
                                 to="/" 
-                                variant="primary" 
+                                variant="dark" 
                                 size="lg" 
                                 className="me-sm-3 mb-2 mb-sm-0"
                             >

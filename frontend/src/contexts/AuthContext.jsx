@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
         } finally {
             setIsLoading(false);
         }
-    }, [addToast]);
+    }, []);
 
     // Effetto per gestire l'inizializzazione del token e caricare il profilo
     useEffect(() => {

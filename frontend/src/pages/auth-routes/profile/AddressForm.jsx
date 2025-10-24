@@ -1,4 +1,4 @@
-import { Card, Form } from "react-bootstrap";
+import { Col, Form, Row } from "react-bootstrap";
 
 // Componente per gestire l'indirizzo di spedizione
 const AddressForm = ({ address, onChange, readOnly = false }) => {
@@ -10,59 +10,61 @@ const AddressForm = ({ address, onChange, readOnly = false }) => {
     };
 
     return (
-        <Card className="p-3 mb-3">
-            <Card.Title>Indirizzo di Spedizione</Card.Title>
+        <div className="my-3">
+            <h5>Indirizzo di Spedizione</h5>
             <Form.Group className="mb-3">
-                <Form.Label>Via</Form.Label>
+                <Form.Label>Indirizzo</Form.Label>
                 <Form.Control 
                     type="text" 
-                    name="street" 
-                    value={address?.street || ''} 
+                    name="address" 
+                    placeholder="Via e numero civico"
+                    value={address?.address || ''} 
                     onChange={handleAddressChange} 
                     readOnly={readOnly} 
                 />
             </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>Città</Form.Label>
-                <Form.Control 
-                    type="text" 
-                    name="city" 
-                    value={address?.city || ''} 
-                    onChange={handleAddressChange} 
-                    readOnly={readOnly} 
-                />
-            </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>CAP</Form.Label>
-                <Form.Control 
-                    type="text" 
-                    name="zipCode" 
-                    value={address?.zipCode || ''} 
-                    onChange={handleAddressChange} 
-                    readOnly={readOnly} 
-                />
-            </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>Provincia</Form.Label>
-                <Form.Control 
-                    type="text" 
-                    name="province" 
-                    value={address?.province || ''} 
-                    onChange={handleAddressChange} 
-                    readOnly={readOnly} 
-                />
-            </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>Nazione</Form.Label>
-                <Form.Control 
-                    type="text" 
-                    name="country" 
-                    value={address?.country || ''} 
-                    onChange={handleAddressChange} 
-                    readOnly={readOnly} 
-                />
-            </Form.Group>
-        </Card>
+            <Row>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Città</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            name="city" 
+                            placeholder="Città"
+                            value={address?.city || ''} 
+                            onChange={handleAddressChange} 
+                            readOnly={readOnly} 
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={3}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>CAP</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            name="postalCode" 
+                            placeholder="CAP"
+                            value={address?.postalCode || ''} 
+                            onChange={handleAddressChange} 
+                            readOnly={readOnly} 
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={3}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Paese</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            name="country" 
+                            placeholder="Paese"
+                            value={address?.country || ''} 
+                            onChange={handleAddressChange} 
+                            readOnly={readOnly} 
+                        />
+                    </Form.Group>
+                </Col>
+            </Row>
+        </div>
     );
 };
 

@@ -156,12 +156,12 @@ function PublicNavbar() {
                         {isAuthenticated ? (
                             <Dropdown align="end">
                                 <Dropdown.Toggle as={Nav.Link} className="p-0 user-avatar-toggle">
-                                    <Image
+                                    { authUser?.avatar?.url && <Image
                                         className="avatar"
                                         src={authUser?.avatar?.url}
-                                        alt="Avatar dell'utente"
+                                        alt="Immagine utente"
                                         roundedCircle
-                                    />
+                                    />}
                                     <span className="ms-2 d-none d-lg-inline">{authUser?.firstName} {authUser?.lastName}</span>
                                 </Dropdown.Toggle>
 
@@ -203,69 +203,6 @@ function PublicNavbar() {
                             </>
                         )}
                     </Nav>
-                    {/* <Nav className="w-100 d-flex align-items-center">
-                        <div className='d-flex justify-content-between align-items-center w-100'>
-                            <div className='d-flex'>
-                                <Nav.Link as={NavLink} to="/" key="nav-link-prodotti">
-                                    Prodotti
-                                </Nav.Link>
-                                {(authUser?.role === 'user' || authUser?.role === 'admin') && <Nav.Link as={NavLink} to="/cart" key="nav-link-carrello">
-                                    Carrello
-                                </Nav.Link>}
-                                {authUser?.role === 'admin' && <Nav.Link as={NavLink} to="/admin" key="nav-link-admin">
-                                    Pannello di amministrazione
-                                </Nav.Link>}
-                            </div>
-                            {isAuthenticated ? (
-                                    <div className='d-flex align-items-center'  key="authenticated-user-section">
-                                        <span className="me-2">
-                                            {authUser?.firstName} {authUser?.lastName}
-                                        </span>
-                                        <Dropdown align="end"> 
-                                            <Dropdown.Toggle as={Nav.Link} className="no-caret-dropdown-toggle p-0"> 
-                                                <Image className="avatar" src={authUser?.avatar?.url}
-                                                alt="Avatar dell'utente" roundedCircle />
-                                            </Dropdown.Toggle>
-
-                                            <Dropdown.Menu>
-                                                <Dropdown.Item as={Link} to={`/profile`}>
-                                                    Profilo
-                                                </Dropdown.Item>
-                                                <Dropdown.Item as={Link} to={`/orders`}>
-                                                    Storico ordini
-                                                </Dropdown.Item>
-                                                <Dropdown.Divider />
-                                                <Dropdown.Item onClick={handleLogout}>
-                                                    Esci
-                                                </Dropdown.Item>
-                                            </Dropdown.Menu>
-                                        </Dropdown>
-                                    </div>
-                                    // <div className='d-flex align-items-center'>
-                                    //     <Nav.Link as={NavLink} onClick={logout}>
-                                    //         Logout
-                                    //     </Nav.Link>
-                                    //     <Nav.Link as={NavLink} to={`/orders`}>
-                                    //         Storico ordini
-                                    //     </Nav.Link>
-                                    //     <Nav.Link as={NavLink} to={`/profile`}>
-                                    //         {authUser?.firstName} {authUser?.lastName}
-                                    //     </Nav.Link>
-                                    //     <Image className="avatar" src={authUser?.avatar?.url}
-                                    //     alt="Avatar dell'utente" roundedCircle />
-                                    // </div>
-                            ) : (
-                                <div className='d-flex justify-content-end w-100' key="guest-user-section">
-                                    <Nav.Link onClick={handleShowRegister} key="nav-link-register">
-                                        Register
-                                    </Nav.Link>
-                                    <Nav.Link onClick={handleShowLogin} key="nav-link-login">
-                                        Login
-                                    </Nav.Link>
-                                </div>
-                            )}
-                        </div>
-                    </Nav> */}
                 </Navbar.Collapse>
             </Container>
             

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Image, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, Image, ListGroup, Row, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import "./styles.css";
 import AddressForm from "./AddressForm";
 import { useAuth } from "../../../contexts/AuthContext";
 import { profile } from "../../../api/authentication";
 import { ArrowLeft, PencilFill, PersonCircle, TrashFill, XCircleFill } from "react-bootstrap-icons";
-import { addAvatar, editUser, removeAvatar } from "../../../api/user";
+import { addAvatar, editUser, removeAvatar, removeUser } from "../../../api/user";
+import { useToast } from "../../../contexts/ToastContext";
+import DeleteModal from "../../../components/modals/DeleteModal";
 
 
 function ProfilePage() {
@@ -21,9 +23,9 @@ function ProfilePage() {
         phone: '',
         birthDate: '',
         shippingAddress: {
-            street: '',
+            address: '',
             city: '',
-            zipCode: '',
+            postalCode: '',
             province: '',
             country: ''
         }
@@ -34,15 +36,16 @@ function ProfilePage() {
     const [successMessage, setSuccessMessage] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { authUser, setAuthUser, setToken } = useAuth();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const { authUser, setAuthUser, setToken, logout } = useAuth();
     const navigate = useNavigate();
-
+    const { addToast } = useToast();
     
     useEffect(() => {
         if (authUser?._id) {
             readUserProfile(authUser._id);
         } else {
-            setError("Nessun utente specificato o autenticato.");
+            setError("Non è stato possibile recuperare i dati dell'utente. Riprova più tardi.");
             setLoading(false);
         }
     }, [authUser]);
@@ -66,7 +69,7 @@ function ProfilePage() {
                 email: result.email || '',
                 phone: result.phone || '',
                 birthDate: result.birthDate ? new Date(result.birthDate).toISOString().split('T')[0] : '',
-                shippingAddress: result.shippingAddress || { street: '', city: '', zipCode: '', province: '', country: '' }
+                shippingAddress: result.shippingAddress || { address: '', city: '', postalCode: '', province: '', country: '' }
             });
             setPreviewUrl(result.avatar?.url || null);
         } catch (err) {
@@ -126,7 +129,7 @@ function ProfilePage() {
             setAvatarFile(null);
             setPreviewUrl(updatedUser.avatar?.url || null);
         } catch (err) {
-            setError("Errore durante l'aggiornamento del profilo.");
+            addToast("Errore durante l'aggiornamento del profilo.", "danger");
             console.error("Errore aggiornamento profilo:", err);
         } finally {
             setLoading(false);
@@ -135,7 +138,10 @@ function ProfilePage() {
     
     async function handleSubmit(e) {
         e.preventDefault();
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            setMessage({ type: 'danger', text: 'Si prega di correggere gli errori nella pagina.' });
+            return;
+        }
 
         setIsSubmitting(true);
         setSuccessMessage(null);
@@ -168,8 +174,9 @@ function ProfilePage() {
             setIsEdit(false);
             setAvatarFile(null);
             setPreviewUrl(updatedUser.avatar?.url || null);
+            addToast("Profilo aggiornato con successo!", "success");
         } catch (err) {
-            setError("Errore durante l'aggiornamento del profilo.");
+            addToast("Errore durante l'aggiornamento del profilo.", "danger");
             console.error("Errore aggiornamento profilo:", err);
         } finally {
             setLoading(false);
@@ -188,26 +195,29 @@ function ProfilePage() {
             email: user.email || '',
             phone: user.phone || '',
             birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
-            shippingAddress: user.shippingAddress || { street: '', city: '', zipCode: '', province: '', country: '' }
+            shippingAddress: user.shippingAddress || { address: '', city: '', postalCode: '', province: '', country: '' }
         });
     }
 
+    const handleDeleteClick = (user) => {
+        setShowDeleteModal(true);
+    };
+
     async function handleDeleteAccount() {
-        if (window.confirm("Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.")) {
-            setLoading(true);
-            setError(null);
-            try {
-                await deleteUserAccount(user._id);
-                localStorage.removeItem('token');
-                setToken(null);
-                setAuthUser(null);
-                navigate("/");
-            } catch (err) {
-                setError("Errore durante l'eliminazione dell'account.");
-                console.error("Errore eliminazione account:", err);
-            } finally {
-                setLoading(false);
-            }
+        setLoading(true);
+        setError(null);
+        try {
+            await removeUser(user._id);
+            addToast("Profilo eliminato con successo", "info")
+            localStorage.removeItem('token');
+            setShowDeleteModal(false);
+            logout();
+            navigate("/");
+        } catch (err) {
+            addToast("Errore durante l'eliminazione dell'account.", "danger");
+            console.error("Errore eliminazione account:", err);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -221,25 +231,25 @@ function ProfilePage() {
             </Container>
         );
     }
-
+    
     if (error) {
         return (
-            <Container className="mt-5">
-                <Alert variant="danger">
-                    <Alert.Heading>Si è verificato un problema</Alert.Heading>
-                    <div>{error}</div>
-                </Alert>
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla home
+                </Button>
+                <Alert variant="danger">{error}</Alert>
             </Container>
         );
     }
 
     if (!user) {
         return (
-            <Container className="mt-5">
-                <Alert variant="info">
-                    <Alert.Heading>Nessun profilo trovato</Alert.Heading>
-                    <p>Impossibile caricare i dati dell'utente.</p>
-                </Alert>
+            <Container className="my-5">
+                <Button variant="outline-dark" onClick={() => navigate("/")} className="mb-3">
+                    <ArrowLeft className="me-2" />Torna alla home
+                </Button>
+                <Alert variant="warning">Profilo non trovato.</Alert>
             </Container>
         );
     }
@@ -247,151 +257,191 @@ function ProfilePage() {
     const canEdit = authUser && authUser._id === user._id;
 
     return (
-        <div className="user-profile-root py-4">
+        <div className="py-4">
             <Container>
-                <div className="d-flex mb-3">
-                    <Button variant="secondary" onClick={() => navigate('/')}>
-                        <ArrowLeft className="me-2" />Torna alla home
-                    </Button>
+
+                <div className="d-flex justify-content-between align-items-end my-3">
+                    <h1 className='m-0'>Il Mio Profilo</h1>
+                    {canEdit && !isEdit && (
+                        <div className="d-flex gap-3">
+                            <Button variant="outline-secondary" title="Modifica profilo"
+                                onClick={() => setIsEdit(true)}
+                            >
+                                <PencilFill />
+                            </Button>
+                            <Button variant="outline-danger" onClick={handleDeleteClick} title="Elimina profilo">
+                                <TrashFill />
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                <h1 className='pb-4'>Il Mio Profilo</h1>
 
-                <Row className='align-items-center mb-4'>
-                    <Col xs={12} md={3} className='d-flex justify-content-center justify-content-md-start mb-3 mb-md-0 position-relative'>
-                        {previewUrl ? (
-                            <Image src={previewUrl} roundedCircle fluid style={{ width: '150px', height: '150px', objectFit: 'cover' }} alt="Avatar utente" />
-                        ) : (
-                            <PersonCircle size={150} className="text-secondary" />
-                        )}
-                        {isEdit && previewUrl && (
-                            <Button variant="danger" size="sm" className="position-absolute top-0 end-0" onClick={handleRemoveAvatar}>
-                                <XCircleFill />
-                            </Button>
-                        )}
-                    </Col>
-                    <Col xs={12} md={9} className='d-flex justify-content-center justify-content-md-end'>
-                        {canEdit && !isEdit && (
-                            <Button variant="outline-primary" onClick={() => setIsEdit(true)}>
-                                <PencilFill className="me-2" /> Modifica Profilo
-                            </Button>
-                        )}
-                    </Col>
-                </Row>
 
-                <Card className="p-4 shadow-sm">
-                    <Form onSubmit={handleSubmit}>
-                        <Row className="mb-3">
-                            <Col md={6}>
-                                <Form.Group controlId="formFirstName" className="mb-3">
-                                    <Form.Label>Nome</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="firstName"
-                                        value={isEdit ? formData.firstName : user.firstName}
-                                        onChange={handleFormChange}
-                                        readOnly={!isEdit}
-                                        isInvalid={!!formErrors.firstName}
-                                    />
-                                    <Form.Control.Feedback type="invalid">{formErrors.firstName}</Form.Control.Feedback>
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group controlId="formLastName" className="mb-3">
-                                    <Form.Label>Cognome</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="lastName"
-                                        value={isEdit ? formData.lastName : user.lastName}
-                                        onChange={handleFormChange}
-                                        readOnly={!isEdit}
-                                        isInvalid={!!formErrors.lastName}
-                                    />
-                                    <Form.Control.Feedback type="invalid">{formErrors.lastName}</Form.Control.Feedback>
-                                </Form.Group>
-                            </Col>
-                        </Row>
-
-                        <Row className="mb-3">
-                            <Col md={6}>
-                                <Form.Group controlId="formEmail" className="mb-3">
-                                    <Form.Label>Email</Form.Label>
-                                    <Form.Control
-                                        type="email"
-                                        name="email"
-                                        value={isEdit ? formData.email : user.email}
-                                        onChange={handleFormChange}
-                                        readOnly={!isEdit}
-                                        isInvalid={!!formErrors.email}
-                                    />
-                                    <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group controlId="formPhone" className="mb-3">
-                                    <Form.Label>Telefono</Form.Label>
-                                    <Form.Control
-                                        type="tel"
-                                        name="phone"
-                                        value={isEdit ? formData.phone : (user.phone || 'Non specificato')}
-                                        onChange={handleFormChange}
-                                        readOnly={!isEdit}
-                                    />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-
-                        <Row className="mb-3">
-                            <Col md={6}>
-                                <Form.Group controlId="formBirthDate" className="mb-3">
-                                    <Form.Label>Data di Nascita</Form.Label>
-                                    <Form.Control
-                                        type="date"
-                                        name="birthDate"
-                                        value={isEdit ? formData.birthDate : (user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : 'Non specificata')}
-                                        onChange={handleFormChange}
-                                        readOnly={!isEdit}
-                                    />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                {isEdit && (
-                                    <Form.Group controlId="formAvatar" className="mb-3">
-                                        <Form.Label>Cambia Avatar</Form.Label>
-                                        <Form.Control
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleAvatarChange}
-                                        />
-                                    </Form.Group>
+                {isEdit ? ( 
+                    <>
+                        <Row className='align-items-center mb-4'>
+                            <Col xs={12} md={3} className='d-flex justify-content-center justify-content-md-start mb-3 mb-md-0 position-relative'>
+                                {previewUrl ? (
+                                    <Image src={previewUrl} roundedCircle fluid style={{ width: '150px', height: '150px', objectFit: 'cover' }} alt="Avatar utente" />
+                                ) : (
+                                    <PersonCircle size={150} className="text-secondary" />
+                                )}
+                                {isEdit && previewUrl && (
+                                    <Button variant="danger" size="sm" className="position-absolute top-0 end-0" onClick={handleRemoveAvatar}>
+                                        <XCircleFill />
+                                    </Button>
                                 )}
                             </Col>
                         </Row>
 
-                        <AddressForm 
-                            address={isEdit ? formData.shippingAddress : user.shippingAddress} 
-                            onChange={handleAddressChange} 
-                            readOnly={!isEdit} 
-                        />
+                    <Card className="p-4 shadow-sm">
+                        <Form onSubmit={handleSubmit}>
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="formFirstName" className="mb-3">
+                                        <Form.Label>Nome</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            name="firstName"
+                                            value={isEdit ? formData.firstName : user.firstName}
+                                            onChange={handleFormChange}
+                                            readOnly={!isEdit}
+                                            isInvalid={!!formErrors.firstName}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{formErrors.firstName}</Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group controlId="formLastName" className="mb-3">
+                                        <Form.Label>Cognome</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            name="lastName"
+                                            value={isEdit ? formData.lastName : user.lastName}
+                                            onChange={handleFormChange}
+                                            readOnly={!isEdit}
+                                            isInvalid={!!formErrors.lastName}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{formErrors.lastName}</Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
 
-                        {canEdit && isEdit && (
-                            <Form.Group className="d-flex justify-content-end mt-4">
-                                <Button type="button" variant="outline-secondary" onClick={cancelEditing} className="me-2">
-                                    Annulla
-                                </Button>
-                                <Button type="submit" variant="primary">
-                                    Salva Modifiche
-                                </Button>
-                            </Form.Group>
-                        )}
-                        {canEdit && !isEdit && (
-                             <Form.Group className="d-flex justify-content-end mt-4">
-                                <Button variant="danger" onClick={handleDeleteAccount} className="ms-2">
-                                    <TrashFill className="me-2" /> Elimina Profilo
-                                </Button>
-                             </Form.Group>
-                        )}
-                    </Form>
-                </Card>
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="formEmail" className="mb-3">
+                                        <Form.Label>Email</Form.Label>
+                                        <Form.Control
+                                            type="email"
+                                            name="email"
+                                            value={isEdit ? formData.email : user.email}
+                                            onChange={handleFormChange}
+                                            readOnly={!isEdit}
+                                            isInvalid={!!formErrors.email}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group controlId="formPhone" className="mb-3">
+                                        <Form.Label>Telefono</Form.Label>
+                                        <Form.Control
+                                            type="tel"
+                                            name="phone"
+                                            value={isEdit ? formData.phone : (user.phone || 'Non specificato')}
+                                            onChange={handleFormChange}
+                                            readOnly={!isEdit}
+                                        />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="formBirthDate" className="mb-3">
+                                        <Form.Label>Data di Nascita</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            name="birthDate"
+                                            value={isEdit ? formData.birthDate : (user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : 'Non specificata')}
+                                            onChange={handleFormChange}
+                                            readOnly={!isEdit}
+                                        />
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    {isEdit && (
+                                        <Form.Group controlId="formAvatar" className="mb-3">
+                                            <Form.Label>Cambia Avatar</Form.Label>
+                                            <Form.Control
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleAvatarChange}
+                                            />
+                                        </Form.Group>
+                                    )}
+                                </Col>
+                            </Row>
+
+                            <AddressForm 
+                                address={isEdit ? formData.shippingAddress : user.shippingAddress} 
+                                onChange={handleAddressChange} 
+                                readOnly={!isEdit} 
+                            />
+                            {canEdit && isEdit && (
+                                <Form.Group className="d-flex justify-content-end mt-4">
+                                    <Button type="button" variant="outline-secondary" onClick={cancelEditing} className="me-2">
+                                        Annulla
+                                    </Button>
+                                    <Button type="submit" variant="secondary">
+                                        Salva Modifiche
+                                    </Button>
+                                </Form.Group>
+                            )}
+                        </Form>
+                    </Card>
+                    </>
+                ) : (
+                    <Card className="my-4">
+                        <Card.Body>
+                            <Row className="mb-3 align-items-center">
+                                <Col md={3} className="text-center">
+                                    <Image src={user.avatar?.url || 'https://res.cloudinary.com/dztq95r7a/image/upload/v1757890401/no-image_k1reth.jpg'} roundedCircle className="avatar-user" alt="Immagine Utente" />
+                                </Col>
+                                <Col md={9}>
+                                    <ListGroup variant="flush">
+                                        <ListGroup.Item className="border-0"><strong>Nome:</strong> {user.firstName}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Cognome:</strong> {user.lastName}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Email:</strong> {user.email}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Telefono:</strong> {user.phone || 'N/A'}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Data di Nascita:</strong> {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : 'N/A'}</ListGroup.Item>
+                                    </ListGroup>
+                                </Col>
+                            </Row>
+                            <h5 className="mt-4 mb-3 border-top pt-3">Indirizzo di Spedizione</h5>
+                            {user.shippingAddress ? (
+                                <>
+                                    <ListGroup variant="flush">
+                                        <ListGroup.Item className="border-0"><strong>Indirizzo:</strong> {user.shippingAddress.address || 'N/A'}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Città:</strong> {user.shippingAddress.city || 'N/A'}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>CAP:</strong> {user.shippingAddress.postalCode || 'N/A'}</ListGroup.Item>
+                                        <ListGroup.Item className="border-0"><strong>Paese:</strong> {user.shippingAddress.country || 'N/A'}</ListGroup.Item>
+                                    </ListGroup>
+                                </>
+                            ) : (
+                                <span>{'N/A'}</span>
+                            )}
+                        </Card.Body>
+                    </Card>
+                )
+                }
+                
+                <DeleteModal
+                    show={showDeleteModal}
+                    onHide={() => setShowDeleteModal(false)}
+                    onConfirm={handleDeleteAccount}
+                    textToShow={"Sei sicuro di voler eliminare il tuo profilo?"}
+                />
             </Container>
         </div>
     )
