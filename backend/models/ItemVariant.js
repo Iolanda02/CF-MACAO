@@ -16,7 +16,7 @@ const itemVariantSchema = new Schema({
     },
     name: {
         type: String,
-        require: [true, "Il nome deve variante è obbligatorio"],
+        required: [true, "Il nome deve variante è obbligatorio"],
         trim: true,
         maxlength: [100, "Il nome della variante non può superare i 100 caratteri"] 
     },

@@ -101,6 +101,9 @@ function AdminOrdersListPage() {
             await cancelOrder(orderToDelete._id);
             setMessage({ type: 'success', text: 'Ordine eliminato con successo!' });
             fetchOrders(); // Ricarica la lista dopo la cancellazione
+            if (currentPage > Math.ceil((orders.length - 1) / productsPerPage)) {
+                setCurrentPage(Math.max(1, currentPage - 1));
+            }
             setShowDeleteModal(false);
             setOrderToDelete(null);
         } catch (err) {

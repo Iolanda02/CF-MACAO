@@ -10,7 +10,7 @@ function AdminProductsListPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false); 
     const [message, setMessage] = useState(null);
-    const [filterTerm, setFilterTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState('');
     const [currentFilterInput, setCurrentFilterInput] = useState("");
     const navigate = useNavigate();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -29,7 +29,7 @@ function AdminProductsListPage() {
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
-            const result = await getAllProducts(filterTerm, paginator);
+            const result = await getAllProducts(searchTerm, paginator);
             setProducts(result.data);
             setPaginator(prev => ({
                 ...prev,
@@ -42,7 +42,7 @@ function AdminProductsListPage() {
         } finally {
             setLoading(false);
         }
-    }, [filterTerm, paginator.page, paginator.perPage]);
+    }, [searchTerm, paginator.page, paginator.perPage]);
 
 
     useEffect(() => {
@@ -79,15 +79,15 @@ function AdminProductsListPage() {
             ...prev,
             page: 1
         }));
+        setSearchTerm(currentFilterInput);
     };
     
     const clearFilter = () => {
-        setPaginator({
-            page: 1,
-            perPage: 6,
-            totalCount: 0,
-            totalPages: 1
-        });
+        setPaginator(prev => ({
+            ...prev,
+            page: 1
+        }));
+        setSearchTerm("");
         setCurrentFilterInput("");
     };
 
@@ -124,14 +124,6 @@ function AdminProductsListPage() {
         );
     }
 
-    // if (error) {
-    //     return (
-    //         <Container className="mt-5">
-    //             <Alert variant="danger">{error}</Alert>
-    //         </Container>
-    //     );
-    // }
-
     return (
         <Container className="my-4">
             <Row className="mb-4 align-items-center">
@@ -152,28 +144,27 @@ function AdminProductsListPage() {
             )}
 
             {/* Componente di Ricerca */}
-            <Row className="mb-4">
-                <Col>
-                    <InputGroup>
-                        <Form.Control
-                            type="text"
-                            placeholder="Filtra prodotti..."
-                            value={currentFilterInput}
-                            onChange={() => setCurrentFilterInput(e.target.value)}
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') applyFilter();
-                            }}
-                            disabled={loading}
-                        />
-                        <Button variant="outline-secondary" onClick={applyFilter} disabled={loading}>
-                            <Search className="me-1" />Cerca
-                        </Button>
-                        <Button variant="outline-danger" onClick={clearFilter} disabled={loading || !currentFilterInput}>
-                            <XCircleFill className="me-1" />Reset
-                        </Button>
-                    </InputGroup>
-                </Col>
-            </Row>
+            {(products?.length > 0 || currentFilterInput) && 
+                <Row className="mb-4">
+                    <Col>
+                        <InputGroup>
+                            <Form.Control
+                                type="text"
+                                placeholder="Filtra prodotti..."
+                                value={currentFilterInput}
+                                onChange={(e) => setCurrentFilterInput(e.target.value)}
+                                disabled={loading}
+                            />
+                            <Button variant="outline-secondary" onClick={applyFilter} disabled={loading}>
+                                <Search className="me-1" />Cerca
+                            </Button>
+                            <Button variant="outline-danger" onClick={clearFilter} disabled={loading || !currentFilterInput}>
+                                <XCircleFill className="me-1" />Reset
+                            </Button>
+                        </InputGroup>
+                    </Col>
+                </Row>
+            }
 
             {products?.length === 0 ? (
                 <Alert variant="info">Nessun prodotto disponibile.</Alert>
@@ -201,22 +192,24 @@ function AdminProductsListPage() {
                                         <span className="text-danger"><XCircleFill /></span>
                                     )}
                                 </td>
-                                <td className="text-center">
-                                <Button variant="outline-dark" size="sm" className="me-2" title="Visualizza prodotto"
-                                    onClick={() => navigate(`/admin/products/${product._id}`)}
-                                >
-                                    <EyeFill />
-                                </Button>
-                                <Button variant="outline-secondary" size="sm" className="me-2" title="Modifica prodotto"
-                                    onClick={() => navigate(`/admin/products/edit/${product._id}`)}
-                                >
-                                    <PencilFill />
-                                </Button>
-                                <Button variant="outline-danger" size="sm" title="Elimina prodotto"
-                                    onClick={() => handleDelete(product)}
-                                >
-                                    <TrashFill />
-                                </Button>
+                                <td>
+                                    <div className="d-flex justify-content-center gap-2">
+                                        <Button variant="outline-dark" size="sm" className="me-2" title="Visualizza prodotto"
+                                            onClick={() => navigate(`/admin/products/${product._id}`)}
+                                        >
+                                            <EyeFill />
+                                        </Button>
+                                        <Button variant="outline-secondary" size="sm" className="me-2" title="Modifica prodotto"
+                                            onClick={() => navigate(`/admin/products/edit/${product._id}`)}
+                                        >
+                                            <PencilFill />
+                                        </Button>
+                                        <Button variant="outline-danger" size="sm" title="Elimina prodotto"
+                                            onClick={() => handleDelete(product)}
+                                        >
+                                            <TrashFill />
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -226,8 +219,8 @@ function AdminProductsListPage() {
 
             {/* Paginazione */}
             {paginator.totalPages > 1 && (
-                <Row className="mt-5 justify-content-center">
-                    <Col xs="auto">
+                <Row className="my-3 justify-content-center">
+                    <Col xs="auto" className="d-flex align-items-baseline gap-3 flex-wrap">
                         <Pagination>
                             <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
                             <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
@@ -237,6 +230,7 @@ function AdminProductsListPage() {
                             <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
                             <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
                         </Pagination>
+                        <small className="text-muted">{paginator.totalCount} risultati totali</small>
                     </Col>
                 </Row>
             )}

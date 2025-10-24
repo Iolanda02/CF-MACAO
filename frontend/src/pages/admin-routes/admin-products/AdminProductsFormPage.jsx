@@ -40,18 +40,17 @@ const getInitialVariantState = () => ({
 function AdminProductsFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-
-    const isEditing = !!id;
-
     const [product, setProduct] = useState(getInitialProductState());
-    const [loading, setLoading] = useState(isEditing);
+    const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
     const { addToast } = useToast();
-
     // imagesToUpload: { [variantIndex]: { [imageIndex]: { file: File, previewUrl: string, isNew: boolean, isDeleted: boolean } } }
     const [imagesToProcess, setImagesToProcess] = useState({});
+    
+    const isEditing = !!id;
 
     const getProductDetails = useCallback(async (id) => {
         try {
@@ -86,7 +85,7 @@ function AdminProductsFormPage() {
 
         } catch(error) {
             console.error(error);
-            setError("Non è stato possibile caricare i dettagli del prodotto. Riprova più tardi.");
+            setError("Impossibile caricare i dettagli del prodotto. Riprova più tardi.");
         } finally {
             setLoading(false);
         }
@@ -97,12 +96,17 @@ function AdminProductsFormPage() {
             getProductDetails(id);
         } else {
             setProduct(getInitialProductState());
+            setLoading(false);
+            setError(null);
+            setFormErrors({});
         }
     }, [id, isEditing, getProductDetails]);
     
     // Gestore per i campi del prodotto principale
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        setFormErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
+
         setProduct(prev => ({
         ...prev,
         [name]: type === 'checkbox' ? checked : value
@@ -275,16 +279,16 @@ function AdminProductsFormPage() {
     
     // Funzione per la validazione delle varianti
     const validateVariants = () => {
+        let errors = {};
+        let variantErrors = [];
         if (product.variants.length === 0) {
-            setError('Devi aggiungere almeno una variante per il prodotto.');
-            return false;
+            errors.variants = 'Devi aggiungere almeno una variante per il prodotto.';
         }
 
         for (let i = 0; i < product.variants.length; i++) {
             const variant = product.variants[i];
             if (!variant.name.trim()) {
-                setError(`Il nome della variante ${i + 1} è obbligatorio.`);
-                return false;
+                variantErrors[i].name = `Il nome della variante ${i + 1} è obbligatorio.`;
             }
             if (variant.price.amount <= 0) {
                 setError(`Il prezzo della variante ${i + 1} deve essere maggiore di zero.`);
@@ -295,36 +299,46 @@ function AdminProductsFormPage() {
                 return false;
             }
         }
-        return true;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    // Funzione per la validazione delle varianti
+    const validateProduct = () => {
+        let errors = {};
+
+        if (!product.name.trim()) {
+            errors.product.name = 'Il nome del prodotto è obbligatorio.'
+        }
+        if (!product.itemType.trim()) {
+            errors.product.itemType = 'Il tipo di prodotto è obbligatorio.'
+        }
+        // if (product.intensity && (isNaN(parseInt(product.intensity)) || parseInt(product.intensity) < 1 || parseInt(product.intensity) > 12)) {
+        //     errors.product.intensity = 'L\'intensità deve essere un numero intero tra 1 e 12.';
+        // }
+        
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-
-        if (!product.name || !product.itemType) {
-        setError('Nome e tipo di prodotto sono campi obbligatori.');
-        return;
-        }
-        if (product.intensity && (isNaN(parseInt(product.intensity)) || parseInt(product.intensity) < 1 || parseInt(product.intensity) > 12)) {
-            setError('L\'intensità deve essere un numero intero tra 1 e 12.');
+        if (!validateProduct() || !validateVariants()) {
+            setMessage({ type: 'danger', text: 'Si prega di correggere gli errori nella pagina.' });
             return;
         }
-        // Validazione delle varianti
-        if (!validateVariants()) {
-            return;
-        }
-
+        
         setSubmitting(true);
+        setError(null);
 
         let savedProduct;
         // Prepara i dati per l'invio
         const dataToSend = {
             ...product,
-            intensity: product.intensity ? parseInt(product.intensity) : undefined,
+            intensity: product.intensity ? parseInt(product.intensity) : '',
             // tags: product.tags ? product.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-            systemCompatibility: product.systemCompatibility ? product.systemCompatibility.map(sys => sys.trim()).filter(sys => sys) : [],
+            // systemCompatibility: product.systemCompatibility ? product.systemCompatibility.map(sys => sys.trim()).filter(sys => sys) : [],
             variants: product.variants.map(variant => ({
                 ...variant,
                 itemType: product.itemType,
@@ -345,10 +359,17 @@ function AdminProductsFormPage() {
                 savedProduct = savedProduct.data;
                 addToast("Prodotto aggiunto con successo!", "success");
             }
+        } catch (err) {
+            console.error("Errore nel salvataggio prodotto:", err);
+            const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
+            setMessage("Impossibile salvare il prodotto. Riprova più tardi.");
+            addToast("Salvataggio non riuscito", "danger");
+            return;
+        }
 
+        try {
             const currentProductId = savedProduct._id;
 
-            
             // Gestione immagini per ogni variante
             const finalVariants = await Promise.all(
                 savedProduct.variants.map(async (variant, vIdx) => {
@@ -454,30 +475,29 @@ function AdminProductsFormPage() {
 
     return (
         <Container className="my-4">
-            <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mt-3">
+            <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mb-3">
                 <ArrowLeft className="me-2" />Torna alla Lista Prodotti
             </Button>
-            <h1 className="m-0">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
+            <h1 className="mb-4">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
 
             {message && (
                 <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
                 {message.text}
                 </Alert>
             )}
-        <Row>
-            <Col>
-            <Form onSubmit={handleSubmit} className="mt-4">
+
+            <Form onSubmit={handleSubmit} noValidate>
                 <Form.Group className="mb-3" controlId="productName">
-                <Form.Label>Nome Prodotto</Form.Label>
-                <Form.Control
-                    type="text"
-                    placeholder="Nome del prodotto"
-                    name="name"
-                    value={product.name}
-                    onChange={handleChange}
-                    required
-                    disabled={submitting}
-                />
+                    <Form.Label>Nome Prodotto*</Form.Label>
+                    <Form.Control
+                        type="text"
+                        placeholder="Nome del prodotto"
+                        name="name"
+                        value={product.name}
+                        onChange={handleChange}
+                        required
+                        disabled={submitting}
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="productBrand">
@@ -506,7 +526,7 @@ function AdminProductsFormPage() {
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="productItemType">
-                    <Form.Label>Tipo di Prodotto</Form.Label>
+                    <Form.Label>Tipo di Prodotto*</Form.Label>
                     <Form.Select
                         name="itemType"
                         value={product.itemType}
@@ -551,7 +571,6 @@ function AdminProductsFormPage() {
                         <Form.Control
                             type="number"
                             min="1"
-                            max="12"
                             placeholder="Es. 8"
                             name="intensity"
                             value={product.intensity}
@@ -644,7 +663,7 @@ function AdminProductsFormPage() {
                         </Row>
 
                         <Form.Group className="mb-3" controlId={`variantName-${index}`}>
-                            <Form.Label>Nome Variante</Form.Label>
+                            <Form.Label>Nome Variante*</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={variant.name}
@@ -668,7 +687,7 @@ function AdminProductsFormPage() {
                             </Col>
                             <Col md={6}>
                                 <Form.Group className="mb-3" controlId={`variantPrice-${index}`}>
-                                    <Form.Label>Prezzo (€)</Form.Label>
+                                    <Form.Label>Prezzo (€)*</Form.Label>
                                     <InputGroup>
                                         <InputGroup.Text>€</InputGroup.Text>
                                         <Form.Control
@@ -704,7 +723,7 @@ function AdminProductsFormPage() {
                             </Col>
                             <Col md={6}>
                                 <Form.Group className="mb-3" controlId={`variantStock-${index}`}>
-                                    <Form.Label>Stock</Form.Label>
+                                    <Form.Label>Stock*</Form.Label>
                                     <Form.Control
                                         type="number"
                                         min="0"
@@ -853,7 +872,7 @@ function AdminProductsFormPage() {
                 </Button>
 
                 <div className="d-flex flex-items-center gap-3 mt-3 mb-5">
-                    <Button variant={isEditing ? "primary" : "success"} type="submit" disabled={submitting}>
+                    <Button variant={isEditing ? "secondary" : "success"} type="submit" disabled={submitting}>
                         {submitting ? (
                             <>
                                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
@@ -867,7 +886,7 @@ function AdminProductsFormPage() {
                         )}
                     </Button>
                     
-                    <Button variant={isEditing ? "outline-primary" : "outline-success"} type="submit" 
+                    <Button variant={isEditing ? "outline-secondary" : "outline-success"}
                         disabled={submitting} 
                         onClick={() => navigate(-1)}
                     >
@@ -875,8 +894,6 @@ function AdminProductsFormPage() {
                     </Button>
                 </div>
             </Form>
-            </Col>
-        </Row>
         </Container>
     )
 }

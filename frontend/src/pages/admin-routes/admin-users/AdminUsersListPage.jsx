@@ -42,7 +42,6 @@ function AdminUsersListPage() {
         } catch (err) {
             console.error("Errore nel recupero utenti:", err);
             setMessage({ type: 'danger', text: 'Impossibile caricare gli utenti. Riprova più tardi.' });
-            setLoading(false);
         } finally {
             setLoading(false);
         }
@@ -100,6 +99,9 @@ function AdminUsersListPage() {
             await removeUser(userToDelete._id);
             setMessage({ type: 'success', text: 'Utente eliminato con successo!' });
             fetchUsers(); // Ricarica la lista dopo la cancellazione
+            if (currentPage > Math.ceil((users.length - 1) / productsPerPage)) {
+                setCurrentPage(Math.max(1, currentPage - 1));
+            }
             setShowDeleteModal(false);
             setUserToDelete(null);
         } catch (err) {
