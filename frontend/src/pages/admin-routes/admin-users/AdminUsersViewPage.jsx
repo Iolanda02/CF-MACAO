@@ -15,7 +15,7 @@ function AdminUsersViewPage() {
     const getUserDetails = useCallback(async (id) => {
         try {
             setLoading(true);
-            setError(false);
+            setError(null);
             const result = await getUser(id);
             setUser(result.data);
         } catch(error) {

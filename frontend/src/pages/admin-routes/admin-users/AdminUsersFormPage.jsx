@@ -31,10 +31,7 @@ const getInitialUserState = () => ({
 function AdminUsersFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isEditMode = !!id;
-
     const [user, setUser] = useState(getInitialUserState());
-
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -42,6 +39,8 @@ function AdminUsersFormPage() {
     const [formErrors, setFormErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const { addToast } = useToast();
+    
+    const isEditMode = !!id;
 
     useEffect(() => {
         if (isEditMode) {
@@ -75,7 +74,6 @@ function AdminUsersFormPage() {
         } catch (err) {
             console.error("Errore nel recupero utente per modifica:", err);
             setError("Impossibile caricare i dettagli dell'utente. Riprova più tardi.");
-            navigate('/404', { replace: true });
         } finally {
             setLoading(false);
         }
@@ -223,7 +221,7 @@ function AdminUsersFormPage() {
     }
 
     return (
-        <Container className="mt-4">
+        <Container className="my-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <Button variant="outline-dark" onClick={() => navigate("/admin/users")}>
                     <ArrowLeft className="me-2" />Torna alla lista utenti

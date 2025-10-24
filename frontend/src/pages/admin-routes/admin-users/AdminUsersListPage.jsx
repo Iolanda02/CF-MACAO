@@ -48,16 +48,6 @@ function AdminUsersListPage() {
         }
     };
 
-    // Funzione per cambiare la pagina (clic sul numero)
-    const handlePageChange = useCallback((number) => {
-        if (number !== paginator.page && number <= paginator.totalPages && number >= 1) {
-            setPaginator(prev => ({
-                ...prev,
-                page: number,
-            }));
-        }
-    }, [paginator.page, paginator.totalPages]);
-
     // Aggiorna gli elementi della paginazione quando i parametri del paginatore cambiano
     useEffect(() => {
         const pages = [];
@@ -72,7 +62,17 @@ function AdminUsersListPage() {
         setPaginationItems(pages);
     }, [paginator.totalPages, paginator.page]);
 
-    // Funzione per applicare il filtro (clic sul pulsante Cerca)
+    // Funzione per cambiare la pagina
+    const handlePageChange = useCallback((number) => {
+        if (number !== paginator.page && number <= paginator.totalPages && number >= 1) {
+            setPaginator(prev => ({
+                ...prev,
+                page: number,
+            }));
+        }
+    }, [paginator.page, paginator.totalPages]);
+
+    // Funzione per applicare il filtro
     const applyFilter = () => {
         setPaginator(prev => ({
             ...prev,
@@ -180,7 +180,7 @@ function AdminUsersListPage() {
                     </thead>
                     <tbody>
                         {users.map((user, index) => (
-                            <tr key={user._id}>
+                            <tr key={index}>
                                 <td>{(paginator.page - 1) * paginator.perPage + index + 1}</td>
                                 <td>{user.fullName || `${user.firstName} ${user.lastName}`}</td>
                                 <td><b>{user.email}</b></td>

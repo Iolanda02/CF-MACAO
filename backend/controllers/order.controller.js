@@ -64,41 +64,6 @@ export const getAllOrders = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-
-    // const user = req.user;
-    // if (!user || !mongoose.Types.ObjectId.isValid(user.id)) {
-    //     return next(new AppError("ID utente non valido", 400))
-    // }
-
-    // try {
-    //     const { status, page = 1, limit = 10, ...otherQueryParams } = req.query;
-    //     const baseQuery = buildOrderQuery(user.role, user.id, { status, ...otherQueryParams });
-
-    //     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    //     const orders = await Order.find(baseQuery)
-    //                               .populate('user', 'firstName lastName email')
-    //                               .populate('items.item', 'name description')
-    //                               .populate('items.variant', 'sku attributes')
-    //                               .sort({ createdAt: -1 }) // dal più recente al meno recente
-    //                               .skip(skip)
-    //                               .limit(parseInt(limit));
-
-    //     const totalOrders = await Order.countDocuments(baseQuery);
-    //     const totalPages = Math.ceil(totalOrders / parseInt(limit));
-
-    //     res.status(200).json({
-    //         status: 'success',
-    //         data: {
-    //             orders,
-    //             totalOrders,
-    //             currentPage: parseInt(page),
-    //             totalPages,
-    //         }
-    //     });
-    // } catch (error) {
-    //     next(error);
-    // }
 }
 
 
