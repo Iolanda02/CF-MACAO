@@ -1,13 +1,21 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { addItemToCartApi, getCart, removeCartItemApi, updateCartItemQuantityApi } from "../api/cart";
+import { useToast } from "./ToastContext";
+import { useAuth } from "./AuthContext";
 
 export function CartProvider({ children }) {
     const [cart, setCart] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { addToast } = useToast();
 
     // Funzione per recuperare il carrello dal backend
     const fetchCart = useCallback(async () => {
+        if (!isAuthenticated || authLoading) {
+            setCart(null); // Assicurati che il carrello sia nullo se non autenticato
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -21,17 +29,22 @@ export function CartProvider({ children }) {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isAuthenticated, authLoading]);
 
     // Recupera il carrello al mount del componente (o ogni volta che l'utente è autenticato)
     useEffect(() => {
-        // Dovresti avere qui una logica per verificare se l'utente è autenticato
-        // e solo in quel caso chiamare fetchCart.
-        // Per semplicità, lo chiamiamo sempre per ora.
-        fetchCart();
-    }, [fetchCart]);
+        if (isAuthenticated && !authLoading) {
+            fetchCart();
+        } else if (!isAuthenticated && !authLoading) {
+            setCart(null);
+        }
+    }, [isAuthenticated, authLoading, fetchCart]);
 
     const addItemToCart = async (itemId, quantity, variantId) => {
+        if (!isAuthenticated) {
+            addToast("Devi effettuare l'accesso per aggiungere prodotti al carrello.");
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -52,6 +65,10 @@ export function CartProvider({ children }) {
     };
 
     const updateCartItemQuantity = async (itemId, variantId, newQuantity) => {
+        if (!isAuthenticated) {
+            setError("Devi effettuare l'accesso per modificare il carrello.");
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -69,6 +86,10 @@ export function CartProvider({ children }) {
     };
 
     const removeCartItem = async (itemId, variantId) => {
+        if (!isAuthenticated) {
+            setError("Devi effettuare l'accesso per modificare il carrello.");
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -93,6 +114,7 @@ export function CartProvider({ children }) {
         addItemToCart,
         updateCartItemQuantity,
         removeCartItem,
+        cartItemCount: cart?.items?.length || 0
     };
 
     return (

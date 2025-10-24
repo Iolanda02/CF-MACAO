@@ -23,7 +23,7 @@ function PublicNavbar() {
     const [scrolled, setScrolled] = useState(false);
     const navbarRef = useRef(null);
     const { addToast } = useToast();
-    const { cart } = useCart();
+    const { cartItemCount } = useCart();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -136,9 +136,9 @@ function PublicNavbar() {
                         {(authUser?.role === 'user' || authUser?.role === 'admin') && (
                             <Nav.Link as={NavLink} to="/cart" className="position-relative me-3">
                                 <CartFill size={22} />
-                                {cart?.items?.length > 0 && (
+                                {cartItemCount > 0 && (
                                     <Badge pill bg="danger" className="position-absolute top-0 start-100 translate-middle">
-                                        {cart?.items?.length}
+                                        {cartItemCount}
                                         <span className="visually-hidden">elementi nel carrello</span>
                                     </Badge>
                                 )}
