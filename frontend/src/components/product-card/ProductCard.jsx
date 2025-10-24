@@ -127,7 +127,7 @@ function ProductCard({ product }) {
                         </Button>
                     </InputGroup>
                     <Button
-                        variant="primary"
+                        variant="outline-secondary"
                         onClick={handleAddToCart}
                         className="ms-2"
                         disabled={isLoading}

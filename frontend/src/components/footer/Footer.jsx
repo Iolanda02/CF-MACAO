@@ -9,14 +9,14 @@ function Footer() {  return (
       <Container>
         <Row className="mb-4">
           {/* Colonna Logo */}
-          <Col md={3} className="text-center text-md-start mb-3 mb-md-0">
+          <Col md={4} className="text-center text-md-start mb-3 mb-md-0">
             <Nav.Link as={NavLink} to="/">
               <Image src={logo} alt="Lavazza Logo" fluid style={{ maxWidth: '120px' }} />
             </Nav.Link>
           </Col>
 
           {/* Colonna Prodotti */}
-          <Col md={3} className="mb-3 mb-md-0">
+          <Col md={4} className="mb-3 mb-md-0">
             <h5 className="text-uppercase mb-3">Prodotti</h5>
             <Nav className="flex-column">
               <Nav.Link as={NavLink} to="/" className="text-white footer-link">
@@ -26,7 +26,7 @@ function Footer() {  return (
           </Col>
 
           {/* Colonna Aiuto e Contatti */}
-          <Col md={3} className="mb-3 mb-md-0">
+          <Col md={4} className="mb-3 mb-md-0">
             <h5 className="text-uppercase mb-3">Aiuto e Contatti</h5>
             <Nav className="flex-column">
               <Nav.Link as={NavLink} to="/help" className="text-white footer-link">
@@ -43,12 +43,12 @@ function Footer() {  return (
           </Col>
 
           {/* Colonna Metodi di Pagamento */}
-          <Col md={3} className="mb-3 mb-md-0">
+          {/* <Col md={3} className="mb-3 mb-md-0">
             <h5 className="text-uppercase mb-3">Pagamento Sicuro</h5>
             <div>
               <Image src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" style={{ height: '30px' }} />
             </div>
-          </Col>
+          </Col> */}
         </Row>
 
         <hr className="bg-light my-4" />

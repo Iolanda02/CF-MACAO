@@ -137,7 +137,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                                             <>
                                                 {editingReviewId === review._id ? (
                                                     <>
-                                                        <Button variant="outline-success" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
+                                                        <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
                                                         <Button variant="outline-danger" size="sm" className="ms-2" onClick={handleCancelEdit}>Annulla</Button>
                                                     </>
                                                 ) : (
@@ -194,7 +194,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                                     placeholder="Condividi la tua opinione su questo prodotto..."
                                 />
                             </Form.Group>
-                            <Button variant="primary" onClick={handlePostReview} disabled={!newReviewText.trim() && newReviewRating === 0}>
+                            <Button variant="dark" onClick={handlePostReview} disabled={!newReviewText.trim() && newReviewRating === 0}>
                                 Invia
                             </Button>
                         </Card>

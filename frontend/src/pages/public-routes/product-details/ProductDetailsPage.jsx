@@ -153,7 +153,7 @@ function ProductDetailsPage() {
                                         height: '100px', 
                                         objectFit: 'cover',
                                         cursor: 'pointer',
-                                        border: img.url === mainImage?.url ? '2px solid var(--bs-primary)' : '1px solid #dee2e6'
+                                        border: img.url === mainImage?.url ? '2px solid var(--bs-dark)' : '1px solid #dee2e6'
                                     }} 
                                     onClick={() => setMainImage(img)}
                                 />
@@ -163,7 +163,6 @@ function ProductDetailsPage() {
                 </Col>
                 <Col md={6}>
                     <h1 className="display-4 mb-3">{product.name}</h1>
-                    {/* Rating medio (mock) */}
                     <div className="d-flex align-items-center mb-3">
                         {totalReviews > 0 ? (
                             <>
@@ -182,7 +181,7 @@ function ProductDetailsPage() {
                         )}
                     </div>
 
-                    <h2 className="mb-4 text-primary">€{currentPrice ? currentPrice.toFixed(2) : 'N/D'}</h2>
+                    <h2 className="mb-4 text-secondary">€{currentPrice ? currentPrice.toFixed(2) : 'N/D'}</h2>
 
                     <p className="lead mb-4">{product.description}</p>
 
@@ -215,7 +214,7 @@ function ProductDetailsPage() {
                                 disabled={quantity >= currentStock}
                             ><Plus /></Button>
                         </InputGroup>
-                        <Button variant="primary" size="lg" 
+                        <Button variant="outline-secondary" size="lg" 
                             onClick={handleAddToCart}
                             disabled={!selectedVariant || currentStock <= 0 || quantity > currentStock}
                         >

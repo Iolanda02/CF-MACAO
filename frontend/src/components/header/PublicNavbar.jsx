@@ -3,13 +3,15 @@ import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { Dropdown, Image } from 'react-bootstrap';
+import { Badge, Dropdown, Image } from 'react-bootstrap';
 import logo from "../../assets/logo.png";
 import "./styles.css";
 import LoginModal from '../modals/LoginModal';
 import { useEffect, useRef, useState } from 'react';
 import RegisterModal from '../modals/RegistrerModal';
 import { useToast } from '../../contexts/ToastContext';
+import { useCart } from '../../contexts/CartContext';
+import { BoxArrowRight, BoxSeam, CartFill, Gear, Person, Speedometer } from 'react-bootstrap-icons';
 
 
 function PublicNavbar() {
@@ -21,6 +23,7 @@ function PublicNavbar() {
     const [scrolled, setScrolled] = useState(false);
     const navbarRef = useRef(null);
     const { addToast } = useToast();
+    const { cart } = useCart();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -109,15 +112,98 @@ function PublicNavbar() {
         navigate("/");
     };
 
+    const isActiveProducts = location.pathname === '/' ;
+
     return (
-        <Navbar expand="lg" className={`bg-secondary-subtle ${scrolled ? 'scrolled' : ''}`} fixed='top' ref={navbarRef}>
+        <Navbar expand="lg" className={`bg-dark navbar-dark ${scrolled ? 'scrolled' : ''}`} fixed='top' ref={navbarRef}>
             <Container>
                 <Navbar.Brand as={Link} to="/" key="navbar-brand">
                     <img className={`blog-navbar-brand ${scrolled ? 'scrolled-logo' : ''}`} alt="logo" src={logo} />
+                    {/* <span className="ms-2 app-brand-text">Caffè Macao</span> */}
                 </Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" key="navbar-toggle" />
                 <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="w-100 d-flex align-items-center">
+                     {/* Voci di Navigazione Centrali */}
+                    <Nav className="mx-auto">
+                        <Nav.Link as={NavLink} to="/" className={`menu-nav-link ${isActiveProducts ? 'active' : ''}`}>
+                            Prodotti
+                        </Nav.Link>
+                    </Nav>
+
+                    {/* Voci a Destra */}
+                    <Nav className="d-flex align-items-center">
+                        {/* Carrello */}
+                        {(authUser?.role === 'user' || authUser?.role === 'admin') && (
+                            <Nav.Link as={NavLink} to="/cart" className="position-relative me-3">
+                                <CartFill size={22} />
+                                {cart?.items?.length > 0 && (
+                                    <Badge pill bg="danger" className="position-absolute top-0 start-100 translate-middle">
+                                        {cart?.items?.length}
+                                        <span className="visually-hidden">elementi nel carrello</span>
+                                    </Badge>
+                                )}
+                            </Nav.Link>
+                        )}
+
+                        {/* Pannello di Amministrazione (se admin) */}
+                        {authUser?.role === 'admin' && (
+                            <Nav.Link as={NavLink} to="/admin" className="d-flex flex-column align-items-center admin-panel-link me-3">
+                                <Speedometer size={20} />
+                                <small className="mt-1">Admin</small>
+                            </Nav.Link>
+                        )}
+
+                        {isAuthenticated ? (
+                            <Dropdown align="end">
+                                <Dropdown.Toggle as={Nav.Link} className="p-0 user-avatar-toggle">
+                                    <Image
+                                        className="avatar"
+                                        src={authUser?.avatar?.url}
+                                        alt="Avatar dell'utente"
+                                        roundedCircle
+                                    />
+                                    <span className="ms-2 d-none d-lg-inline">{authUser?.firstName} {authUser?.lastName}</span>
+                                </Dropdown.Toggle>
+
+                                <Dropdown.Menu>
+                                    <Dropdown.Header className="text-center bg-light py-3">
+                                        <Image
+                                            src={authUser?.avatar?.url}
+                                            roundedCircle
+                                            width="60"
+                                            height="60"
+                                            className="mb-2 avatar big"
+                                            alt="Avatar dell'utente"
+                                        />
+                                        <h6>{authUser?.firstName} {authUser?.lastName}</h6>
+                                        <small className="text-muted">{authUser?.email}</small>
+                                    </Dropdown.Header>
+                                    <Dropdown.Divider />
+                                    <Dropdown.Item as={Link} to={`/profile`}>
+                                        <Person className="me-2" /> Profilo
+                                    </Dropdown.Item>
+                                    <Dropdown.Item as={Link} to={`/orders`}>
+                                        <BoxSeam className="me-2" /> I miei ordini
+                                    </Dropdown.Item>
+                                    <Dropdown.Divider />
+                                    <Dropdown.Item onClick={handleLogout} className="text-danger">
+                                        <BoxArrowRight className="me-2" /> Esci
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        ) : (
+                            // Se non autenticato: Login/Register
+                            <>
+                                <Nav.Link onClick={handleShowRegister} key="nav-link-register" className="btn btn-ligth-outline ms-2 px-3 py-2 rounded-pill">
+                                    Registrati
+                                </Nav.Link>
+                                <Nav.Link onClick={handleShowLogin} key="nav-link-login" className="btn btn-ligth-outline ms-2 px-3 py-2 rounded-pill">
+                                    Accedi
+                                </Nav.Link>
+                            </>
+                        )}
+                    </Nav>
+                    {/* <Nav className="w-100 d-flex align-items-center">
                         <div className='d-flex justify-content-between align-items-center w-100'>
                             <div className='d-flex'>
                                 <Nav.Link as={NavLink} to="/" key="nav-link-prodotti">
@@ -179,7 +265,7 @@ function PublicNavbar() {
                                 </div>
                             )}
                         </div>
-                    </Nav>
+                    </Nav> */}
                 </Navbar.Collapse>
             </Container>
             

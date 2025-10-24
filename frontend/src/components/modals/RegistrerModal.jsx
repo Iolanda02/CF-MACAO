@@ -1,8 +1,9 @@
 import { Button, Form, InputGroup, Modal, Alert } from "react-bootstrap";
-import "./styles.css";
 import { useState } from "react";
 import { EyeFill, EyeSlashFill } from "react-bootstrap-icons";
 import { registerApi } from "../../api/authentication";
+import logoGoogle from "/google.svg";
+import "./styles.css";
 
 
 const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
@@ -58,7 +59,7 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
 
                 <div className="social-login-buttons d-grid gap-2 mb-3">
                     <Button variant="outline-secondary" className="social-button d-flex align-items-center justify-content-center">
-                        <img src="" alt="Google" className="social-icon me-2" />
+                        <img src={logoGoogle} alt="Google" className="social-icon me-2" />
                         GOOGLE
                     </Button>
                 </div>

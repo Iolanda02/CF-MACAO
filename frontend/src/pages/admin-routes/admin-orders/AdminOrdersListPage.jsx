@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Col, Container, Form, Pagination, Row, Spinner, Table, InputGroup } from "react-bootstrap";
 import { Link, useNavigate } from "react-router";
 import { cancelOrder, getAllOrdersAdmin } from "../../../api/order";
-import { EyeFill, PencilFill, Search, TrashFill, XCircleFill } from "react-bootstrap-icons";
+import { EyeFill, PencilFill, Search, TrashFill, XCircle } from "react-bootstrap-icons";
 import DeleteModal from "../../../components/modals/DeleteModal";
 import "./styles.css";
 
@@ -149,11 +149,17 @@ function AdminOrdersListPage() {
                                 onChange={(e) => setCurrentFilterInput(e.target.value)}
                                 disabled={loading}
                             />
-                            <Button variant="outline-secondary" onClick={applyFilter} disabled={loading}>
-                                <Search className="me-1" />Cerca
+                            <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
+                                <div className="d-flex align-items-center">
+                                    <Search className="me-2" />
+                                    Filtra
+                                </div>
                             </Button>
-                            <Button variant="outline-danger" onClick={clearFilter} disabled={loading || !currentFilterInput}>
-                                <XCircleFill className="me-1" />Reset
+                            <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
+                                <div className="d-flex align-items-center">
+                                    <XCircle className="me-2" />
+                                    Svuota
+                                </div>
                             </Button>
                         </InputGroup>
                     </Col>
@@ -173,7 +179,7 @@ function AdminOrdersListPage() {
             }
 
             {orders?.length === 0 ? (
-                <Alert variant="info">Nessun ordine trovato.</Alert>
+                <h3 className="text-muted">Nessun ordine trovato</h3>
             ) : (
                 <Table striped bordered hover responsive className="admin-orders-table">
                     <thead>
