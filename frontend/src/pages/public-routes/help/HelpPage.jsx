@@ -16,7 +16,7 @@ function HelpPage() {
         {/* Sezione Contatti */}
         <Row className="justify-content-center align-items-center mb-5">
             <Col md={6} lg={5} className='h-full'>
-            <Card className="shadow-sm border-0 help-card bg-primary text-white h-100"> 
+            <Card className="shadow-sm border-0 help-card bg-secondary text-white h-100"> 
                 <Card.Body className="d-flex flex-column justify-content-between">
                     <div className="d-flex justify-content-between align-items-center mb-2">
                         <Card.Title className="h4 mb-0 fw-bold">Possiamo aiutarti?</Card.Title>
@@ -32,12 +32,12 @@ function HelpPage() {
             </Col>
 
             <Col md={6} lg={5} className='h-full'>
-            <Card className="shadow-sm border-0 help-card bg-body-secondary h-100">
+            <Card className="shadow-sm border-0 help-card contact bg-secondary h-100">
                 <Card.Body>
                 <Card.Text className="text-muted mb-1">Chiama il numero di assistenza</Card.Text>
                 <div className="d-flex align-items-center mb-2">
-                    <TelephoneFill className="me-2 text-primary" size={24} />
-                    <Card.Title className="h3 mb-0 fw-bold text-primary">800 124535</Card.Title>
+                    <TelephoneFill className="me-2 text-primary-emphasis" size={24} />
+                    <Card.Title className="h3 mb-0 fw-bold text-primary-emphasis">800 124535</Card.Title>
                 </div>
                 <Card.Text className="text-muted small">
                     Dal lunedì al sabato dalle 8:00 alle 20:00
@@ -48,7 +48,7 @@ function HelpPage() {
         </Row>
 
         {/* Sezione Domande Frequenti */}
-        <Row className="justify-content-center" ref={faqSectionRef}>
+        <Row className="justify-content-center faq-section-offset" ref={faqSectionRef}>
             <Col md={10} lg={8}>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="fw-bold text-dark">Domande frequenti</h2>

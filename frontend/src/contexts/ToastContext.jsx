@@ -41,7 +41,7 @@ export const ToastProvider = ({ children }) => {
         style={{
             position: 'fixed',
             top: '16vh',
-            right: '20px',
+            right: '10px',
             zIndex: 9999, 
           }}
         >
@@ -61,7 +61,7 @@ export const ToastProvider = ({ children }) => {
                    toast.variant === 'danger' ? 'Errore' : 'Messaggio'}
                 </strong>
               </Toast.Header>
-              <Toast.Body className={toast.variant === 'light' ? 'text-dark' : 'text-white'}>
+              <Toast.Body>
                 {toast.message}
               </Toast.Body>
             </Toast>

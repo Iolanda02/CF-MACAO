@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Form, InputGroup, Toast, ToastContainer } from "react-bootstrap";
+import { Badge, Button, Card, Form, InputGroup } from "react-bootstrap";
 import { Link } from "react-router";
 import { CartPlusFill, Dash, Plus } from "react-bootstrap-icons";
 import { useCart } from "../../contexts/CartContext";
@@ -7,14 +7,14 @@ import { useAuth } from "../../contexts/AuthContext";
 import LoginModal from "../modals/LoginModal";
 import { useToast } from "../../contexts/ToastContext";
 import defaultProductImage from '../../assets/no-image.png';
-import "./styles.css";
 import RegisterModal from "../modals/RegistrerModal";
 import { registerApi } from "../../api/authentication";
+import "./styles.css";
 
 
 function ProductCard({ product }) {
-    const { addItemToCart, isLoading, error } = useCart();
-    const { isAuthenticated, authUser, login } = useAuth();
+    const { addItemToCart, isLoading } = useCart();
+    const { isAuthenticated, login } = useAuth();
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
     const [mainImage, setMainImage] = useState(product.variants[0]?.images?.[0]);
@@ -24,6 +24,8 @@ function ProductCard({ product }) {
     
     const currentPrice = selectedVariant?.price?.amount;
     const currentStock = selectedVariant?.stock?.quantity;
+    const stockStatus = currentStock > 0 ? "Disponibile" : "Esaurito";
+    const stockVariant = currentStock > 0 ? "success" : "danger";
 
     useEffect(() => {
         if (selectedVariant) {
@@ -100,59 +102,76 @@ function ProductCard({ product }) {
     };
     
     return (
-        <Card className="h-100 shadow-sm">
+        <Card className="product-card h-100 shadow border-0 d-flex flex-column">
             <Card.Img variant="top" src={mainImage?.url || defaultProductImage} 
-                alt={mainImage?.altText || `Immagine per ${product.name}`} style={{ height: '200px', objectFit: 'cover' }} />
+                alt={mainImage?.altText || `Immagine per ${product.name}`} className="product-card-img" />
             <Card.Body className="d-flex flex-column">
-                <Card.Title className="mb-2">
-                    <Link to={`/product/${product._id}`} className="text-decoration-none text-dark">
-                        {product.name}
-                    </Link>
-                </Card.Title>
-                <Card.Text className="text-muted flex-grow-1">
-                    {product.description?.length > 100 ?
-                        `${product.description.substring(0, 100)}...` :
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                    <Card.Title className="mb-0 fs-5 fw-bold flex-grow-1">
+                        <Link to={`/product/${product._id}`} className="text-decoration-none text-title hover-primary">
+                            {product.name}
+                        </Link>
+                    </Card.Title>
+                    <Badge pill bg={stockVariant} className="ms-2 mt-1">
+                        {stockStatus}
+                    </Badge>
+                </div>
+                <Card.Text className="text-muted flex-grow-1 mb-3 card-description">
+                    {product.description?.length > 70 ?
+                        `${product.description.substring(0, 70)}...` :
                         product.description}
                 </Card.Text>
                 
                 {/* Selezione del formato */}
-                <div className="mb-2">
-                    <strong>Formato:</strong>
+                <div className="mb-3 d-flex flex-column">
+                    <span className="text-label me-2">Formato:</span>
                     <Form.Select
                         size="sm"
-                        className="mt-1"
+                        className="flex-grow-1 select-variant"
                         value={selectedVariant?._id || ''}
                         onChange={(e) => handleVariantChange(e.target.value)}
                     >
                         {product.variants?.map(variant => (
-                            <option key={variant._id} value={variant._id}>
+                            <option key={variant._id} value={variant._id} className="">
                                 {variant.name}
                             </option>
                         ))}
                     </Form.Select>
                 </div>
 
-                <h5 className="text-end mb-3">
-                    €{currentPrice?.toFixed(2)}
-                </h5>
+
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                    {currentStock > 0 && (
+                    <p className="text-muted mb-0">In magazzino: {currentStock}</p>
+                    )}
+                    <div className={`d-flex justify-content-end ${currentStock <= 0? "w-100": ""}`}>
+                        <h4 className="mb-0 fw-bold">
+                            €{currentPrice?.toFixed(2)}
+                        </h4>
+                    </div>
+                </div>
 
                 {/* Controlli quantità e pulsante aggiungi al carrello */}
                 <div className="d-flex align-items-center justify-content-between mt-auto">
-                    <InputGroup className="w-auto me-3">
+                    <InputGroup className="w-auto me-3 quantity-control">
                         <Button variant="outline-secondary" 
                             onClick={() => handleQuantityChange(-1)}
                             disabled={isLoading || !selectedVariant || quantity <= 1}
+                            className="border-end-0"
                         ><Dash /></Button>
-                        <Form.Control type="text" readOnly value={quantity}  className="text-center" style={{ maxWidth: '60px' }} />
+                        <Form.Control type="text" readOnly value={quantity} 
+                        disabled={stockStatus === "Esaurito"}  
+                        className="text-center quantity-input" />
                         <Button variant="outline-secondary" 
                             onClick={() => handleQuantityChange(1)}
                             disabled={isLoading || !selectedVariant || quantity >= currentStock}
+                            className="border-start-0"
                         ><Plus /></Button>
                     </InputGroup>
                     <Button
                         variant="outline-secondary"
                         onClick={handleAddToCart}
-                        className="ms-2"
+                        className="ms-3 flex-grow-1 add-to-cart-btn"
                         disabled={isLoading || !selectedVariant || currentStock <= 0 || quantity > currentStock}
                     >
                         <CartPlusFill className="me-2" /> Aggiungi

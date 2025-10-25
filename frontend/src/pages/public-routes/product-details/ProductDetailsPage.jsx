@@ -236,7 +236,7 @@ function ProductDetailsPage() {
                         )}
                     </div>
 
-                    <h2 className="mb-4 text-secondary">€{currentPrice ? currentPrice.toFixed(2) : 'N/D'}</h2>
+                    <h2 className="mb-4 text-dark">€{currentPrice ? currentPrice.toFixed(2) : 'N/D'}</h2>
 
                     <p className="lead mb-4">{product.description}</p>
 
@@ -258,18 +258,21 @@ function ProductDetailsPage() {
 
                     {/* Controlli quantità e Aggiungi al Carrello */}
                     <div className="d-flex align-items-center mb-4">
-                        <InputGroup className="w-auto me-3">
+                        <InputGroup className="w-auto me-3 quantity-control">
                             <Button variant="outline-secondary" 
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={loading || !selectedVariant || quantity <= 1}
+                                className="border-end-0"
                             ><Dash /></Button>
-                            <Form.Control type="text" readOnly value={quantity}  className="text-center" style={{ maxWidth: '60px' }} />
+                            <Form.Control type="text" readOnly value={quantity}  className="text-center quantity-input" 
+                            disabled={currentStock <= 0} />
                             <Button variant="outline-secondary" 
                                 onClick={() => handleQuantityChange(1)}
                                 disabled={loading || !selectedVariant || quantity >= currentStock}
                             ><Plus /></Button>
                         </InputGroup>
                         <Button variant="outline-secondary" size="lg" 
+                        className="ms-3 add-to-cart-btn"
                             onClick={handleAddToCart}
                             disabled={loading || !selectedVariant || currentStock <= 0 || quantity > currentStock}
                         >

@@ -200,7 +200,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                         </Card>
                     ) : (
                         <Alert variant="info" className="text-center">
-                            <Link to="/login" className="alert-link">Accedi</Link> per lasciare una recensione.
+                            Accedi per lasciare una recensione.
                         </Alert>
                     )}
                 </Col>

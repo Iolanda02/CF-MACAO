@@ -7,8 +7,12 @@
   justify-content: center;
 }
 
-.help-card.bg-primary {
-  background-color: #0d2c4e !important;
+.help-card.bg-secondary {
+  background-color: var(--bs-primary-text-emphasis) !important;
+}
+
+.help-card.contact.bg-secondary {
+  background-color: var(--bs-gray-300) !important;
 }
 
 .faq-accordion .accordion-item {
@@ -24,8 +28,8 @@
 }
 
 .faq-accordion .accordion-button:not(.collapsed) {
-  color: #0d2c4e;
-  background-color: #e9ecef;
+  color: var(--bs-dark);
+  background-color: var(--bs-gray-400);
   box-shadow: none;
 }
 
@@ -45,5 +49,11 @@
 }
 
 .h-full {
-    height: -webkit-fill-available;
+  height: -webkit-fill-available;
+}
+
+.faq-section-offset {
+  padding-top: 80px;
+  margin-top: -80px; 
+  scroll-margin-top: 80px; 
 }

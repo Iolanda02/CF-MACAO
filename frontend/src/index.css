@@ -20,3 +20,26 @@
 body {
   transition: padding-top 0.3s ease-in-out;
 }
+
+.alert-info {
+  background-color: var(--bs-gray-400);
+  border-color: var(--bs-gray-400);
+  color: var(--bs-dark);
+}
+
+.toast.bg-info {
+  background-color: var(--bs-gray-400) !important;
+  border-color: var(--bs-gray-500);
+  color: var(--bs-dark);
+  font-weight: 500;
+}
+
+.toast.bg-danger {    
+  background-color: rgba(var(--bs-danger-rgb), 90%) !important;
+  font-weight: 500;
+}
+
+.toast.bg-success {    
+  background-color: rgba(var(--bs-success-rgb), 90%) !important;
+  font-weight: 500;
+}

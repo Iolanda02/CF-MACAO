@@ -35,12 +35,12 @@ export async function register(request, response, next) {
             Benvenuto nel mondo di Caffè Macao, ${firstName}!
             <p>Siamo entusiasti di darti il benvenuto nella nostra famiglia di amanti del buon caffè.</p>
             <p>Ora che fai parte della nostra community, sei a un solo click dalle migliori selezioni di cialde e capsule, pensate per regalarti ogni giorno un'esperienza di gusto unica.</p>
-            <p><a href="${process.env.FRONTEND_HOST}/login">Inizia il tuo viaggio nel Gusto</a></p>
+            <p><a href="${process.env.FRONTEND_HOST}/">Inizia il tuo viaggio nel Gusto</a></p>
             <p>Preparati a trasformare ogni pausa caffè in un momento di puro piacere.</p>
             <p>A presto, e buon caffè!</p>
             <p>Lo staff di Caffè Macao</p>
             <br><br>
-            <p>Hai domande? Contattaci o visita le nostre <a href="${process.env.FRONTEND_HOST}/faq">FAQ</a>.</p>
+            <p>Hai domande? Contattaci o visita le nostre <a href="${process.env.FRONTEND_HOST}/help">FAQ</a>.</p>
             <p>&copy; ${new Date().getFullYear()} Caffè Macao. Tutti i diritti riservati.</p>
         `;
 
@@ -69,12 +69,12 @@ export async function register(request, response, next) {
             <p>Benvenuto nel mondo di Caffè Macao, ${firstName}!</p>
             <p>Siamo entusiasti di darti il benvenuto nella nostra famiglia di amanti del buon caffè.</p>
             <p>Ora che fai parte della nostra community, sei a un solo click dalle migliori selezioni di cialde e capsule, pensate per regalarti ogni giorno un'esperienza di gusto unica.</p>
-            <p><a href="${process.env.FRONTEND_HOST}/login">Inizia il tuo viaggio nel Gusto</a></p>
+            <p><a href="${process.env.FRONTEND_HOST}/">Inizia il tuo viaggio nel Gusto</a></p>
             <p>Preparati a trasformare ogni pausa caffè in un momento di puro piacere.</p>
             <p>A presto, e buon caffè!</p>
             <p>Lo staff di Caffè Macao</p>
             <br><br>
-            <p>Hai domande? Contattaci o visita le nostre <a href="${process.env.FRONTEND_HOST}/faq">FAQ</a>.</p>
+            <p>Hai domande? Contattaci o visita le nostre <a href="${process.env.FRONTEND_HOST}/help">FAQ</a>.</p>
             <p>&copy; ${new Date().getFullYear()} Caffè Macao. Tutti i diritti riservati.</p>
         `;
 
