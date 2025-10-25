@@ -55,6 +55,7 @@ function ProductCard({ product }) {
             // Recupero l'ID del prodotto, la quantità e l'ID della variante selezionata
             if (product && quantity > 0 && selectedVariant) {
                 await addItemToCart(product?._id, quantity, selectedVariant._id);
+                setQuantity(1);
                 addToast(`"${product.name}" (${selectedVariant.name}) aggiunto al carrello!`, "info");
             }
         } catch (error) {

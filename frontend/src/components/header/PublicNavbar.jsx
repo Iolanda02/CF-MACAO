@@ -148,7 +148,7 @@ function PublicNavbar() {
                             <Nav.Link as={NavLink} to="/cart" className="position-relative me-3">
                                 <CartFill size={22} />
                                 {cartItemCount > 0 && (
-                                    <Badge pill bg="danger" className="position-absolute top-0 start-100 translate-middle">
+                                    <Badge pill bg="danger" className="pill-items position-absolute top-0 start-100 translate-middle">
                                         {cartItemCount}
                                         <span className="visually-hidden">elementi nel carrello</span>
                                     </Badge>

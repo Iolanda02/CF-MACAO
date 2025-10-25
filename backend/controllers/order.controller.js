@@ -117,6 +117,7 @@ export const createOrder = async (req, res, next) => {
             cart.orderStatus = "Processing";
             cart.paymentStatus = "Pending";
             cart.paymentMethod = paymentMethod || cart.paymentMethod;
+            cart.orderDate = Date.now();
             
             
             if (shippingAddress) {

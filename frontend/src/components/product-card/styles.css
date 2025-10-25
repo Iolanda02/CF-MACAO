@@ -6,9 +6,11 @@
 }
 
 .product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
-  background-color: var(--bs-light);
+  transform: translateY(-5px);
+  /* box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.4) !important; */
+  box-shadow: 15px 0.5rem 1.5rem rgba(0, 0, 0, 0.5) !important;
+  background-color: var(--bs-white);
+  border-color: var(--bs-gray-600);
 }
 
 .product-card-img {
@@ -66,16 +68,20 @@
 }
 
 .quantity-control .btn {
-  background-color: var(--bs-gray-500);
-  border-color: var(--bs-gray-500);
+  /* background-color: var(--bs-gray-500);
+  border-color: var(--bs-gray-500); */
+  background-color: var(--bs-primary-text-emphasis);
+  border-color: var(--bs-primary-text-emphasis); 
   color: var(--bs-white);
   padding: 0.5rem 0.75rem;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
 .quantity-control .btn:hover:not(:disabled) {
-  background-color: var(--bs-gray-600);
-  border-color: var(--bs-gray-600);
+  /* background-color: var(--bs-gray-600);
+  border-color: var(--bs-gray-600); */
+  background-color: #0a4a94;
+  border-color: #0a4a94;
   color: var(--bs-white);
 }
 
@@ -90,7 +96,7 @@
   font-weight: bold;
   background-color: var(--bs-gray-100);
   color: var(--bs-dark);
-  border-color: var(--bs-gray-300);
+  border-color: var(--bs-primary-text-emphasis);
 }
 
 .quantity-control .quantity-input:disabled {
@@ -98,8 +104,8 @@
 }
 
 .add-to-cart-btn {
-  background-color: var(--bs-gray-600);
-  border-color: var(--bs-gray-600); 
+  background-color: var(--bs-primary-text-emphasis);
+  border-color: var(--bs-primary-text-emphasis); 
   color: var(--bs-white);
   font-weight: bold;
   border-radius: 2rem; 
@@ -108,14 +114,17 @@
 }
 
 .add-to-cart-btn:hover:not(:disabled) {
-  background-color: var(--bs-gray-800);
-  border-color: var(--bs-gray-800);
+  /* background-color: var(--bs-blue);
+  border-color: var(--bs-gray-800); */
+  background-color: #0a4a94;
+  border-color: #0a4a94;
 }
 
 .add-to-cart-btn:disabled {
   background-color: var(--bs-gray-400);
   border-color: var(--bs-gray-400);
   color: var(--bs-white);
+  cursor: not-allowed;
 }
 
 .badge {

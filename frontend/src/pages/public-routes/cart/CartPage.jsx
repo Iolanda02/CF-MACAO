@@ -71,7 +71,7 @@ function CartPage() {
                                 <Card className="cart-item mb-3" key={`${item._id}-${item.variant?._id}`}>
                                     <Row className="g-0 align-items-center">
                                         <Col xs={3} md={2}>
-                                            <Card.Img src={item.variant?.images?.[0]?.url} alt={item.variant?.images?.[0]?.url} className="cart-item-img p-2" />
+                                            <Card.Img src={item.variantImageUrl?.url} alt={item.variantImageUrl?.altText} className="cart-item-img p-2" />
                                         </Col>
                                         <Col xs={9} md={10}>
                                             <Card.Body>

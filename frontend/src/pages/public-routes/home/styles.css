@@ -3,3 +3,32 @@
   font-weight: bold;
   color: #333;
 }
+
+.home-page-wrapper {
+  position: relative;
+  min-height: calc(100vh - 246px);
+  overflow-x: hidden;
+}
+
+.home-page-wrapper::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../../../assets/sfondo.jpg');
+  background-size: cover;
+  /* background-position: center center; */
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  filter: blur(6px); 
+  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: multiply;
+}
+
+.home-page-content {
+  position: relative; 
+  z-index: 1;
+}

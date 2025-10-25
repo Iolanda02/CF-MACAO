@@ -23,16 +23,16 @@ const OrderDetailModal = ({ show, onHide, order }) => {
             <Modal.Body>
                 <Row className="mb-3">
                     <Col md={6}>
-                        <p><strong>Data Ordine:</strong> {formatDate(order.createdAt)}</p>
-                        <p><strong>Stato Pagamento:</strong> {order.paymentStatus}</p>
+                        <p><strong>Data Ordine:</strong> {formatDate(order.orderDate)}</p>
+                        <p><strong>Stato Pagamento:</strong> {translatePaymentStatus(order.paymentStatus)}</p>
                         {/* <p><strong>Stato Ordine:</strong> {order.orderStatus}</p> */}
                     </Col>
                     <Col md={6}>
                         {/* <p><strong>Totale:</strong> {order.totalAmount?.toFixed(2)} {order.currency}</p> */}
-                        <p><strong>Stato Ordine:</strong> {order.orderStatus}</p>
+                        <p><strong>Stato Ordine:</strong> {translateOrderStatus(order.orderStatus)}</p>
                         <p><strong>Metodo di Pagamento:</strong> {order.paymentMethod || 'Non specificato'}</p>
                     </Col>
-                    <Col>
+                    <Col xs={12}>
                         <p><strong>Indirizzo di spedizione:</strong> 
                         {order.shippingAddress ? (
                             <span> {order.shippingAddress.address} 
@@ -44,6 +44,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                             <span className="text-muted">Indirizzo di spedizione non disponibile</span>
                         )}
                         </p>
+                        <p><strong>Telefono:</strong> {order.phone? order.phone : 'N/A'}</p>
                         {order.notes && <p><strong>Note:</strong> {order.notes}</p>}
                     </Col>
                 </Row>
@@ -114,6 +115,23 @@ const OrderDetailModal = ({ show, onHide, order }) => {
         </Modal>
     );
 };
+
+const translatePaymentStatus = (statusPayment) => {
+    return statusPayment === "Pending" ? 'In Sospeso' :
+        statusPayment === "Paid" ? 'Pagato' :
+        statusPayment === "Failed" ? 'Fallito' :
+        statusPayment === "Refunded" ? 'Rimborsato' :
+        statusPayment === "Partially Refunded" ? 'Parzialmente rimborsato' : '';
+}
+
+const translateOrderStatus = (orderStatus) => {
+    return orderStatus === "Pending" ? 'In Sospeso' :
+        orderStatus === "Processing" ? 'In Elaborazione' :
+        orderStatus === "Shipped" ? 'Spedito' :
+        orderStatus === "Delivered" ? 'Consegnato' :
+        orderStatus === "Cancelled" ? 'Annullato' :
+        orderStatus === "Returned" ? 'Restituito' : '';
+}
 
 
 function OrdersPage() {
@@ -299,8 +317,8 @@ function OrdersPage() {
                                     <tr key={index}>
                                         <td>{order.orderNumber}</td>
                                         <td>{formatDateForTable(order.createdAt)}</td>
-                                        <td>{order.orderStatus}</td>
-                                        <td>{order.paymentStatus}</td>
+                                        <td>{translateOrderStatus(order.orderStatus)}</td>
+                                        <td>{translatePaymentStatus(order.paymentStatus)}</td>
                                         <td><b>{order.totalAmount?.toFixed(2)} {order.currency}</b></td>
                                         <td className="text-center">
                                             <Button 

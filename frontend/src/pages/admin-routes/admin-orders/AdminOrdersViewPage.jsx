@@ -93,8 +93,8 @@ function AdminOrdersViewPage() {
                     <Row>
                         <Col md={6}>
                             <p><strong>N. Ordine:</strong> {order.orderNumber}</p>
-                            <p><strong>Data Ordine:</strong> {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}</p>
-                            <p><strong>Ultimo Aggiornamento:</strong> {new Date(order.updatedAt).toLocaleDateString()} {new Date(order.updatedAt).toLocaleTimeString()}</p>
+                            <p><strong>Data Ordine:</strong> {formatDate(order.orderDate)}</p>
+                            <p><strong>Ultimo Aggiornamento:</strong> {formatDate(order.updatedAt)}</p>
                             <p><strong>Cliente:</strong> {order.user?.email || 'N/A'}</p>
                             <p><strong>Metodo Pagamento:</strong> {order.paymentMethod || 'N/A'}</p>
                         </Col>
@@ -139,7 +139,7 @@ function AdminOrdersViewPage() {
                             <p>Nessun indirizzo di spedizione specificato.</p>
                         )}
                     </p>
-                    <p><strong>Telefono:</strong> {order.user.phone? order.user.phone : 'N/A'}</p>
+                    <p><strong>Telefono:</strong> {order.phone? order.phone : 'N/A'}</p>
                 </Card.Body>
             </Card>
 

@@ -111,7 +111,30 @@ function AdminOrdersListPage() {
             setMessage({ type: 'danger', text: 'Errore durante l\'eliminazione del\'ordine.' });
         }
     };
+
+    const translatePaymentStatus = (statusPayment) => {
+        return statusPayment === "Pending" ? 'In Sospeso' :
+            statusPayment === "Paid" ? 'Pagato' :
+            statusPayment === "Failed" ? 'Fallito' :
+            statusPayment === "Refunded" ? 'Rimborsato' :
+            statusPayment === "Partially Refunded" ? 'Parzialmente rimborsato' : '';
+    }
+
+    const translateOrderStatus = (orderStatus) => {
+        return orderStatus === "Pending" ? 'In Sospeso' :
+            orderStatus === "Processing" ? 'In Elaborazione' :
+            orderStatus === "Shipped" ? 'Spedito' :
+            orderStatus === "Delivered" ? 'Consegnato' :
+            orderStatus === "Cancelled" ? 'Annullato' :
+            orderStatus === "Returned" ? 'Restituito' : '';
+    }
     
+    // Funzione helper per formattare la data
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleString();
+    };
+
     // const handleStatusFilterChange = (event) => {
     //     setFilterStatus(event.target.value);
     // };
@@ -199,9 +222,9 @@ function AdminOrdersListPage() {
                                 <td><b>{order.orderNumber}</b></td>
                                 <td>{order.user?.email || 'N/A'}</td>
                                 <td>{order.totalAmount?.toFixed(2)} {order.currency}</td>
-                                <td>{order.paymentStatus}</td>
-                                <td>{order.orderStatus}</td>
-                                <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td>{translatePaymentStatus(order.paymentStatus)}</td>
+                                <td>{translateOrderStatus(order.orderStatus)}</td>
+                                <td>{formatDate(order.orderDate)}</td>
                                 <td>
                                     <div className="d-flex justify-content-center gap-2">
                                         <Link to={`/admin/orders/${order._id}`}>

@@ -91,95 +91,97 @@ function HomePage() {
     
     if (loading) {
         return (
-            <Container className="text-center mt-5">
-                <Spinner animation="border" role="status">
-                    <span className="visually-hidden">Caricamento catalogo...</span>
-                </Spinner>
-                <p>Caricamento catalogo...</p>
-            </Container>
+        <div className="home-page-wrapper">
+            <div className="home-page-content">
+                <Container className="text-center mt-5">
+                    <Spinner animation="border" role="status">
+                        <span className="visually-hidden">Caricamento catalogo...</span>
+                    </Spinner>
+                    <p>Caricamento catalogo...</p>
+                </Container>
+            </div>
+        </div>
         );
     }
 
-    // if (error) {
-    //     return (
-    //         <Container className="mt-5">
-    //             <Alert variant="danger">{error}</Alert>
-    //         </Container>
-    //     );
-    // }
-
     return (
-        <Container fluid="md" className="my-4">
-            <h1 className="text-center mb-5 main-title">Catalogo Prodotti</h1>
-            
-            {message && (
-                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
-                {message.text}
-                </Alert>
-            )}
+        <div className="home-page-wrapper">
+            <div className="home-page-content">
+                <Container fluid="md" className="my-4 mb-5">
+                    <h1 className="text-center mb-5 main-title">Catalogo Prodotti</h1>
+                    
+                    {message && (
+                        <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                        {message.text}
+                        </Alert>
+                    )}
 
-            {(products?.length > 0 || currentFilterInput) && 
-                <Row className="my-4 justify-content-center">
-                    <Col md={8} lg={6}>
-                        <InputGroup>
-                            <Form.Control
-                                type="text"
-                                placeholder="Cerca prodotti per nome"
-                                value={currentFilterInput}
-                                onChange={(e) => setCurrentFilterInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        applyFilter();
-                                    }
-                                }}
-                            />
-                            <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
-                                <div className="d-flex align-items-center">
-                                    <Search className="me-2" />
-                                    Filtra
-                                </div>
-                            </Button>
-                            <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
-                                <div className="d-flex align-items-center">
-                                    <XCircle className="me-2" />
-                                    Svuota
-                                </div>
-                            </Button>
-                        </InputGroup>
-                    </Col>
-                </Row>
-            }
+                    {(products?.length > 0 || currentFilterInput) && 
+                        <Row className="my-4 justify-content-center">
+                            <Col md={8} lg={6}>
+                                <InputGroup>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Cerca prodotti per nome"
+                                        value={currentFilterInput}
+                                        onChange={(e) => setCurrentFilterInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                applyFilter();
+                                            }
+                                        }}
+                                    />
+                                    <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
+                                        <div className="d-flex align-items-center">
+                                            <Search className="me-2" />
+                                            Filtra
+                                        </div>
+                                    </Button>
+                                    <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
+                                        <div className="d-flex align-items-center">
+                                            <XCircle className="me-2" />
+                                            Svuota
+                                        </div>
+                                    </Button>
+                                </InputGroup>
+                            </Col>
+                        </Row>
+                    }
 
-            {products.length === 0 ? (
-                <h3 className="text-center text-muted">Nessun prodotto trovato</h3>
-            ) : (
-                <Row xs={1} md={2} lg={3} className="g-4">
-                    {products.map((product) => (
-                        <Col key={product._id}>
-                            <ProductCard product={product} />
-                        </Col>
-                    ))}
-                </Row>
-            )}
+                    {products.length === 0 ? (
+                        <h3 className="text-center text-muted">Nessun prodotto trovato</h3>
+                    ) : (
+                        <Row xs={1} md={2} lg={3} className="g-4">
+                            {products.map((product, index) => (
+                                <Col key={index}>
+                                    {product.isActive && (
+                                        <ProductCard product={product} />
+                                    )}
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
 
-            {/* Paginazione */}
-            {paginator.totalPages > 1 && (
-                <Row className="my-3 justify-content-center">
-                    <Col xs="auto" className="d-flex align-items-baseline gap-3 flex-wrap">
-                        <Pagination>
-                            <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
-                            <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
+                    {/* Paginazione */}
+                    {paginator.totalPages > 1 && (
+                        <Row className="my-3 justify-content-center">
+                            <Col xs="auto" className="d-flex align-items-baseline gap-3 flex-wrap">
+                                <Pagination>
+                                    <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
+                                    <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
 
-                            {paginationItems}
+                                    {paginationItems}
 
-                            <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
-                            <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
-                        </Pagination>
-                        <small className="text-muted">{paginator.totalCount} risultati totali</small>
-                    </Col>
-                </Row>
-            )}
-        </Container>
+                                    <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
+                                    <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
+                                </Pagination>
+                                <small className="text-muted">{paginator.totalCount} risultati totali</small>
+                            </Col>
+                        </Row>
+                    )}
+                </Container>
+            </div>
+        </div>
     );
 }
 

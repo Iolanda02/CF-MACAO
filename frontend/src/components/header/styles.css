@@ -118,3 +118,7 @@
   background-color: var(--bs-gray-600);
   border-color: var(--bs-gray-600);
 }
+
+.pill-items.translate-middle {
+  transform: translate(-50%, -25%) !important;
+}

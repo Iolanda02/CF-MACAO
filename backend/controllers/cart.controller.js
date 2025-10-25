@@ -3,6 +3,7 @@ import Order from "../models/Order.js";
 import Item from "../models/Item.js";
 import ItemVariant from "../models/ItemVariant.js";
 import AppError from "../utils/appError.js";
+import { DEFAULT_PRODUCT_IMAGE_PUBLIC_ID, DEFAULT_PRODUCT_IMAGE_URL } from "../config/cloudinary.config.js";
 
 /**
  * @desc Recupera l'ordine attualmente in stato "Pending" per l'utente autenticato. Se non esiste, ne crea uno vuoto.
@@ -146,11 +147,11 @@ export const addItemToChart = async (req, res, next) => {
                 productName: item.name,
                 variantName: variant.name,
                 sku: variant.sku,
-                // variantImageUrl: {
-                //     url: variant.imageUrls[0]?.url || item.imageUrls[0]?.url || "",
-                //     public_id: variant.imageUrls[0]?.public_id || item.imageUrls[0]?.public_id || "",
-                //     altText: `${item.name} ${variant.sku}`
-                // },
+                variantImageUrl: {
+                    url: variant.images?.find(i => i.isMain)?.url || DEFAULT_PRODUCT_IMAGE_URL,
+                    public_id: variant.images?.find(i => i.isMain)?.public_id || DEFAULT_PRODUCT_IMAGE_PUBLIC_ID,
+                    altText: variant.images?.find(i => i.isMain)?.altText || `Immagine per ${item.name}`
+                },
                 price: {
                     amount: variant.price.amount,
                     currency: variant.price.currency || "EUR"
