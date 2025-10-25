@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, Image, Modal, Pagination, Row, Spinner, Table } from "react-bootstrap";
+import { Alert, Button, Col, Container, Image, Modal, Pagination, Row, Spinner, Table } from "react-bootstrap";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getAllOrdersUser, getOrderById } from "../../../api/order";
-import { ArrowLeft, EyeFill, XLg } from "react-bootstrap-icons";
+import { EyeFill, XLg } from "react-bootstrap-icons";
 import { useNavigate } from "react-router";
 
 // Componente per visualizzare i dettagli di un singolo ordine nella modale
@@ -41,7 +41,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                             {order.shippingAddress.country? ', ' + order.shippingAddress.country: ''}
                             </span>
                         ) : (
-                            <Alert variant="warning">Indirizzo di spedizione non disponibile.</Alert>
+                            <span className="text-muted">Indirizzo di spedizione non disponibile</span>
                         )}
                         </p>
                         {order.notes && <p><strong>Note:</strong> {order.notes}</p>}
@@ -49,21 +49,24 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                 </Row>
 
                 <h5 className="mt-4 mb-3">Articoli Ordinati</h5>
-                {order.items && order.items.length > 0 ? (
-                    <Table striped bordered hover responsive size="sm">
+                
+                {order.items && order.items.length == 0 ? (
+                    <h3 className="text-muted">Nessun articolo trovato per questo ordine</h3>
+                ) : (
+                    <Table striped bordered hover responsive size="user-single-order-table sm">
                         <thead>
                             <tr>
                                 <th></th>
-                                <th>Prodotto</th>
-                                <th>Variante</th>
-                                <th>Quantità</th>
-                                <th>Prezzo Unitario</th>
-                                <th>Subtotale</th>
+                                <th className="text-dark-emphasis">Prodotto</th>
+                                <th className="text-dark-emphasis">Variante</th>
+                                <th className="text-dark-emphasis">Quantità</th>
+                                <th className="text-dark-emphasis">Prezzo Unitario</th>
+                                <th className="text-dark-emphasis">Subtotale</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {order.items.map((item) => (
-                                <tr key={item.item + item.variant}>
+                            {order.items.map((item, index) => (
+                                <tr key={index}>
                                     <td className="text-center" style={{ width: '60px' }}>
                                         {item.variantImageUrl?.url ? (
                                             <Image
@@ -76,7 +79,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                                             <XLg size={24} className="text-muted" />
                                         )}
                                     </td>
-                                    <td>{item.productName}</td>
+                                    <td><b>{item.productName}</b></td>
                                     <td>{item.variantName || 'N/A'}</td>
                                     <td>{item.quantity}</td>
                                     <td>{item.price.amount?.toFixed(2)} {item.price.currency}</td>
@@ -101,20 +104,7 @@ const OrderDetailModal = ({ show, onHide, order }) => {
                             </tr>
                         </tfoot>
                     </Table>
-                ) : (
-                    <Alert variant="info">Nessun articolo trovato per questo ordine.</Alert>
                 )}
-
-                {/* <h5 className="mt-4 mb-3">Indirizzo di Spedizione</h5>
-                {order.shippingAddress ? (
-                    <Card className="p-3">
-                        <p className="mb-1">{order.shippingAddress.street}</p>
-                        <p className="mb-1">{order.shippingAddress.zipCode} {order.shippingAddress.city}, {order.shippingAddress.province}</p>
-                        <p className="mb-1">{order.shippingAddress.country}</p>
-                    </Card>
-                ) : (
-                    <Alert variant="warning">Indirizzo di spedizione non disponibile.</Alert>
-                )} */}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
@@ -129,10 +119,11 @@ const OrderDetailModal = ({ show, onHide, order }) => {
 function OrdersPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [message, setMessage] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentFilterInput, setCurrentFilterInput] = useState("");
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
     const { authUser } = useAuth();
 
@@ -151,7 +142,6 @@ function OrdersPage() {
 
     const fetchOrders = async () => {
         setLoading(true);
-        setError(null);
         try {
             const response = await getAllOrdersUser(searchTerm, paginator);
             setOrders(response.data);
@@ -162,8 +152,7 @@ function OrdersPage() {
             }));
         } catch (err) {
             console.error("Errore nel recupero dello storico ordini:", err);
-            setError("Impossibile caricare gli ordini. Riprova più tardi.");
-            setLoading(false);
+            setMessage({ type: 'danger', text: 'Impossibile caricare gli ordini. Riprova più tardi.' });
         } finally {
             setLoading(false);
         }
@@ -199,19 +188,27 @@ function OrdersPage() {
             ...prev,
             page: 1
         }));
+        setSearchTerm(currentFilterInput);
     };
 
+    const clearFilter = () => {
+        setPaginator(prev => ({
+            ...prev,
+            page: 1
+        }));
+        setSearchTerm("");
+        setCurrentFilterInput("");
+    };
 
     const handleViewDetails = async (orderId) => {
         setLoading(true);
-        setError(null);
         try {
             const fullOrderDetails = await getOrderById(orderId); 
             setSelectedOrder(fullOrderDetails.data);
             setShowDetailModal(true);
         } catch (err) {
-            setError("Errore durante il caricamento dei dettagli dell'ordine.");
             console.error("Errore caricamento dettagli ordine:", err);
+            setMessage({ type: 'danger', text: 'Impossibile caricare il dettaglio dell\'ordine. Riprova più tardi.' });
         } finally {
             setLoading(false);
         }
@@ -242,54 +239,74 @@ function OrdersPage() {
         );
     }
 
-    if (error) {
-        return (
-            <Container className="mt-5">
-                <Alert variant="danger">
-                    <Alert.Heading>Errore!</Alert.Heading>
-                    <p>{error}</p>
-                </Alert>
-            </Container>
-        );
-    }
-
     return (
-        <div className="order-history-root py-4">
+        <div className="py-4">
             <Container>
-                <div className="d-flex mb-3">
-                    <Button variant="secondary" onClick={() => navigate('/')}>
-                        <ArrowLeft className="me-2" />Torna alla home
-                    </Button>
-                </div>
                 <h1 className="mb-4">Storico Ordini</h1>
+                
+                {message && (
+                    <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                    {message.text}
+                    </Alert>
+                )}
+                
+                {/* Componente di Ricerca */}
+                {/* {(orders?.length > 0 || currentFilterInput) && 
+                    <Row className="mb-4">
+                        <Col>
+                            <InputGroup>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Filtra ordini..."
+                                    value={currentFilterInput}
+                                    onChange={(e) => setCurrentFilterInput(e.target.value)}
+                                    disabled={loading}
+                                />
+                                <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
+                                    <div className="d-flex align-items-center">
+                                        <Search className="me-2" />
+                                        Filtra
+                                    </div>
+                                </Button>
+                                <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
+                                    <div className="d-flex align-items-center">
+                                        <XCircle className="me-2" />
+                                        Svuota
+                                    </div>
+                                </Button>
+                            </InputGroup>
+                        </Col>
+                    </Row>
+                } */}
 
                 {orders.length === 0 ? (
-                    <Alert variant="info">Non hai ancora effettuato ordini.</Alert>
+                    <h3 className="text-muted">Non hai ancora effettuato ordini</h3>
                 ) : (
                     <>
-                        <Table striped bordered hover responsive className="shadow-sm">
+                        <Table striped bordered hover responsive className="user-orders-table shadow-sm">
                             <thead>
                                 <tr>
-                                    <th>Numero Ordine</th>
-                                    <th>Data</th>
-                                    <th>Stato Ordine</th>
-                                    <th>Stato Pagamento</th>
-                                    <th>Totale</th>
-                                    <th>Azioni</th>
+                                    <th className="text-dark-emphasis">Numero Ordine</th>
+                                    <th className="text-dark-emphasis">Data</th>
+                                    <th className="text-dark-emphasis">Stato Ordine</th>
+                                    <th className="text-dark-emphasis">Stato Pagamento</th>
+                                    <th className="text-dark-emphasis">Totale</th>
+                                    <th className="text-dark-emphasis text-center">Azioni</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {orders.map((order) => (
-                                    <tr key={order._id}>
+                                {orders.map((order, index) => (
+                                    <tr key={index}>
                                         <td>{order.orderNumber}</td>
                                         <td>{formatDateForTable(order.createdAt)}</td>
                                         <td>{order.orderStatus}</td>
                                         <td>{order.paymentStatus}</td>
-                                        <td>{order.totalAmount?.toFixed(2)} {order.currency}</td>
+                                        <td><b>{order.totalAmount?.toFixed(2)} {order.currency}</b></td>
                                         <td className="text-center">
                                             <Button 
-                                                variant="outline-primary" 
+                                                variant="outline-dark" 
                                                 size="sm" 
+                                                title="Visualizza ordine"
                                                 onClick={() => handleViewDetails(order._id)}
                                                 aria-label={`Vedi dettagli ordine ${order.orderNumber}`}
                                             >
@@ -303,8 +320,8 @@ function OrdersPage() {
 
                         {/* Paginazione */}
                         {paginator.totalPages > 1 && (
-                            <Row className="mt-5 justify-content-center">
-                                <Col xs="auto">
+                            <Row className="my-3 justify-content-center">
+                                <Col xs="auto" className="d-flex align-items-baseline gap-3 flex-wrap">
                                     <Pagination>
                                         <Pagination.First disabled={paginator.page === 1} onClick={() => handlePageChange(1)} />
                                         <Pagination.Prev disabled={paginator.page === 1} onClick={() => handlePageChange(paginator.page - 1)} />
@@ -314,6 +331,7 @@ function OrdersPage() {
                                         <Pagination.Next disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.page + 1)} />
                                         <Pagination.Last disabled={paginator.page === paginator.totalPages} onClick={() => handlePageChange(paginator.totalPages)} />
                                     </Pagination>
+                                    <small className="text-muted">{paginator.totalCount} risultati totali</small>
                                 </Col>
                             </Row>
                         )}

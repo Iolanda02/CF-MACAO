@@ -37,7 +37,7 @@ function HomePage() {
             }));
         } catch(error) {
             console.error("Errore nel recupero dei prodotti:", error);
-            setMessage({ type: 'danger', text: 'Impossibile caricare gli utenti. Riprova più tardi.' });
+            setMessage({ type: 'danger', text: 'Impossibile caricare i prodotti. Riprova più tardi.' });
         } finally {
             setLoading(false);
         }

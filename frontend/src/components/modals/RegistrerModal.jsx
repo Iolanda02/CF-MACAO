@@ -21,7 +21,7 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
         setError(null);
 
         try {
-            await registerApi({firstName, lastName, email, password});
+            await onRegister(firstName, lastName, email, password);
             onSwitchToLogin();
         } catch (err) {
             setError(err.response?.data?.message || "Errore durante la registrazione. Riprova.");
@@ -70,9 +70,9 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
                     <hr className="flex-grow-1" />
                 </div>
 
-                <Form onSubmit={handleRegister}>
+                <Form onSubmit={handleRegister} noValidate>
                     <Form.Group className="mb-3 text-start" controlId="formFirstName">
-                        <Form.Label srOnly>Nome</Form.Label>
+                        <Form.Label>Nome</Form.Label>
                         <Form.Control
                             type="text"
                             placeholder="Nome"
@@ -84,7 +84,7 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
                     </Form.Group>
 
                     <Form.Group className="mb-3 text-start" controlId="formLastName">
-                        <Form.Label srOnly>Cognome</Form.Label>
+                        <Form.Label>Cognome</Form.Label>
                         <Form.Control
                             type="text"
                             placeholder="Cognome"
@@ -96,7 +96,7 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
                     </Form.Group>
 
                     <Form.Group className="mb-3 text-start" controlId="formRegisterEmail">
-                        <Form.Label srOnly>Email</Form.Label>
+                        <Form.Label>Email</Form.Label>
                         <Form.Control
                             type="email"
                             placeholder="Email"
@@ -108,7 +108,7 @@ const RegisterModal = ({ show, handleClose, onRegister, onSwitchToLogin }) => {
                     </Form.Group>
 
                     <Form.Group className="mb-3 text-start" controlId="formRegisterPassword">
-                        <Form.Label srOnly>Password</Form.Label>
+                        <Form.Label>Password</Form.Label>
                         <InputGroup>
                             <Form.Control
                                 type={showPassword ? 'text' : 'password'}

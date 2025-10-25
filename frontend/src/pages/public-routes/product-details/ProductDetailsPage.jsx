@@ -6,6 +6,9 @@ import ProductReviewsArea from "../../../components/product-reviews-area/Product
 import { getProduct } from "../../../api/product";
 import { CartPlusFill, Dash, Plus, StarFill } from "react-bootstrap-icons";
 import { useCart } from "../../../contexts/CartContext";
+import LoginModal from "../../../components/modals/LoginModal";
+import RegisterModal from "../../../components/modals/RegistrerModal";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ProductDetailsPage() {
     const [product, setProduct] = useState(null);
@@ -15,9 +18,12 @@ function ProductDetailsPage() {
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [mainImage, setMainImage] = useState(null);
     const params = useParams();
-    const { authUser } = useAuth();
+    const { isAuthenticated, authUser, login } = useAuth();
     const { addItemToCart } = useCart(); 
     const navigate = useNavigate();
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
+    const { addToast } = useToast();
     
     const getProductDetails = useCallback(async (id) => {
         try {
@@ -75,12 +81,61 @@ function ProductDetailsPage() {
         }
     };
 
-    const handleAddToCart = () => {
-        if (product && quantity > 0 && selectedVariant) {
-            addItemToCart(product?._id, quantity, selectedVariant._id);
+    const handleAddToCart = async () => {
+        try {
+            if(!isAuthenticated) {
+                handleShowLogin();
+                return;
+            }
+            // Recupero l'ID del prodotto, la quantità e l'ID della variante selezionata
+            if (product && quantity > 0 && selectedVariant) {
+                await addItemToCart(product?._id, quantity, selectedVariant._id);
+                addToast(`"${product.name}" (${selectedVariant.name}) aggiunto al carrello!`, "info");
+            }
+        } catch (error) {
+            console.error("Errore nell'aggiunta al carrello:", error);
+            addToast("Errore nell'aggiunta al carrello. Riprova.", "danger");
         }
     };
+    
+    const handleShowLogin = () => {
+        setShowRegisterModal(false); // Chiudi la modale di registrazione se aperta
+        setShowLoginModal(true);
+    };
+    const handleCloseLogin = () => setShowLoginModal(false);
 
+    const handleShowRegister = () => {
+        setShowLoginModal(false); // Chiudi la modale di login se aperta
+        setShowRegisterModal(true);
+    };
+    const handleCloseRegister = () => setShowRegisterModal(false);
+
+    const handleLogin = async (email, password) => {
+        try {
+            await login({email, password}); 
+        } catch (loginError) {
+            console.error("Errore durante il login dalla modale:", loginError);
+            addToast("Credenziali di accesso non valide.", "danger");
+            setError("Credenziali di accesso non valide.")
+        }
+    }
+
+    const handleRegister = async (firstName, lastName, email, password) => {
+        try {
+            await registerApi({
+                firstName, 
+                lastName, 
+                email, 
+                password
+            });
+            setShowRegisterModal(false);
+            addToast("Registrazione avvenuta con successo!")
+        } catch (loginError) {
+            console.error("Errore durante il login dalla modale:", loginError);
+            addToast("Errore durante la registrazione", "danger");
+        }
+    };
+    
     const { averageRating, totalReviews } = useMemo(() => {
         if (!product?.reviews || product.reviews.length === 0) {
             return { averageRating: 0, totalReviews: 0 };
@@ -98,7 +153,7 @@ function ProductDetailsPage() {
     //     .sort(() => 0.5 - Math.random())
     //     .slice(0, 3);
 
-        
+
     if (loading) {
         return (
             <Container className="text-center mt-5">
@@ -206,17 +261,17 @@ function ProductDetailsPage() {
                         <InputGroup className="w-auto me-3">
                             <Button variant="outline-secondary" 
                                 onClick={() => handleQuantityChange(-1)}
-                                disabled={quantity <= 1}
+                                disabled={loading || !selectedVariant || quantity <= 1}
                             ><Dash /></Button>
                             <Form.Control type="text" readOnly value={quantity}  className="text-center" style={{ maxWidth: '60px' }} />
                             <Button variant="outline-secondary" 
                                 onClick={() => handleQuantityChange(1)}
-                                disabled={quantity >= currentStock}
+                                disabled={loading || !selectedVariant || quantity >= currentStock}
                             ><Plus /></Button>
                         </InputGroup>
                         <Button variant="outline-secondary" size="lg" 
                             onClick={handleAddToCart}
-                            disabled={!selectedVariant || currentStock <= 0 || quantity > currentStock}
+                            disabled={loading || !selectedVariant || currentStock <= 0 || quantity > currentStock}
                         >
                             <CartPlusFill className="me-2" /> Aggiungi al Carrello
                         </Button>
@@ -268,6 +323,20 @@ function ProductDetailsPage() {
                     </Row>
                 </Col>
             </Row> */}
+            
+            <LoginModal
+                show={showLoginModal}
+                handleClose={handleCloseLogin}
+                onLogin={handleLogin}
+                onSwitchToRegister={handleShowRegister}
+            />
+            
+            <RegisterModal
+                show={showRegisterModal}
+                handleClose={handleCloseRegister}
+                onRegister={handleRegister}
+                onSwitchToLogin={handleShowLogin}
+            />
         </Container>
     )
 }

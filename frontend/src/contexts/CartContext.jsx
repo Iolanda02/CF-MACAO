@@ -106,6 +106,10 @@ export function CartProvider({ children }) {
         }
     };
 
+    const totalCartItemCount = cart?.items
+        ? cart.items.reduce((total, item) => total + item.quantity, 0)
+        : 0;
+
     const cartContextValue = {
         cart,
         isLoading,
@@ -114,7 +118,7 @@ export function CartProvider({ children }) {
         addItemToCart,
         updateCartItemQuantity,
         removeCartItem,
-        cartItemCount: cart?.items?.length || 0
+        cartItemCount: totalCartItemCount
     };
 
     return (

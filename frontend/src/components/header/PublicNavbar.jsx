@@ -12,6 +12,7 @@ import RegisterModal from '../modals/RegistrerModal';
 import { useToast } from '../../contexts/ToastContext';
 import { useCart } from '../../contexts/CartContext';
 import { BoxArrowRight, BoxSeam, CartFill, Gear, Person, Speedometer } from 'react-bootstrap-icons';
+import { registerApi } from '../../api/authentication';
 
 
 function PublicNavbar() {
@@ -102,9 +103,19 @@ function PublicNavbar() {
     }
 
     const handleRegister = async (firstName, lastName, email, password) => {
-        console.log("Tentativo di registrazione con:", firstName, lastName, email, password);
-        // Implementa la logica di registrazione qui
-        return new Promise(resolve => setTimeout(resolve, 1000)); // Simula un'API call
+        try {
+            await registerApi({
+                firstName, 
+                lastName, 
+                email, 
+                password
+            });
+            setShowRegisterModal(false);
+            addToast("Registrazione avvenuta con successo!")
+        } catch (loginError) {
+            console.error("Errore durante il login dalla modale:", loginError);
+            throw new Error(loginError)
+        }
     };
 
     const handleLogout = () => {
