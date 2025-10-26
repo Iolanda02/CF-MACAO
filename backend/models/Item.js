@@ -10,7 +10,7 @@ const itemSchema = new Schema({
     },
     slug: {
         type: String,
-        unique: true,
+        // unique: true,
         trim: true,
         lowercase: true
     },

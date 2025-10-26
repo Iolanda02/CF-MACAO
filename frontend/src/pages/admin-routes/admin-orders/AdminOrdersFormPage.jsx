@@ -298,12 +298,12 @@ function AdminOrdersFormPage() {
                             <Form.Label>Numero di Telefono</Form.Label>
                             <Form.Control
                                 type="text"
-                                name="user.phone"
-                                value={order.user?.phone || ''}
+                                name="order.phone"
+                                value={order.phone || ''}
                                 onChange={handleChange}
-                                isInvalid={!!formErrors['user.phone']}
+                                isInvalid={!!formErrors['order.phone']}
                             />
-                            <Form.Control.Feedback type="invalid">{formErrors['user.phone']}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{formErrors['order.phone']}</Form.Control.Feedback>
                             </Form.Group>
                         </Col>
                     </Row>
@@ -315,6 +315,7 @@ function AdminOrdersFormPage() {
                             name="shippingCost.amount"
                             value={order.shippingCost?.amount || 0}
                             onChange={handleChange}
+                            onWheel={(e) => e.currentTarget.blur()}
                             isInvalid={!!formErrors['shippingCost.amount']}
                         />
                         <Form.Control.Feedback type="invalid">{formErrors['shippingCost.amount']}</Form.Control.Feedback>
@@ -352,6 +353,7 @@ function AdminOrdersFormPage() {
                         name="discountAmount"
                         value={order.discountAmount || 0}
                         onChange={handleChange}
+                        onWheel={(e) => e.currentTarget.blur()}
                         isInvalid={!!formErrors.discountAmount}
                     />
                     <Form.Control.Feedback type="invalid">{formErrors.discountAmount}</Form.Control.Feedback>

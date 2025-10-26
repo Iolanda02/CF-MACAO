@@ -32,3 +32,20 @@
   position: relative; 
   z-index: 1;
 }
+
+.product-seach-field {
+  min-width: 200px;
+}
+
+.product-filter-btn {
+  margin-left: 0.5px !important;
+}
+
+.product-filter-btn .product-search-btn {
+  border-radius: 0;
+}
+
+.product-filter-btn .product-reset-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}

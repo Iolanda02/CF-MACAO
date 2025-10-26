@@ -118,9 +118,10 @@ function ProductCard({ product }) {
                     </Badge>
                 </div>
                 <Card.Text className="text-muted flex-grow-1 mb-3 card-description">
-                    {product.description?.length > 70 ?
+                    {product.description}
+                    {/* {product.description?.length > 70 ?
                         `${product.description.substring(0, 70)}...` :
-                        product.description}
+                        product.description} */}
                 </Card.Text>
                 
                 {/* Selezione del formato */}
@@ -153,8 +154,8 @@ function ProductCard({ product }) {
                 </div>
 
                 {/* Controlli quantità e pulsante aggiungi al carrello */}
-                <div className="d-flex align-items-center justify-content-between mt-auto">
-                    <InputGroup className="w-auto me-3 quantity-control">
+                <div className="d-flex align-items-center justify-content-between mt-auto flex-wrap gap-4">
+                    <InputGroup className="w-auto quantity-control">
                         <Button variant="outline-secondary" 
                             onClick={() => handleQuantityChange(-1)}
                             disabled={isLoading || !selectedVariant || quantity <= 1}
@@ -172,7 +173,7 @@ function ProductCard({ product }) {
                     <Button
                         variant="outline-secondary"
                         onClick={handleAddToCart}
-                        className="ms-3 flex-grow-1 add-to-cart-btn"
+                        className="flex-grow-1 add-to-cart-btn"
                         disabled={isLoading || !selectedVariant || currentStock <= 0 || quantity > currentStock}
                     >
                         <CartPlusFill className="me-2" /> Aggiungi

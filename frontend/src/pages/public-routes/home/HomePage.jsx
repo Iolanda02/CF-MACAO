@@ -124,6 +124,7 @@ function HomePage() {
                                         type="text"
                                         placeholder="Cerca prodotti per nome"
                                         value={currentFilterInput}
+                                        className="product-seach-field"
                                         onChange={(e) => setCurrentFilterInput(e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
@@ -131,18 +132,24 @@ function HomePage() {
                                             }
                                         }}
                                     />
-                                    <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
-                                        <div className="d-flex align-items-center">
-                                            <Search className="me-2" />
-                                            Filtra
-                                        </div>
-                                    </Button>
-                                    <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
-                                        <div className="d-flex align-items-center">
-                                            <XCircle className="me-2" />
-                                            Svuota
-                                        </div>
-                                    </Button>
+                                    <div className="product-filter-btn">
+                                        <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput} 
+                                            className="product-search-btn"
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <Search className="me-2" />
+                                                Filtra
+                                            </div>
+                                        </Button>
+                                        <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}
+                                            className="product-reset-btn"
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <XCircle className="me-2" />
+                                                Svuota
+                                            </div>
+                                        </Button>
+                                    </div>
                                 </InputGroup>
                             </Col>
                         </Row>

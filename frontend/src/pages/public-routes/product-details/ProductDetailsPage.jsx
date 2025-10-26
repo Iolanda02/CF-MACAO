@@ -191,7 +191,7 @@ function ProductDetailsPage() {
                             fluid 
                             rounded 
                             className="shadow-sm mb-3" 
-                            style={{ maxHeight: '450px', width: '100%', objectFit: 'contain' }} 
+                            style={{ width: '100%', objectFit: 'contain' }} 
                         />
                     )}
                     {/* Slider di immagini secondarie */}
@@ -257,8 +257,8 @@ function ProductDetailsPage() {
                     </Form.Group>
 
                     {/* Controlli quantità e Aggiungi al Carrello */}
-                    <div className="d-flex align-items-center mb-4">
-                        <InputGroup className="w-auto me-3 quantity-control">
+                    <div className="d-flex align-items-center mt-auto flex-wrap gap-4 mb-4">
+                        <InputGroup className="w-auto quantity-control">
                             <Button variant="outline-secondary" 
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={loading || !selectedVariant || quantity <= 1}
@@ -272,7 +272,7 @@ function ProductDetailsPage() {
                             ><Plus /></Button>
                         </InputGroup>
                         <Button variant="outline-secondary" size="lg" 
-                        className="ms-3 add-to-cart-btn"
+                        className="add-to-cart-btn"
                             onClick={handleAddToCart}
                             disabled={loading || !selectedVariant || currentStock <= 0 || quantity > currentStock}
                         >
@@ -287,14 +287,14 @@ function ProductDetailsPage() {
             </Row>
 
             {/* Descrizione estesa */}
-            {product.description && 
+            {/* {product.description && 
                 <Row className="mb-5">
                     <Col>
                         <h3 className="mb-3">Dettagli del Prodotto</h3>
                         <p>{product.description}</p>
                     </Col>
                 </Row>
-            }
+            } */}
 
             {/* Sezione Recensioni */}
             <Row className="mb-5">

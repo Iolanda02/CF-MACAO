@@ -19,6 +19,11 @@
 
 body {
   transition: padding-top 0.3s ease-in-out;
+  background-color: var(--bs-gray-100);
+}
+
+.card-header {
+  background-color: var(--bs-gray-300);
 }
 
 .alert-info {
@@ -42,4 +47,26 @@ body {
 .toast.bg-success {    
   background-color: rgba(var(--bs-success-rgb), 90%) !important;
   font-weight: 500;
+}
+
+.pagination .page-link {
+  color: var(--bs-dark);
+}
+
+.pagination .page-link:hover {
+  color: var(--bs-white);
+  background-color: var(--bs-dark);
+  border-color: var(--bs-dark);
+}
+
+.pagination .page-item.active .page-link {
+  color: var(--bs-white);
+  background-color: var(--bs-dark);
+  border-color: var(--bs-dark);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--bs-gray-600);
+  background-color: var(--bs-gray-200);
+  border-color: var(--bs-gray-400);
 }

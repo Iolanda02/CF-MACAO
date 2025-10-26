@@ -9,18 +9,18 @@ import "./styles.css";
 // Funzione per inizializzare lo stato del prodotto vuoto
 const getInitialProductState = () => ({
   name: '',
-  slug: '',
+  slug: '' ,
   brand: '',
   description: '',
   itemType: 'coffee_capsule',
   isActive: true,
-  tags: [],
+  tags: '',
   // Campi specifici per coffee_capsule
-  intensity: '',
+  intensity: 0,
   roastLevel: 'Medium',
   blend: '',
   aromaProfile: '',
-  systemCompatibility: [],
+  systemCompatibility: '',
   variants: []
 });
 
@@ -45,7 +45,7 @@ function AdminProductsFormPage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
-    const [formErrors, setFormErrors] = useState({});
+    const [formErrors, setFormErrors] = useState({variants: []});
     const { addToast } = useToast();
     // imagesToUpload: { [variantIndex]: { [imageIndex]: { file: File, previewUrl: string, isNew: boolean, isDeleted: boolean } } }
     const [imagesToProcess, setImagesToProcess] = useState({});
@@ -96,6 +96,7 @@ function AdminProductsFormPage() {
             getProductDetails(id);
         } else {
             setProduct(getInitialProductState());
+            setImagesToProcess({});
             setLoading(false);
             setError(null);
             setFormErrors({});
@@ -104,6 +105,7 @@ function AdminProductsFormPage() {
     
     // Gestore per i campi del prodotto principale
     const handleChange = (e) => {
+        // e.preventDefault();
         const { name, value, type, checked } = e.target;
         setFormErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
 
@@ -279,28 +281,26 @@ function AdminProductsFormPage() {
     
     // Funzione per la validazione delle varianti
     const validateVariants = () => {
-        let errors = {};
-        let variantErrors = [];
+        let variants = [];
+
         if (product.variants.length === 0) {
-            errors.variants = 'Devi aggiungere almeno una variante per il prodotto.';
+            variants.push('Devi aggiungere almeno una variante per il prodotto.');
         }
 
         for (let i = 0; i < product.variants.length; i++) {
             const variant = product.variants[i];
             if (!variant.name.trim()) {
-                variantErrors[i].name = `Il nome della variante ${i + 1} è obbligatorio.`;
+                variants.push(`Il nome della variante ${i + 1} è obbligatorio.`);
             }
             if (variant.price.amount <= 0) {
-                setError(`Il prezzo della variante ${i + 1} deve essere maggiore di zero.`);
-                return false;
+                variants.push(`Il prezzo della variante ${i + 1} deve essere maggiore di zero.`);
             }
             if (variant.stock.quantity < 0) {
-                setError(`La quantità in stock della variante ${i + 1} non può essere negativa.`);
-                return false;
+                variant.push(`La quantità in stock della variante ${i + 1} non può essere negativa.`);
             }
         }
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
+        setFormErrors(prev => ({...prev, variants: variants}));
+        return variants.length === 0;
     };
 
     // Funzione per la validazione delle varianti
@@ -308,24 +308,26 @@ function AdminProductsFormPage() {
         let errors = {};
 
         if (!product.name.trim()) {
-            errors.product.name = 'Il nome del prodotto è obbligatorio.'
+            errors.name = 'Il nome del prodotto è obbligatorio.'
         }
         if (!product.itemType.trim()) {
-            errors.product.itemType = 'Il tipo di prodotto è obbligatorio.'
+            errors.itemType = 'Il tipo di prodotto è obbligatorio.'
         }
-        // if (product.intensity && (isNaN(parseInt(product.intensity)) || parseInt(product.intensity) < 1 || parseInt(product.intensity) > 12)) {
-        //     errors.product.intensity = 'L\'intensità deve essere un numero intero tra 1 e 12.';
-        // }
+        if (product.intensity && (isNaN(parseInt(product.intensity)) || parseInt(product.intensity) < 1 || parseInt(product.intensity) > 12)) {
+            errors.intensity = 'L\'intensità deve essere un numero intero tra 1 e 12.';
+        }
         
-        setFormErrors(errors);
+        setFormErrors(prev => ({...prev, ...errors}));
         return Object.keys(errors).length === 0;
     };
 
     
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateProduct() || !validateVariants()) {
-            setMessage({ type: 'danger', text: 'Si prega di correggere gli errori nella pagina.' });
+        const productValidation = validateProduct();
+        const variantValidation = validateVariants();
+        if (!productValidation || !variantValidation) {
+            // setMessage({ type: 'danger', text: 'Si prega di correggere gli errori nella pagina.' });
             return;
         }
         
@@ -336,16 +338,16 @@ function AdminProductsFormPage() {
         // Prepara i dati per l'invio
         const dataToSend = {
             ...product,
-            intensity: product.intensity ? parseInt(product.intensity) : '',
+            intensity: product.intensity ? parseInt(product.intensity) : 0,
             // tags: product.tags ? product.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
             // systemCompatibility: product.systemCompatibility ? product.systemCompatibility.map(sys => sys.trim()).filter(sys => sys) : [],
             variants: product.variants.map(variant => ({
                 ...variant,
                 itemType: product.itemType,
-                price: { ...variant.price, amount: parseFloat(variant.price.amount) },
-                discountPrice: parseFloat(variant.discountPrice),
-                stock: { ...variant.stock, quantity: parseInt(variant.stock.quantity) },
-                weight: { ...variant.weight, value: parseFloat(variant.weight.value) }
+                price: { ...variant.price, amount: variant.price?.amount? parseFloat(variant.price.amount): 0 },
+                discountPrice: variant.discountPrice? parseFloat(variant.discountPrice): 0,
+                stock: { ...variant.stock, quantity: variant.stock?.quantity? parseInt(variant.stock.quantity): 0 },
+                weight: { ...variant.weight, value: variant.weight?.value? parseFloat(variant.weight.value): 0 }
             }))
         };
 
@@ -365,6 +367,8 @@ function AdminProductsFormPage() {
             setMessage("Impossibile salvare il prodotto. Riprova più tardi.");
             addToast("Salvataggio non riuscito", "danger");
             return;
+        } finally {
+            setSubmitting(false);
         }
 
         try {
@@ -373,7 +377,7 @@ function AdminProductsFormPage() {
             // Gestione immagini per ogni variante
             const finalVariants = await Promise.all(
                 savedProduct.variants.map(async (variant, vIdx) => {
-                    const currentVariantId = variant._id || savedProduct.variants[vIdx]._id; // Ottieni l'ID della variante salvata
+                    const currentVariantId = variant?._id || savedProduct.variants[vIdx]?._id; // Ottieni l'ID della variante salvata
                     const variantImagesToProcess = imagesToProcess[vIdx] || {};
                     const newVariantImagesArray = []; // Questo array conterrà le immagini finali per la variante
 
@@ -420,7 +424,7 @@ function AdminProductsFormPage() {
 
                     return {
                         ...variant,
-                        _id: currentVariantId, // Assicurati di mantenere l'ID della variante
+                        _id: currentVariantId, // L'ID della variante
                         images: newVariantImagesArray // Le immagini finali per questa variante
                     };
                 })
@@ -434,7 +438,9 @@ function AdminProductsFormPage() {
         } catch (err) {
             console.error(err);
             // const apiErrorMessage = err.response?.data?.message || "Impossibile salvare il prodotto.";
-            addToast("Problemi con il salvataggio delle immagini.", "danger")
+            addToast("Problemi con il salvataggio delle immagini.", "danger");
+            // vado ugualmente alla lista dei prodotti
+            navigate('/admin/products');
         } finally {
             setSubmitting(false);
         }
@@ -480,12 +486,6 @@ function AdminProductsFormPage() {
             </Button>
             <h1 className="mb-4">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>
 
-            {message && (
-                <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
-                {message.text}
-                </Alert>
-            )}
-
             <Form onSubmit={handleSubmit} noValidate>
                 <Form.Group className="mb-3" controlId="productName">
                     <Form.Label>Nome Prodotto*</Form.Label>
@@ -497,7 +497,11 @@ function AdminProductsFormPage() {
                         onChange={handleChange}
                         required
                         disabled={submitting}
+                        isInvalid={!!formErrors.name}
                     />
+                    <Form.Control.Feedback type="invalid">
+                        {formErrors.name}
+                    </Form.Control.Feedback>
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="productBrand">
@@ -575,8 +579,13 @@ function AdminProductsFormPage() {
                             name="intensity"
                             value={product.intensity}
                             onChange={handleChange}
+                            onWheel={(e) => e.currentTarget.blur()}
                             disabled={submitting}
+                            isInvalid={!!formErrors.intensity}
                         />
+                        <Form.Control.Feedback type="invalid">
+                            {formErrors.intensity}
+                        </Form.Control.Feedback>
                         </Form.Group>
                     </Col>
                     <Col md={6}>
@@ -644,7 +653,7 @@ function AdminProductsFormPage() {
                 )}
 
                 {product.variants.map((variant, index) => (
-                    <div key={variant._id || `new-variant-${index}`} className="border p-3 mb-3 rounded shadow-sm">
+                    <div key={index} className="border p-3 mb-3 rounded shadow-sm">
                         <Row className="align-items-center mb-3">
                             <Col>
                                 <h4>Variante {index + 1}</h4>
@@ -696,6 +705,7 @@ function AdminProductsFormPage() {
                                             min="0.01"
                                             value={variant.price.amount}
                                             onChange={(e) => handleVariantChange(index, 'price.amount', e.target.value)}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             required
                                             disabled={submitting}
                                         />
@@ -716,6 +726,7 @@ function AdminProductsFormPage() {
                                             min="0"
                                             value={variant.discountPrice}
                                             onChange={(e) => handleVariantChange(index, 'discountPrice', e.target.value)}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             disabled={submitting}
                                         />
                                     </InputGroup>
@@ -730,6 +741,7 @@ function AdminProductsFormPage() {
                                         step="1"
                                         value={variant.stock.quantity}
                                         onChange={(e) => handleVariantChange(index, 'stock.quantity', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         required
                                         disabled={submitting}
                                     />
@@ -737,66 +749,72 @@ function AdminProductsFormPage() {
                             </Col>
                         </Row>
 
-                        <h5 className="mt-4">Immagini Variante</h5>
+                        <h5 className="mt-4 mb-0">Immagini Variante</h5>
                         {Object.keys(imagesToProcess[index] || {}).length === 0 && (
                             <Alert variant="secondary">Nessuna immagine aggiunta per questa variante.</Alert>
                         )}
-                        <div className="d-flex flex-wrap gap-3 mb-3">
+                        <Row>
                             {Object.entries(imagesToProcess[index] || {}).map(([imgIdx, imgData]) => (
                                 (!imgData.isDeleted) && ( // Mostra solo le immagini non marcate per la cancellazione
-                                    <div key={imgIdx} className="position-relative border p-2 rounded" style={{ width: '250px', height: 'auto' }}>
-                                        {imgData.previewUrl ? (
-                                            <Image src={imgData.previewUrl} fluid thumbnail />
-                                        ) : (
-                                            <div className="text-center text-muted py-5">No Preview</div>
-                                        )}
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            className="position-absolute top-0 end-0"
-                                            onClick={() => handleRemoveImage(index, imgIdx)}
-                                            disabled={submitting}
-                                        >
-                                            <XCircleFill />
-                                        </Button>
-                                        <Form.Group className="mt-2">
-                                            <Form.Label>File Immagine</Form.Label>
-                                            <Form.Control
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageFileChange(index, imgIdx, e)}
-                                                disabled={submitting}
-                                            />
-                                            <Form.Label className="mt-2">Alt Text</Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                placeholder="Descrizione immagine"
-                                                value={imgData.altText}
-                                                onChange={(e) => handleImageAltTextChange(index, imgIdx, e.target.value)}
-                                                disabled={submitting}
-                                            />
-                                            <Form.Check
-                                                type="checkbox"
-                                                label="Immagine Principale"
-                                                checked={imgData.isMain}
-                                                onChange={(e) => handleImageMainChange(index, imgIdx, e.target.checked)}
-                                                className="mt-2"
-                                                disabled={submitting}
-                                            />
-                                        </Form.Group>
-                                    </div>
+                                    <Col md={6} lg={4} key={imgIdx} className="my-3">
+                                        <div className="position-relative border p-2 rounded section-image">
+                                            <div className="container-image">
+                                                {imgData.previewUrl ? (
+                                                    <Image src={imgData.previewUrl} fluid thumbnail />
+                                                ) : (
+                                                    <div className="text-center text-muted py-5">No Preview</div>
+                                                )}
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    className="position-absolute top-0 end-0"
+                                                    onClick={() => handleRemoveImage(index, imgIdx)}
+                                                    disabled={submitting}
+                                                >
+                                                    <XCircleFill />
+                                                </Button>
+                                            </div>
+                                            <Form.Group className="mt-2">
+                                                <Form.Label>File Immagine</Form.Label>
+                                                <Form.Control
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => handleImageFileChange(index, imgIdx, e)}
+                                                    disabled={submitting}
+                                                />
+                                                <Form.Label className="mt-2">Alt Text</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    placeholder="Descrizione immagine"
+                                                    value={imgData.altText}
+                                                    onChange={(e) => handleImageAltTextChange(index, imgIdx, e.target.value)}
+                                                    disabled={submitting}
+                                                />
+                                                <Form.Check
+                                                    type="checkbox"
+                                                    label="Immagine Principale"
+                                                    checked={imgData.isMain}
+                                                    onChange={(e) => handleImageMainChange(index, imgIdx, e.target.checked)}
+                                                    className="mt-2"
+                                                    disabled={submitting}
+                                                />
+                                            </Form.Group>
+                                        </div>
+                                    </Col>
                                 )
                             ))}
+                        </Row>
+                        <div className="mb-4">
+                            <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={() => addImageField(index)}
+                                className="d-flex align-items-center"
+                                disabled={submitting}
+                            >
+                                <PlusCircle className="me-2" /> Aggiungi Immagine
+                            </Button>
                         </div>
-                        <Button
-                            variant="outline-info"
-                            size="sm"
-                            onClick={() => addImageField(index)}
-                            className="d-flex align-items-center"
-                            disabled={submitting}
-                        >
-                            <PlusCircle className="me-2" /> Aggiungi Immagine
-                        </Button>
 
                         {/* <Form.Group className="mb-3" controlId={`variantImage-${index}`}>
                             <Form.Label>Immagine Principale (URL)</Form.Label>
@@ -821,6 +839,7 @@ function AdminProductsFormPage() {
                                             step="0.1"
                                             value={variant.weight.value}
                                             onChange={(e) => handleVariantChange(index, 'weight.value', e.target.value)}
+                                            onWheel={(e) => e.currentTarget.blur()}
                                             disabled={submitting}
                                         />
                                         <Form.Select
@@ -870,6 +889,28 @@ function AdminProductsFormPage() {
                 >
                     <PlusCircle className="me-2" /> Aggiungi Nuova Variante
                 </Button>
+                
+                {message?.text && (
+                    <Alert variant={message.type} onClose={() => setMessage(null)} dismissible>
+                    {message.text}
+                    </Alert>
+                )}
+
+                {Object.keys(formErrors).filter(key => key !== 'variants').length > 0 && (
+                    Object.keys(formErrors)
+                        .filter(key => key !== 'variants')
+                        .map((key, index) => (
+                            <p key={index} className="text-danger small mb-1">
+                                {formErrors[key]}
+                            </p>
+                        ))
+                )}
+
+                {formErrors?.variants?.length > 0 && (
+                    formErrors.variants.map((err, index) => (
+                        <p key={index} className="text-danger small mb-1">{err}</p>
+                    ))
+                )}
 
                 <div className="d-flex flex-items-center gap-3 mt-3 mb-5">
                     <Button variant={isEditing ? "secondary" : "success"} type="submit" disabled={submitting}>

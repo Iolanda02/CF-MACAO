@@ -119,7 +119,7 @@ function ProductReviewsArea({ productId, productReviews }) {
                         {reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                             .map((review, index) => (
                             <ListGroup.Item key={index} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
-                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                <div className="d-flex justify-content-between align-items-center flex-wrap mb-2">
                                     <div>
                                         <strong>{review.user?.firstName || ''} {review.user?.lastName || ''}</strong>
                                         <span className="text-muted ms-2">{new Date(review.createdAt).toLocaleDateString()}</span>

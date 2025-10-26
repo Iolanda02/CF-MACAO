@@ -112,41 +112,41 @@ export const createOrder = async (req, res, next) => {
             
             variant.stock.quantity -= cartItem.quantity;
             await variant.save({ session });
-            
-            
-            cart.orderStatus = "Processing";
-            cart.paymentStatus = "Pending";
-            cart.paymentMethod = paymentMethod || cart.paymentMethod;
-            cart.orderDate = Date.now();
-            
-            
-            if (shippingAddress) {
-                cart.shippingAddress = shippingAddress;
-                cart.phone = shippingAddress.mobilePhoneNumber || '';
-            } else if (!cart.shippingAddress || Object.keys(cart.shippingAddress).length === 0) {
-                return next(new AppError("L\'indirizzo di spedizione è obbligatorio per finalizzare l'ordine", 400));
-            }
-            
-            // Possibile logica per elaborare il pagamento
-            // const paymentResult = await processPaymentWithStripe(paymentDetails, cart.totalAmount, cart.currency);
-            // if (paymentResult.success) {
-            //     cart.paymentStatus = "Paid";
-            // } else {
-            //     cart.paymentStatus = "Failed";
-            //     cart.orderStatus = "Cancelled";
-            //     return next(new AppError("Pagamento fallito. Riprova più tardi.", 400));
-            // }
-
-            await cart.save({ session });
-
-            await session.commitTransaction();
-            session.endSession();
-            
-            res.status(201).json({
-                status: 'success',
-                data: cart
-            });
         }
+            
+        cart.orderStatus = "Processing";
+        cart.paymentStatus = "Pending";
+        cart.paymentMethod = paymentMethod || cart.paymentMethod;
+        cart.orderDate = Date.now();
+        
+        
+        if (shippingAddress) {
+            cart.shippingAddress = shippingAddress;
+            cart.phone = shippingAddress.mobilePhoneNumber || '';
+        } else if (!cart.shippingAddress || Object.keys(cart.shippingAddress).length === 0) {
+            return next(new AppError("L\'indirizzo di spedizione è obbligatorio per finalizzare l'ordine", 400));
+        }
+        
+        // Possibile logica per elaborare il pagamento
+        // const paymentResult = await processPaymentWithStripe(paymentDetails, cart.totalAmount, cart.currency);
+        // if (paymentResult.success) {
+        //     cart.paymentStatus = "Paid";
+        // } else {
+        //     cart.paymentStatus = "Failed";
+        //     cart.orderStatus = "Cancelled";
+        //     return next(new AppError("Pagamento fallito. Riprova più tardi.", 400));
+        // }
+
+        await cart.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+        
+        res.status(201).json({
+            status: 'success',
+            data: cart
+        });
+        
     } catch (error) {
         await session.abortTransaction();
         session.endSession();

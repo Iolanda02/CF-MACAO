@@ -169,7 +169,12 @@ function AdminProductsViewPage() {
                                                     src={img.url} 
                                                     alt={img.altText || `Immagine ${index + 1} di ${variant.name}`} 
                                                     thumbnail 
-                                                    style={{ width: '80px', height: '80px', objectFit: 'cover' }} 
+                                                    style={{ 
+                                                        width: '80px', 
+                                                        height: '80px', 
+                                                        objectFit: 'cover',
+                                                        border: img.isMain ? '2px solid var(--bs-dark)' : '1px solid #dee2e6'
+                                                    }} 
                                                 />
                                             ))}
                                         </div>

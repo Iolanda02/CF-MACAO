@@ -6,6 +6,7 @@ import * as factory from './factory.controller.js';
 import Review from '../models/Review.js';
 import { DEFAULT_PRODUCT_IMAGE_PUBLIC_ID, DEFAULT_PRODUCT_IMAGE_URL, deleteCloudinaryAsset } from '../config/cloudinary.config.js';
 import multer from 'multer';
+import CoffeeCapsuleItem from '../models/discriminators/CoffeeCapsuleItem.js';
 
 
 // export const getAllItems = factory.getAll(Item);
@@ -100,7 +101,13 @@ export const createItem = async (req, res, next) => {
             return next(new AppError("Per creare il prodotto bisogna fornire almeno una specifica variante vendibile", 400));
         }
 
-        const newItem = await Item.create([{ ...itemData, variants: [] }], { session });
+        let newItem;
+        if(itemData?.itemType === 'coffee_capsule') {
+            newItem = await CoffeeCapsuleItem.create([{ ...itemData, variants: [] }], { session });
+        } else {
+            newItem = await Item.create([{ ...itemData, variants: [] }], { session });
+        }
+
         const createdItem = newItem[0];
 
         const variantPromises = variants.map(async variantData => {
@@ -117,10 +124,12 @@ export const createItem = async (req, res, next) => {
 
         await session.commitTransaction();
         session.endSession();
+        
+        const finalItem = await Item.findById(createdItem._id).populate('variants');
     
         res.status(201).json({
             status: 'success',
-            data: createdItem
+            data: finalItem
         });
     } catch(error) {
         await session.abortTransaction();
@@ -139,8 +148,14 @@ export const updateItem = async (req, res, next) => {
             return next(new AppError('ID non valido', 400));
         }
         const { variants, ...itemData } = req.body;
+
+        let existingItem;
+        if(itemData?.itemType === "coffee_capsule") {
+            existingItem = await CoffeeCapsuleItem.findById(id).populate('variants').session(session);
+        } else {
+            existingItem = await Item.findById(id).populate('variants').session(session);
+        }
         
-        const existingItem = await Item.findById(id).populate('variants').session(session);
 
         if (!existingItem) {
             await session.abortTransaction();

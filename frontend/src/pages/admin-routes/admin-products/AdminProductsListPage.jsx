@@ -96,9 +96,14 @@ function AdminProductsListPage() {
             const result = await removeProduct(productToDelete._id);
             setMessage({ type: 'success', text: 'Prodotto eliminato con successo!' });
             // Resetta la paginazione se l'eliminazione causa la scomparsa dell'ultima pagina
-            fetchProducts();
-            if (currentPage > Math.ceil((products.length - 1) / productsPerPage)) {
-                setCurrentPage(Math.max(1, currentPage - 1));
+            const currentPage = paginator.page
+            if (currentPage > Math.ceil((products.length - 1) / paginator.perPage)) {
+                setPaginator(prev => ({
+                    ...prev,
+                    page: Math.max(1, currentPage - 1)
+                }))
+            } else {
+                fetchProducts();
             }
             setShowDeleteModal(false);
             setProductToDelete(null);

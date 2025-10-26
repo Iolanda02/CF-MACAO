@@ -4,7 +4,7 @@ import Item from "../Item.js";
 const coffeeCapsuleItemSchema = new Schema({
     intensity: {
         type: Number,
-        min: 1,
+        min: 0,
         max: 12,
         validate: {
             validator: Number.isInteger,
