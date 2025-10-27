@@ -34,7 +34,7 @@
 }
 
 .product-seach-field {
-  min-width: 200px;
+  min-width: 200px !important;
 }
 
 .product-filter-btn {

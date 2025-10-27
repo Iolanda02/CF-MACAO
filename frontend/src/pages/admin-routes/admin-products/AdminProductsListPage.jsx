@@ -157,21 +157,29 @@ function AdminProductsListPage() {
                                 type="text"
                                 placeholder="Filtra prodotti..."
                                 value={currentFilterInput}
+                                className="product-seach-field"
                                 onChange={(e) => setCurrentFilterInput(e.target.value)}
                                 disabled={loading}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        applyFilter();
+                                    }
+                                }}
                             />
-                            <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
-                                <div className="d-flex align-items-center">
-                                    <Search className="me-2" />
-                                    Filtra
-                                </div>
-                            </Button>
-                            <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}>
-                                <div className="d-flex align-items-center">
-                                    <XCircle className="me-2" />
-                                    Svuota
-                                </div>
-                            </Button>
+                            <div className="product-filter-btn">
+                                <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput} className="product-search-btn">
+                                    <div className="d-flex align-items-center">
+                                        <Search className="me-2" />
+                                        Filtra
+                                    </div>
+                                </Button>
+                                <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput} className="product-reset-btn">
+                                    <div className="d-flex align-items-center">
+                                        <XCircle className="me-2" />
+                                        Svuota
+                                    </div>
+                                </Button>
+                            </div>
                         </InputGroup>
                     </Col>
                 </Row>
