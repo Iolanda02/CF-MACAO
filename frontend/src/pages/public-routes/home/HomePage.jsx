@@ -134,7 +134,7 @@ function HomePage() {
                                     />
                                     <div className="product-filter-btn">
                                         <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput} 
-                                            className="product-search-btn"
+                                            className="search-filter-btn"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <Search className="me-2" />
@@ -142,7 +142,7 @@ function HomePage() {
                                             </div>
                                         </Button>
                                         <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput}
-                                            className="product-reset-btn"
+                                            className="reset-filter-btn"
                                         >
                                             <div className="d-flex align-items-center">
                                                 <XCircle className="me-2" />

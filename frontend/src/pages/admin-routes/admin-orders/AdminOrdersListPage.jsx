@@ -178,14 +178,14 @@ function AdminOrdersListPage() {
                                     }
                                 }}
                             />
-                            <div className="product-filter-btn">
-                                <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput} className="product-search-btn">
+                            <div>
+                                <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput} className="search-filter-btn">
                                     <div className="d-flex align-items-center">
                                         <Search className="me-2" />
                                         Filtra
                                     </div>
                                 </Button>
-                                <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput} className="product-reset-btn">
+                                <Button variant="outline-dark" onClick={clearFilter} disabled={loading || !currentFilterInput} className="reset-filter-btn">
                                     <div className="d-flex align-items-center">
                                         <XCircle className="me-2" />
                                         Svuota

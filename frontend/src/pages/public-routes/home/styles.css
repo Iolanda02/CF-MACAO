@@ -41,11 +41,11 @@
   margin-left: 0.5px !important;
 }
 
-.product-filter-btn .product-search-btn {
+.search-filter-btn {
   border-radius: 0;
 }
 
-.product-filter-btn .product-reset-btn {
+.reset-filter-btn {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
