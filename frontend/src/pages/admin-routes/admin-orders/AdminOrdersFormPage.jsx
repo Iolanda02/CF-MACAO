@@ -117,7 +117,7 @@ function AdminOrdersFormPage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/orders")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/orders")} className="mb-3 text-dark">
                     <ArrowLeft className="me-2" />Torna alla lista ordini
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -128,7 +128,7 @@ function AdminOrdersFormPage() {
     if (!order) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/orders")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/orders")} className="mb-3 text-dark">
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
                 <Alert variant="warning">Ordine non trovato.</Alert>
@@ -139,8 +139,8 @@ function AdminOrdersFormPage() {
     return (
         <Container className="my-4">
             
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/orders")}>
+            <div className="d-flex justify-content-between align-items-center">
+                <Button variant="link" onClick={() => navigate("/admin/orders")} className="mb-3 text-dark">
                     <ArrowLeft className="me-2" />Torna alla lista ordini
                 </Button>
             </div>

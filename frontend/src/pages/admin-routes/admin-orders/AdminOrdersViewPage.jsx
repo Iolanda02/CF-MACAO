@@ -52,7 +52,7 @@ function AdminOrdersViewPage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/orders")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/orders")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista ordini
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -63,7 +63,7 @@ function AdminOrdersViewPage() {
     if (!order) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/orders")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/orders")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
                 <Alert variant="warning">Ordine non trovato.</Alert>
@@ -74,7 +74,7 @@ function AdminOrdersViewPage() {
     return (
         <Container className="my-4">
             
-            <Button variant="outline-dark" onClick={() => navigate('/admin/orders')}>
+            <Button variant="link" onClick={() => navigate('/admin/orders')} className="text-dark">
                 <ArrowLeft className="me-2" />Torna alla lista ordini
             </Button>
             

@@ -122,3 +122,7 @@
 .pill-items.translate-middle {
   transform: translate(-50%, -25%) !important;
 }
+
+.underline-text:hover {
+  text-decoration: underline;
+}

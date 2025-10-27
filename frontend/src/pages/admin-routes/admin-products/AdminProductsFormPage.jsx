@@ -460,7 +460,7 @@ function AdminProductsFormPage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/products")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -471,7 +471,7 @@ function AdminProductsFormPage() {
     if (!product) {
         return ( 
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/products")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista
                 </Button>
                 <Alert variant="info">Prodotto non disponibile.</Alert>
@@ -481,7 +481,7 @@ function AdminProductsFormPage() {
 
     return (
         <Container className="my-4">
-            <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mb-3">
+            <Button variant="link" onClick={() => navigate('/admin/products')} className="text-dark mb-3">
                 <ArrowLeft className="me-2" />Torna alla Lista Prodotti
             </Button>
             <h1 className="mb-4">{isEditing ? `Modifica Prodotto: ${product?.name}` : 'Aggiungi Nuovo Prodotto'}</h1>

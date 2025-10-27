@@ -235,7 +235,7 @@ function ProfilePage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla home
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -246,7 +246,7 @@ function ProfilePage() {
     if (!user) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla home
                 </Button>
                 <Alert variant="warning">Profilo non trovato.</Alert>
@@ -279,20 +279,18 @@ function ProfilePage() {
 
                 {isEdit ? ( 
                     <>
-                        <Row className='align-items-center mb-4'>
-                            <Col xs={12} md={3} className='d-flex justify-content-center justify-content-md-start mb-3 mb-md-0 position-relative'>
-                                {previewUrl ? (
-                                    <Image src={previewUrl} roundedCircle fluid style={{ width: '150px', height: '150px', objectFit: 'cover' }} alt="Avatar utente" />
-                                ) : (
-                                    <PersonCircle size={150} className="text-secondary" />
-                                )}
-                                {isEdit && previewUrl && (
-                                    <Button variant="danger" size="sm" className="position-absolute top-0 end-0" onClick={handleRemoveAvatar}>
-                                        <XCircleFill />
-                                    </Button>
-                                )}
-                            </Col>
-                        </Row>
+                    <div className='d-flex mb-4'>
+                        {previewUrl ? (
+                            <Image src={previewUrl} roundedCircle fluid style={{ width: '150px', height: '150px', objectFit: 'cover' }} alt="Avatar utente" />
+                        ) : (
+                            <PersonCircle size={150} className="text-secondary" />
+                        )}
+                        {isEdit && previewUrl && (
+                            <Button variant="danger" size="sm" className="h-100" onClick={handleRemoveAvatar}>
+                                <XCircleFill />
+                            </Button>
+                        )}
+                    </div>
 
                     <Card className="p-4 shadow-sm">
                         <Form onSubmit={handleSubmit}>

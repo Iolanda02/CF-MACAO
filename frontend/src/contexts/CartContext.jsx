@@ -58,7 +58,8 @@ export function CartProvider({ children }) {
         } catch (err) {
             console.error("Errore nell'aggiunta al carrello:", err);
             setError("Si è verificato un problema durante l'aggiornamento del carrello. Riprova più tardi.");
-            setCart(null);
+            await fetchCart();
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -78,8 +79,8 @@ export function CartProvider({ children }) {
         } catch (err) {
             console.error("Errore nell'aggiornamento quantità:", err);
             setError("Si è verificato un problema durante l'aggiornamento del carrello. Riprova più tardi.");
-            setCart(null);
-            // throw err;
+            await fetchCart();
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -99,8 +100,8 @@ export function CartProvider({ children }) {
         } catch (err) {
             console.error("Errore nella rimozione dell'articolo:", err);
             setError("Si è verificato un problema durante l'aggiornamento del carrello. Riprova più tardi.");
-            setCart(null);
-            // throw err;
+            await fetchCart();
+            throw err;
         } finally {
             setIsLoading(false);
         }

@@ -201,7 +201,7 @@ function AdminUsersFormPage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/users")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -212,7 +212,7 @@ function AdminUsersFormPage() {
     if (!user) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/users")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/users")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
                 <Alert variant="warning">Utente non trovato.</Alert>
@@ -223,7 +223,7 @@ function AdminUsersFormPage() {
     return (
         <Container className="my-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/users")}>
+                <Button variant="link" onClick={() => navigate("/admin/users")} className="text-dark">
                     <ArrowLeft className="me-2" />Torna alla lista utenti
                 </Button>
             </div>

@@ -45,13 +45,15 @@ const AdminNavbar = () => {
   return (
     <Navbar bg="dark" variant="dark" expand="lg" className={`navbar-admin ${scrolled ? 'scrolled' : ''}`} fixed='top' ref={navbarRef}>
       <Container fluid>
-        <Navbar.Brand as={Link} to="/admin">Pannello di Amministrazione</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/admin">
+            <span className="underline-text">Pannello di Amministrazione</span>
+        </Navbar.Brand>
         <Navbar.Toggle aria-controls="admin-navbar-nav" />
         <Navbar.Collapse id="admin-navbar-nav">
           <Nav className="ms-auto">
             <Nav.Link as={Link} to="/">
               <ArrowLeftSquareFill className="me-2" />
-              Vai al Negozio Pubblico
+              <span className="underline-text">Vai al Negozio Pubblico</span>
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>

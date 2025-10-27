@@ -46,7 +46,7 @@ function AdminProductsViewPage() {
     if (error) {
         return (
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/products")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista prodotti
                 </Button>
                 <Alert variant="danger">{error}</Alert>
@@ -57,7 +57,7 @@ function AdminProductsViewPage() {
     if (!product) {
         return ( 
             <Container className="my-5">
-                <Button variant="outline-dark" onClick={() => navigate("/admin/products")} className="mb-3">
+                <Button variant="link" onClick={() => navigate("/admin/products")} className="text-dark mb-3">
                     <ArrowLeft className="me-2" />Torna alla lista prodotti
                 </Button>
                 <Alert variant="info">Prodotto non disponibile.</Alert>
@@ -79,7 +79,7 @@ function AdminProductsViewPage() {
 
     return (
         <Container className="my-4">
-            <Button variant="outline-dark" onClick={() => navigate('/admin/products')} className="mt-3">
+            <Button variant="link" onClick={() => navigate('/admin/products')} className="mt-3 text-dark">
                 <ArrowLeft className="me-2" />Torna alla Lista Prodotti
             </Button>
 
