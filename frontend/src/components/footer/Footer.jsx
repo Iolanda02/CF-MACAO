@@ -30,11 +30,11 @@ function Footer() {  return (
             <h5 className="text-uppercase mb-3">Aiuto e Contatti</h5>
             <Nav className="flex-column">
               <Nav.Link as={NavLink} to="/help" className="text-white footer-link">
-                FAQs
+                FAQ e Contatti
               </Nav.Link>
-              <Nav.Link as={NavLink} to="/help" className="text-white footer-link">
+              {/* <Nav.Link as={NavLink} to="/help" className="text-white footer-link">
                 Contatti
-              </Nav.Link>
+              </Nav.Link> */}
               <div className="d-flex align-items-center mt-2">
                 <TelephoneFill className="me-2" />
                 <span>800 124 535</span>

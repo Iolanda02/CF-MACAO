@@ -161,7 +161,7 @@ function AdminOrdersListPage() {
             )}
             
             {/* Componente di Ricerca */}
-            {(orders?.length > 0 || currentFilterInput) && 
+            {(orders?.length > 0 || currentFilterInput || searchTerm) && 
                 <Row className="mb-4">
                     <Col>
                         <InputGroup>

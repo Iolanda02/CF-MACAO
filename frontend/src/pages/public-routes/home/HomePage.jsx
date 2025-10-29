@@ -116,7 +116,7 @@ function HomePage() {
                         </Alert>
                     )}
 
-                    {(products?.length > 0 || currentFilterInput) && 
+                    {(products?.length > 0 || currentFilterInput || searchTerm) && 
                         <Row className="my-4 justify-content-center">
                             <Col md={8} lg={6}>
                                 <InputGroup>

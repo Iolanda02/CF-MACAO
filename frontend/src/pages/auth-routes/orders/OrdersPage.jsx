@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Col, Container, Image, Modal, Pagination, Row, Spinner, Table } from "react-bootstrap";
+import { Alert, Button, Col, Container, Form, Image, InputGroup, Modal, Pagination, Row, Spinner, Table } from "react-bootstrap";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getAllOrdersUser, getOrderById } from "../../../api/order";
-import { EyeFill, XLg } from "react-bootstrap-icons";
+import { EyeFill, Search, XCircle, XLg } from "react-bootstrap-icons";
 import { useNavigate } from "react-router";
 
 // Componente per visualizzare i dettagli di un singolo ordine nella modale
@@ -269,7 +269,7 @@ function OrdersPage() {
                 )}
                 
                 {/* Componente di Ricerca */}
-                {/* {(orders?.length > 0 || currentFilterInput) && 
+                {(orders?.length > 0 || currentFilterInput || searchTerm) && 
                     <Row className="mb-4">
                         <Col>
                             <InputGroup>
@@ -279,6 +279,11 @@ function OrdersPage() {
                                     value={currentFilterInput}
                                     onChange={(e) => setCurrentFilterInput(e.target.value)}
                                     disabled={loading}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            applyFilter();
+                                        }
+                                    }}
                                 />
                                 <Button variant="outline-dark" onClick={applyFilter} disabled={loading || !currentFilterInput}>
                                     <div className="d-flex align-items-center">
@@ -295,7 +300,7 @@ function OrdersPage() {
                             </InputGroup>
                         </Col>
                     </Row>
-                } */}
+                }
 
                 {orders.length === 0 ? (
                     <h3 className="text-muted">Non hai ancora effettuato ordini</h3>
@@ -316,7 +321,7 @@ function OrdersPage() {
                                 {orders.map((order, index) => (
                                     <tr key={index}>
                                         <td>{order.orderNumber}</td>
-                                        <td>{formatDateForTable(order.createdAt)}</td>
+                                        <td>{formatDateForTable(order.orderDate)}</td>
                                         <td>{translateOrderStatus(order.orderStatus)}</td>
                                         <td>{translatePaymentStatus(order.paymentStatus)}</td>
                                         <td><b>{order.totalAmount?.toFixed(2)} {order.currency}</b></td>

@@ -20,6 +20,7 @@
     color: var(--bs-gray-100) !important;
     font-weight: 600;
     position: relative;
+    max-width: fit-content;
 }
 
 .navbar-nav .nav-link.active::after {

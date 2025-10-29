@@ -78,3 +78,7 @@ body {
 .btn-link:hover {
   text-decoration: underline;
 }
+
+p {
+  word-wrap: break-word;
+}

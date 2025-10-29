@@ -144,7 +144,7 @@ function AdminUsersListPage() {
             )}
 
             {/* Componente di Ricerca */}
-            {(users?.length > 0 || currentFilterInput) && 
+            {(users?.length > 0 || currentFilterInput || searchTerm) && 
                 <Row className="mb-4">
                     <Col>
                         <InputGroup>

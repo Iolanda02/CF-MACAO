@@ -111,7 +111,18 @@ export const createItem = async (req, res, next) => {
         const createdItem = newItem[0];
 
         const variantPromises = variants.map(async variantData => {
-            const bodyVariant = { ...variantData, item: createdItem._id };
+            let imagesToUse = variantData.images;
+            if (!imagesToUse || imagesToUse.length === 0) {
+                // Se images è mancante o vuoto, usa il default
+                imagesToUse = [{
+                    url: DEFAULT_PRODUCT_IMAGE_URL,
+                    public_id: DEFAULT_PRODUCT_IMAGE_PUBLIC_ID,
+                    altText: "Nessuna immagine disponibile",
+                    isMain: true
+                }];
+            }
+
+            const bodyVariant = { ...variantData, item: createdItem._id, images: imagesToUse };
             const newVariant = await ItemVariant.create([bodyVariant], { session });
             return newVariant[0]._id; 
         });

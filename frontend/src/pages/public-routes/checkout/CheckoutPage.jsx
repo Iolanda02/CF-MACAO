@@ -49,9 +49,9 @@ function CheckoutPage() {
     const validateDeliveryAddress = (addressToCheck) => {
         // console.log("addressToCheck ", addressToCheck)
         const fields = [
-            addressToCheck.firstName,
-            addressToCheck.lastName,
-            addressToCheck.email,
+            // addressToCheck.firstName,
+            // addressToCheck.lastName,
+            // addressToCheck.email,
             // addressToCheck.confirmEmail,
             addressToCheck.address,
             addressToCheck.postalCode,
@@ -86,7 +86,7 @@ function CheckoutPage() {
                 lastName: authUser.lastName || '',
                 email: authUser.email || '',
                 confirmEmail: authUser.email || '',
-                address: cart.shippingAddress? cart.shippingAddress.address || '' : authUser.shippingAddress?.address || '',
+                address: cart?.shippingAddress? cart.shippingAddress.address || '' : authUser.shippingAddress?.address || '',
                 postalCode: cart?.shippingAddress? cart.shippingAddress.postalCode || '' : authUser.shippingAddress?.postalCode || '',
                 city: cart?.shippingAddress? cart.shippingAddress.city || '' : authUser.shippingAddress?.city || '',
                 country: cart?.shippingAddress? cart.shippingAddress.country || '' : authUser.shippingAddress?.country || '',
@@ -323,7 +323,7 @@ function CheckoutPage() {
                                                 <Form.Control type="text" name="firstName" 
                                                     value={authUser.firstName} 
                                                     onChange={handleAddressChange} 
-                                                    required readOnly
+                                                    required disabled
                                                     isInvalid={!!addressError && authUser.firstName.trim() === ''} 
                                                 />
                                                 <Form.Control.Feedback type="invalid">Campo obbligatorio.</Form.Control.Feedback>
@@ -333,7 +333,7 @@ function CheckoutPage() {
                                                 <Form.Control type="text" name="lastName" 
                                                 value={authUser.lastName} 
                                                 onChange={handleAddressChange} 
-                                                required readOnly/>
+                                                required disabled/>
                                             </Form.Group>
                                         </Row>
                                         <Row className="mb-3">
@@ -342,7 +342,7 @@ function CheckoutPage() {
                                                 <Form.Control type="email" name="email" 
                                                 value={authUser.email} 
                                                 onChange={handleAddressChange} 
-                                                required readOnly/>
+                                                required disabled/>
                                             </Form.Group>
                                             {/* <Form.Group as={Col} md={6}>
                                                 <Form.Label>Conferma Email*</Form.Label>

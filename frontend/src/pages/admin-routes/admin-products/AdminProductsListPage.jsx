@@ -149,7 +149,7 @@ function AdminProductsListPage() {
             )}
 
             {/* Componente di Ricerca */}
-            {(products?.length > 0 || currentFilterInput) && 
+            {(products?.length > 0 || currentFilterInput || searchTerm) && 
                 <Row className="mb-4">
                     <Col>
                         <InputGroup>

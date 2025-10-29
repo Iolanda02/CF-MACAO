@@ -60,10 +60,12 @@ export const createReview = async (req, res, next) => {
 
         await session.commitTransaction();
         session.endSession();
+
+        const populatedReview = await savedReview.populate('user'); 
         
         res.status(201).json({
             status: 'success',
-            data: savedReview
+            data: populatedReview
         });
     } catch (error) {
         await session.abortTransaction();
@@ -113,10 +115,12 @@ export const updateReview = async (req, res, next) => {
         if (!updatedReview) {
             return next(new AppError('Recensione non trovata', 404));
         }
+        
+        const populatedReview = await updatedReview.populate('user'); 
 
         res.status(200).json({
             status: 'success',
-            data: updatedReview
+            data: populatedReview
         });
 
     } catch (error) {

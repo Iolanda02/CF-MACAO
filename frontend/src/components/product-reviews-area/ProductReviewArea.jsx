@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { Alert, Button, Card, Col, Container, Form, ListGroup, Row } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, ListGroup, Row, Spinner } from "react-bootstrap";
 import { PencilFill, StarFill, TrashFill } from "react-bootstrap-icons";
 import { Link } from "react-router";
 import { createReview, removeReview, updateReview } from "../../api/review";
@@ -18,6 +18,7 @@ function ProductReviewsArea({ productId, productReviews }) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const { addToast } = useToast();
+    const [loadingComment, setLoadingComment] = useState(false);
 
     // const fetchReviews = useCallback(async () => {
     //     try {
@@ -29,22 +30,25 @@ function ProductReviewsArea({ productId, productReviews }) {
     //     }
     // }, [productId]);
     
-    useEffect(() => {
-        if (productReviews.length !== reviews.length || productReviews.some((pr, i) => pr._id !== reviews[i]?._id)) {
-            setReviews(productReviews);
-        }
-    }, [productReviews, reviews]);
+    // useEffect(() => {
+    //     if (productReviews.length !== reviews.length || productReviews.some((pr, i) => pr._id !== reviews[i]?._id)) {
+    //         setReviews(productReviews);
+    //     }
+    // }, [productReviews, reviews]);
 
     const handlePostReview = async () => {
+        setLoadingComment(true);
         try {
             const newReview = await createReview({item: productId, comment: newReviewText, rating: newReviewRating });
             setNewReviewText("");
             setNewReviewRating(0);
             addToast("Recensione salvata con successo!", "success");
-            setReviews(prevReviews => [...prevReviews, newReview]);
+            setReviews(prevReviews => [...prevReviews, newReview.data]);
         } catch (error) {
             console.error("Error posting review:", error);
             addToast("Errore durante l'invio della recensione. Riprova più tardi.", "danger");
+        } finally {
+            setLoadingComment(false);
         }
     };
 
@@ -66,7 +70,7 @@ function ProductReviewsArea({ productId, productReviews }) {
             addToast("Recensione modificata con successo!", "info");
             handleCancelEdit();
             setReviews(prevReviews => 
-                prevReviews.map(rev => (rev._id === reviewId ? { ...rev, ...updatedReview } : rev))
+                prevReviews.map(rev => (rev._id === reviewId ? { ...rev, ...updatedReview.data } : rev))
             );
         } catch (error) {
             console.error("Error updating review:", error);
@@ -112,99 +116,108 @@ function ProductReviewsArea({ productId, productReviews }) {
     return (
         <Container className="px-0 py-5">
             <h2 className="mb-4">Recensioni dei Clienti</h2>
-            <Row>
-                <Col md={7} className="pb-3">
-                    {reviews.length === 0 && <Alert variant="info">Nessuna recensione ancora. Sii il primo a recensire questo prodotto!</Alert>}
-                    <ListGroup variant="flush">
-                        {reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                            .map((review, index) => (
-                            <ListGroup.Item key={index} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
-                                <div className="d-flex justify-content-between align-items-center flex-wrap mb-2">
-                                    <div>
-                                        <strong>{review.user?.firstName || ''} {review.user?.lastName || ''}</strong>
-                                        <span className="text-muted ms-2">{new Date(review.createdAt).toLocaleDateString()}</span>
+            { loadingComment ? (
+                <Container className="text-center mt-5">
+                    <Spinner animation="border" role="status">
+                        <span className="visually-hidden">Caricamento recensioni...</span>
+                    </Spinner>
+                    <p>Caricamento recensioni...</p>
+                </Container>
+            ): (
+                <Row>
+                    <Col md={7} className="pb-3">
+                        {reviews.length === 0 && <Alert variant="info">Nessuna recensione ancora. Sii il primo a recensire questo prodotto!</Alert>}
+                        <ListGroup variant="flush">
+                            {reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                                .map((review, index) => (
+                                <ListGroup.Item key={index} className="d-flex flex-column mb-3 border rounded shadow-sm p-3">
+                                    <div className="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                                        <div>
+                                            <strong>{review.user?.firstName || ''} {review.user?.lastName || ''}</strong>
+                                            <span className="text-muted ms-2">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="d-flex align-items-center">
+                                            {editingReviewId === review._id ? 
+                                                // Stelle editabili in modalità editing
+                                                renderStars(editingReviewRating, setEditingReviewRating) 
+                                                : 
+                                                // Stelle non editabili in modalità visualizzazione
+                                                renderStars(review.rating, null, true)
+                                            }
+                                            
+                                            {isAuthenticated && authUser?._id === review.user?._id && (
+                                                <>
+                                                    {editingReviewId === review._id ? (
+                                                        <>
+                                                            <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
+                                                            <Button variant="outline-danger" size="sm" className="ms-2" onClick={handleCancelEdit}>Annulla</Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleEditReviewClick(review)}>
+                                                                <PencilFill />
+                                                            </Button>
+                                                            <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleDelete(review)}>
+                                                                <TrashFill />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="d-flex align-items-center">
-                                        {editingReviewId === review._id ? 
-                                            // Stelle editabili in modalità editing
-                                            renderStars(editingReviewRating, setEditingReviewRating) 
-                                            : 
-                                            // Stelle non editabili in modalità visualizzazione
-                                            renderStars(review.rating, null, true)
-                                        }
-                                        
-                                        {isAuthenticated && authUser?._id === review.user?._id && (
-                                            <>
-                                                {editingReviewId === review._id ? (
-                                                    <>
-                                                        <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleUpdateReview(review._id)}>Salva</Button>
-                                                        <Button variant="outline-danger" size="sm" className="ms-2" onClick={handleCancelEdit}>Annulla</Button>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Button variant="outline-secondary" size="sm" className="ms-2" onClick={() => handleEditReviewClick(review)}>
-                                                            <PencilFill />
-                                                        </Button>
-                                                        <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleDelete(review)}>
-                                                            <TrashFill />
-                                                        </Button>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                                {editingReviewId === review._id ? (
-                                    <>
-                                        <Form.Group className="mb-2">
-                                            <Form.Control
-                                                as="textarea"
-                                                rows={3}
-                                                value={editingReviewText}
-                                                onChange={(e) => setEditingReviewText(e.target.value)}
-                                            />
-                                        </Form.Group>
-                                    </>
-                                ) : (
-                                    <p className="mb-0">{review.comment}</p>
-                                )}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Col>
+                                    {editingReviewId === review._id ? (
+                                        <>
+                                            <Form.Group className="mb-2">
+                                                <Form.Control
+                                                    as="textarea"
+                                                    rows={3}
+                                                    value={editingReviewText}
+                                                    onChange={(e) => setEditingReviewText(e.target.value)}
+                                                />
+                                            </Form.Group>
+                                        </>
+                                    ) : (
+                                        <p>{review.comment}</p>
+                                    )}
+                                </ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </Col>
 
-                {/* Form per lasciare una nuova recensione */}
-                <Col md={5}>
-                    {isAuthenticated ? (
-                        <Card className="p-3 shadow-sm">
-                            <Card.Title className="mb-3">Lascia la tua recensione</Card.Title>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Il tuo voto:</Form.Label>
-                                <div className="d-flex gap-1 mb-2">
-                                    {renderStars(newReviewRating, setNewReviewRating)}
-                                </div>
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Il tuo commento:</Form.Label>
-                                <Form.Control
-                                    as="textarea"
-                                    rows={4}
-                                    value={newReviewText}
-                                    onChange={(e) => setNewReviewText(e.target.value)}
-                                    placeholder="Condividi la tua opinione su questo prodotto..."
-                                />
-                            </Form.Group>
-                            <Button variant="dark" onClick={handlePostReview} disabled={!newReviewText.trim() && newReviewRating === 0}>
-                                Invia
-                            </Button>
-                        </Card>
-                    ) : (
-                        <Alert variant="info" className="text-center">
-                            Accedi per lasciare una recensione.
-                        </Alert>
-                    )}
-                </Col>
-            </Row>
+                    {/* Form per lasciare una nuova recensione */}
+                    <Col md={5}>
+                        {isAuthenticated ? (
+                            <Card className="p-3 shadow-sm">
+                                <Card.Title className="mb-3">Lascia la tua recensione</Card.Title>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Il tuo voto:</Form.Label>
+                                    <div className="d-flex gap-1 mb-2">
+                                        {renderStars(newReviewRating, setNewReviewRating)}
+                                    </div>
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Il tuo commento:</Form.Label>
+                                    <Form.Control
+                                        as="textarea"
+                                        rows={4}
+                                        value={newReviewText}
+                                        onChange={(e) => setNewReviewText(e.target.value)}
+                                        placeholder="Condividi la tua opinione su questo prodotto..."
+                                    />
+                                </Form.Group>
+                                <Button variant="dark" onClick={handlePostReview} disabled={!newReviewText.trim() || !newReviewRating}>
+                                    Invia
+                                </Button>
+                            </Card>
+                        ) : (
+                            <Alert variant="info" className="text-center">
+                                Accedi per lasciare una recensione.
+                            </Alert>
+                        )}
+                    </Col>
+                </Row>
+            )}
             
             <DeleteModal
                 show={showDeleteModal}
