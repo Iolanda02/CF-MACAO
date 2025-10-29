@@ -117,15 +117,12 @@ function ProductCard({ product }) {
                         {stockStatus}
                     </Badge>
                 </div>
-                <Card.Text className="text-muted flex-grow-1 mb-3 card-description">
+                {/* <Card.Text className="text-muted flex-grow-1 mb-3 card-description">
                     {product.description}
-                    {/* {product.description?.length > 70 ?
-                        `${product.description.substring(0, 70)}...` :
-                        product.description} */}
-                </Card.Text>
+                </Card.Text> */}
                 
                 {/* Selezione del formato */}
-                <div className="mb-3 d-flex flex-column">
+                <div className="my-3 d-flex flex-column">
                     <span className="text-label me-2">Formato:</span>
                     <Form.Select
                         size="sm"
