@@ -79,6 +79,34 @@ Si prega di utilizzare queste credenziali con cautela dato che dalla dashboard d
 
 ---
 
+## Screenshot 
+
+### Homepage
+<div align="start">
+    <img src="https://res.cloudinary.com/dztq95r7a/image/upload/v1761874314/home_choaqc.png" width="500" alt="Pagina catalogo prodotti">
+</div>
+
+### Dettaglio Prodotto
+<div align="start">
+    <img src="https://res.cloudinary.com/dztq95r7a/image/upload/v1761874024/dettaglio-prodotto_darez1.png" width="500" alt="Pagina dettaglio prodotto">
+</div>
+
+### Carrello e Checkout
+<div align="start">
+    <img src="https://res.cloudinary.com/dztq95r7a/image/upload/v1761874032/carrello_m0hrno.png" width="500" alt="Pagina carrello">
+</div>
+
+<div align="start">
+    <img src="https://res.cloudinary.com/dztq95r7a/image/upload/v1761874043/riepilogo_ozwaa4.png" width="500" alt="Pagina riepilogo ordine">
+</div>
+
+### Pannello di amministrazione
+<div align="start">
+    <img src="https://res.cloudinary.com/dztq95r7a/image/upload/v1761874055/dashboard-admin_hx9xko.png" width="500" alt="Pagina pannello di amministrazione">
+</div>
+
+---
+
 ## Prossimi passi
 
 Come ogni buon sistema software, per ottenere un risultato sempre migliore e vicino alle esigenze dell'utilizzatore finale, si possono integrare diversi miglioramenti, tra cui:
